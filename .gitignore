@@ -8,7 +8,8 @@ node_modules/
 .env.*.local
 # backend/.env já coberto pelo backend/.gitignore — redundância de segurança
 backend/.env
-backend/.env.*
+backend/.env.backup
+backend/.env.production
 pdv/.env
 
 # ── Build outputs ─────────────────────────────────────────────────────────────
