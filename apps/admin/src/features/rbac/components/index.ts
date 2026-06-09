@@ -1,0 +1,6 @@
+export { UsersTable }         from './users-table'
+export { RolesList }          from './roles-list'
+export { RoleForm }           from './role-form'
+export { RoleDetail }         from './role-detail'
+export { PermissionsMatrix }  from './permissions-matrix'
+export { StoreAccessList }    from './store-access-list'

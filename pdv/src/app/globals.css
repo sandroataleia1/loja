@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   CSS Variables — ShadCN token system
+   Dark theme é o padrão (classe .dark no <html>)
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* Light theme (fallback, raramente usado no PDV) */
+    --background:             0 0% 100%;
+    --foreground:             222 84% 5%;
+    --card:                   0 0% 100%;
+    --card-foreground:        222 84% 5%;
+    --popover:                0 0% 100%;
+    --popover-foreground:     222 84% 5%;
+    --primary:                221 83% 53%;
+    --primary-foreground:     210 40% 98%;
+    --secondary:              210 40% 96%;
+    --secondary-foreground:   222 47% 11%;
+    --muted:                  210 40% 96%;
+    --muted-foreground:       215 16% 47%;
+    --accent:                 210 40% 96%;
+    --accent-foreground:      222 47% 11%;
+    --destructive:            0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border:                 214 32% 91%;
+    --input:                  214 32% 91%;
+    --ring:                   221 83% 53%;
+    --radius:                 0.5rem;
+
+    /* Sidebar */
+    --sidebar-width:          14rem;
+    --sidebar-collapsed-width: 3.5rem;
+    --topbar-height:          3.5rem;
+  }
+
+  .dark {
+    /* ─── Palette base: Slate naval escuro ─── */
+    --background:             222 47% 7%;     /* #080d1a — fundo geral */
+    --foreground:             213 31% 91%;    /* #e2e8f0 — texto principal */
+
+    --card:                   222 47% 10%;    /* #0f172a — superfícies */
+    --card-foreground:        213 31% 91%;
+
+    --popover:                222 47% 10%;
+    --popover-foreground:     213 31% 91%;
+
+    --primary:                217 91% 60%;    /* #3b82f6 — azul primário */
+    --primary-foreground:     0 0% 100%;
+
+    --secondary:              217 33% 17%;    /* #1e293b — superfície secundária */
+    --secondary-foreground:   213 31% 91%;
+
+    --muted:                  217 33% 17%;
+    --muted-foreground:       215 20% 55%;   /* #7c8fa6 — texto suave */
+
+    --accent:                 216 34% 20%;   /* hover em items */
+    --accent-foreground:      213 31% 91%;
+
+    --destructive:            0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border:                 215 28% 16%;   /* divisórias */
+    --input:                  215 28% 16%;
+    --ring:                   217 91% 60%;
+
+    --radius:                 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    /* Scrollbar estilizada para theme dark */
+    scrollbar-color: hsl(var(--border)) transparent;
+    scrollbar-width: thin;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    /* Texto não selecionável em terminal PDV */
+    user-select: none;
+  }
+
+  /* Campos de texto ficam selecionáveis */
+  input, textarea, [contenteditable] {
+    user-select: text;
+  }
+
+  /* Números: fonte mono para alinhamento de valores */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ============================================================
+   Utilitários PDV
+   ============================================================ */
+
+@layer utilities {
+  /* Highlight suave para produto adicionado ao carrinho */
+  .cart-item-enter {
+    animation: cart-flash 0.3s ease-out;
+  }
+
+  @keyframes cart-flash {
+    0%   { background-color: hsl(var(--primary) / 0.2); }
+    100% { background-color: transparent; }
+  }
+
+  /* Botões de ação grandes para touchscreen futuro */
+  .pdv-action-btn {
+    @apply h-14 text-base font-semibold rounded-lg;
+  }
+
+  /* Badge de tecla de atalho */
+  .kbd {
+    @apply inline-flex items-center justify-center
+           px-1.5 py-0.5 min-w-[1.4rem]
+           rounded border border-border/60
+           bg-muted text-muted-foreground
+           text-[10px] font-mono leading-none
+           select-none;
+  }
+
+  /* Item selecionado via teclado no carrinho */
+  .cart-item-selected {
+    @apply ring-1 ring-primary/60 bg-primary/5 rounded;
+  }
+
+  /* Fade suave para telas de auth */
+  .auth-enter {
+    animation: auth-fade 0.25s ease-out;
+  }
+
+  @keyframes auth-fade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0);   }
+  }
+
+  /* PIN dot */
+  .pin-dot {
+    @apply w-3.5 h-3.5 rounded-full border-2 transition-all duration-150;
+  }
+  .pin-dot-filled {
+    @apply border-primary bg-primary;
+  }
+  .pin-dot-empty {
+    @apply border-muted-foreground/40 bg-transparent;
+  }
+  .pin-dot-error {
+    @apply border-destructive bg-destructive;
+  }
+}

@@ -1,0 +1,25 @@
+# Admin (Next.js) em container — alternativa à Opção A (Node+PM2).
+# Contexto de build = raiz do monorepo. Publica só em 127.0.0.1:3000
+# (o proxy/SSL — ex.: Caddy — publica externamente em admin.sualoja.com.br).
+#
+# Uso:
+#   1) defina as variáveis num .env na raiz do repo (mesma pasta deste arquivo):
+#        NEXT_PUBLIC_API_URL=https://api.sualoja.com.br/api/v1
+#        NEXT_PUBLIC_APP_NAME=Sua Loja Admin
+#   2) docker compose -f docker-compose.admin.yml up -d --build
+#
+# Obs.: NEXT_PUBLIC_* é embutido no BUILD. Ao trocar a URL da API, rebuild:
+#        docker compose -f docker-compose.admin.yml up -d --build
+
+services:
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Store Admin}
+    container_name: store_admin
+    restart: always
+    ports:
+      - "127.0.0.1:3000:3000"

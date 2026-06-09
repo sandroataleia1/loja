@@ -1,0 +1,83 @@
+# Override de PRODUÇÃO do backend.
+# Use SEMPRE junto com o compose base:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Diferenças vs. dev:
+#  - APP_ENV=production e restart=always
+#  - Postgres/Redis NÃO expostos no host (sem `ports`)
+#  - Redis com senha (REDIS_PASSWORD do .env)
+#  - Nginx publicado só em 127.0.0.1:8000 (um proxy/SSL — ex.: Caddy — publica em 443)
+#  - Mailpit desativado (profile dev)
+#  - Container `scheduler` rodando o agendador do Laravel
+
+services:
+  app:
+    environment:
+      APP_ENV: production
+    restart: always
+
+  horizon:
+    restart: always
+
+  # Agendador: executa `php artisan schedule:run` a cada minuto.
+  # Cobre snapshots de analytics, condicionais vencidos e alertas de certificado.
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: store_scheduler
+    restart: always
+    working_dir: /var/www
+    entrypoint: ["sh", "-c", "while true; do php artisan schedule:run --no-interaction; sleep 60; done"]
+    volumes:
+      - .:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    depends_on:
+      - app
+      - redis
+    networks:
+      - store_network
+
+  nginx:
+    ports:
+      - "127.0.0.1:8000:80"   # apenas localhost; o proxy/SSL publica externamente
+
+  pgsql:
+    ports: !reset []          # remove a exposição pública herdada do compose base
+    restart: always
+
+  redis:
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    ports: !reset []          # remove a exposição pública herdada do compose base
+    restart: always
+
+  # Backup diário do PostgreSQL às 03:00 — mantém 7 dias localmente.
+  # Configure BACKUP_S3_BUCKET (opcional) para enviar ao S3 após o dump.
+  backup:
+    image: postgres:16-alpine
+    container_name: store_backup
+    restart: always
+    environment:
+      POSTGRES_HOST: pgsql
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: "${DB_DATABASE}"
+      POSTGRES_USER: "${DB_USERNAME}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      KEEP_DAYS: "7"
+      BACKUP_DIR: /backups
+    volumes:
+      - ./docker/backup/backup.sh:/scripts/backup.sh:ro
+      - store_backups:/backups
+    # Roda o script às 03:00 todos os dias (via cron interno)
+    entrypoint: ["sh", "-c", "echo '0 3 * * * /scripts/backup.sh >> /var/log/backup.log 2>&1' | crontab - && crond -f"]
+    depends_on:
+      - pgsql
+    networks:
+      - store_network
+
+  # Mailpit não sobe em produção (só com `--profile dev`)
+  mailpit:
+    profiles: ["dev"]
+
+volumes:
+  store_backups:
