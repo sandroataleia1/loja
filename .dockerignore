@@ -7,8 +7,9 @@
 .git
 .gitignore
 
-# Backend não faz parte da imagem do admin
+# Backend e infra não fazem parte da imagem do admin
 backend
+docker
 
 # PDV: só o package.json é necessário (copiado explicitamente no Dockerfile)
 pdv/src-tauri
