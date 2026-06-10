@@ -1,198 +1,230 @@
-# Deploy na VPS — ERP SaaS Moda (backend Laravel + admin Next.js)
+# Deploy na VPS — Store SaaS
 
-> Guia passo a passo para subir o **backend** (API Laravel, em `backend/`) e o
-> **admin** (Next.js, em `apps/admin/`) numa VPS Linux (Ubuntu 22.04+).
-> O **PDV** (Tauri) é desktop e **não** vai para a VPS.
-
-Stack: PHP 8.4-FPM · PostgreSQL 16 · Redis 7 · Nginx · Horizon (filas) — tudo via
-Docker Compose.
+Guia passo a passo para subir o **backend** (Laravel) e o **admin** (Next.js)
+em uma VPS Linux. O PDV (Tauri) é desktop e **não** vai para a VPS.
 
 ---
 
-## ⚠️ Importante: o compose do repositório é de DESENVOLVIMENTO
+## Visão Geral
 
-O `backend/docker-compose.yml` atual é feito para dev:
-- expõe **PostgreSQL (5432)** e **Redis (6379)** no host (risco se a VPS for pública);
-- inclui **Mailpit** (SMTP de teste);
-- `APP_ENV` cai para `local` por padrão.
+```
+VPS
+├── /var/www/loja/backend/   → API Laravel   → porta interna 8000
+├── /var/www/loja/           → Admin Next.js → porta interna 3000
+└── Caddy (proxy + HTTPS)    → expõe 443 para fora
+```
 
-Este guia cria um **override de produção** (`docker-compose.prod.yml`) que corrige
-isso, sem alterar o arquivo de dev. Use sempre os dois arquivos juntos:
-`docker compose -f docker-compose.yml -f docker-compose.prod.yml ...`
+Tudo sobe via **Docker Compose**. O Caddy cuida do TLS automaticamente.
 
 ---
 
-## 0. Pré-requisitos na VPS
+## Pré-requisitos
 
-- VPS Ubuntu 22.04/24.04, 2 vCPU / 4 GB RAM mínimo (recomendado para Postgres+Redis+PHP).
-- Um **domínio** apontando para o IP da VPS (ex.: `api.sualoja.com.br` e `admin.sualoja.com.br`).
-- Acesso `sudo`.
+| Item | Mínimo recomendado |
+|------|-------------------|
+| VPS | Ubuntu 22.04 ou 24.04 |
+| CPU / RAM | 2 vCPU / 4 GB |
+| Domínios | `api.sualoja.com.br` e `admin.sualoja.com.br` apontando para o IP da VPS |
+| Acesso | `sudo` |
 
-### 0.1 Atualizar e criar usuário de deploy
+---
+
+## Etapa 1 — Preparar o servidor
+
+### 1.1 Atualizar o sistema
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo adduser deploy
-sudo usermod -aG sudo deploy
-# copie sua chave SSH para o usuário deploy e desabilite login por senha depois
 ```
 
-### 0.2 Instalar Docker + Compose plugin
+### 1.2 Instalar Docker
 ```bash
 curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker deploy
-# reabra a sessão SSH para o grupo docker valer
-docker --version && docker compose version
+sudo usermod -aG docker $USER
+# Abra uma nova sessão SSH para o grupo docker valer
+docker --version
+docker compose version   # precisa ser v2.24+
 ```
 
-### 0.3 Firewall (UFW)
+### 1.3 Firewall
 ```bash
 sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw enable
 ```
-> NÃO abra 5432/6379 publicamente. O override de produção já tira essas portas do host.
+
+> Não abra as portas 5432 (PostgreSQL) nem 6379 (Redis). O compose de produção
+> já as mantém fechadas para o host.
 
 ---
 
-## 1. Clonar o repositório
+## Etapa 2 — Clonar o repositório
 
 ```bash
-sudo mkdir -p /opt/store && sudo chown deploy:deploy /opt/store
-cd /opt/store
-git clone <URL_DO_SEU_GITHUB> .
-# se o repo for privado, use deploy key ou token:
-#   git clone https://<token>@github.com/<org>/<repo>.git .
+sudo mkdir -p /var/www/loja
+sudo chown $USER:$USER /var/www/loja
+cd /var/www/loja
+git clone https://github.com/sandroataleia1/loja.git .
 ```
 
-Estrutura relevante:
+Estrutura após o clone:
 ```
-/opt/store
-├── backend/        ← API Laravel (deploy via Docker)
-├── apps/admin/     ← painel Next.js
+/var/www/loja/
+├── backend/              ← API Laravel
+├── apps/admin/           ← Painel Next.js
+├── packages/             ← tipos e contratos compartilhados
+├── docker-compose.admin.yml
 └── docs/
 ```
 
 ---
 
-## 2. Backend — configuração de produção
+## Etapa 3 — Configurar o Backend
 
-### 2.1 Override de produção (já incluído no repositório)
-O arquivo **`backend/docker-compose.prod.yml`** já existe no repo. Ele: remove a
-exposição pública de Postgres/Redis (`ports: !reset []`), desativa o Mailpit,
-publica o Nginx só em `127.0.0.1:8000` (um proxy/SSL na frente publica em 443),
-põe senha no Redis e adiciona um **scheduler** (cron do Laravel).
-
-> Requer Docker Compose **v2.24+** (pelas tags `!reset`) — o `get.docker.com` do
-> passo 0.2 já instala uma versão recente. Confira com `docker compose version`.
-
-Nada a criar aqui — siga para o `.env` (2.2).
-
-### 2.2 Criar o `.env` de produção
+### 3.1 Criar o arquivo .env
 ```bash
-cd /opt/store/backend
+cd /var/www/loja/backend
 cp .env.example .env
+nano .env
 ```
-Edite `.env` com valores de produção (mínimos a trocar):
+
+Valores **obrigatórios** para alterar:
+
 ```dotenv
 APP_NAME="Sua Loja"
-APP_ENV=production
-APP_DEBUG=false
 APP_URL=https://api.sualoja.com.br
-APP_KEY=                       # gerado no passo 2.4
+APP_FRONTEND_URL=https://admin.sualoja.com.br
 
-# Banco — use senha FORTE
-DB_CONNECTION=pgsql
-DB_HOST=pgsql
-DB_PORT=5432
-DB_DATABASE=store
-DB_USERNAME=store
-DB_PASSWORD=<senha-forte-do-banco>
+# Banco de dados
+DB_PASSWORD=troque_por_uma_senha_forte
 
-# Redis — defina senha (o override exige)
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_PASSWORD=<senha-forte-do-redis>
-REDIS_CLIENT=phpredis
+# Redis
+REDIS_PASSWORD=troque_por_uma_senha_forte
 
-CACHE_STORE=redis
-QUEUE_CONNECTION=redis
-SESSION_DRIVER=redis
-
-LOG_LEVEL=warning
-
-# Cookies/CORS para o admin (Sanctum)
-SANCTUM_STATEFUL_DOMAINS=admin.sualoja.com.br
-SESSION_DOMAIN=.sualoja.com.br
-
-# E-mail real (ex.: SES, Mailgun, SMTP do provedor)
-MAIL_MAILER=smtp
-MAIL_HOST=<smtp-host>
+# E-mail real (substitua o mailpit)
+MAIL_HOST=smtp.seuprovedor.com.br
 MAIL_PORT=587
-MAIL_USERNAME=<smtp-user>
-MAIL_PASSWORD=<smtp-pass>
+MAIL_USERNAME=seu@email.com.br
+MAIL_PASSWORD=sua_senha_smtp
 MAIL_FROM_ADDRESS="noreply@sualoja.com.br"
-MAIL_FROM_NAME="Sua Loja"
 
-# Fiscal (stub até integrar provedor real)
-FISCAL_STUB_MODE=authorized
-```
-> O `APP_PORT`, `DB_PASSWORD`, `REDIS_PASSWORD` também são lidos pelo compose —
-> manter no `.env` é suficiente (Compose lê o `.env` da pasta `backend/`).
-
-### 2.3 Subir os containers (build + up)
-```bash
-cd /opt/store/backend
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+# Domínios do admin (sem https://)
+SANCTUM_STATEFUL_DOMAINS=admin.sualoja.com.br
+CORS_ALLOWED_ORIGINS=https://admin.sualoja.com.br
 ```
 
-> Dica: crie um alias para encurtar:
-> `alias dcp='docker compose -f docker-compose.yml -f docker-compose.prod.yml'`
+> Os demais valores (`APP_ENV=production`, `APP_DEBUG=false`, `LOG_LEVEL=warning`,
+> `SESSION_ENCRYPT=true`) já vêm corretos no `.env.example`.
 
-### 2.4 Instalar dependências e inicializar a aplicação
-Rode **dentro** do container `store_app`:
+### 3.2 Subir os containers
 ```bash
-cd /opt/store/backend
-dcp exec app composer install --no-dev --optimize-autoloader
-dcp exec app php artisan key:generate --force
-dcp exec app php artisan migrate --force
-dcp exec app php artisan db:seed --class=Database\\Seeders\\RbacSeeder --force   # permissões/roles de sistema
-dcp exec app php artisan storage:link
-dcp exec app php artisan config:cache
-dcp exec app php artisan route:cache
-dcp exec app php artisan view:cache
-```
-> **Não** rode `db:seed` completo (DatabaseSeeder) em produção — ele cria um tenant
-> demo. Rode só o `RbacSeeder` (permissões/roles), que é obrigatório.
-
-### 2.5 Permissões de storage
-```bash
-dcp exec app chown -R www-data:www-data storage bootstrap/cache
+cd /var/www/loja/backend
+sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-### 2.6 Verificar saúde
+O primeiro `up --build` demora alguns minutos (baixa imagens e compila).
+Quando terminar, confirme que está tudo rodando:
+
 ```bash
-dcp ps                      # todos "Up"/"healthy"
-dcp exec app php artisan about
-curl -I http://127.0.0.1:8000   # deve responder (200/302)
+sudo docker ps
+```
+
+Você deve ver os containers:
+
+| Nome | Função |
+|------|--------|
+| `store_app` | PHP 8.4-FPM (API Laravel) |
+| `store_nginx` | Nginx (proxy interno :8000) |
+| `store_pgsql` | PostgreSQL 16 |
+| `store_redis` | Redis 7 |
+| `store_horizon` | Filas (Laravel Horizon) |
+| `store_scheduler` | Agendador (cron do Laravel) |
+| `store_backup` | Backup diário do banco às 03h |
+
+### 3.3 Inicializar a aplicação
+
+Execute os comandos abaixo **um por vez** e aguarde cada um terminar:
+
+```bash
+# Instalar dependências PHP (sem dev)
+sudo docker exec store_app composer install --no-dev --optimize-autoloader
+
+# Gerar a chave de criptografia da aplicação
+sudo docker exec store_app php artisan key:generate --force
+
+# Criar as tabelas no banco
+sudo docker exec store_app php artisan migrate --force
+
+# Popular permissões e perfis de acesso (obrigatório)
+sudo docker exec store_app php artisan db:seed --class="Database\Seeders\RbacSeeder" --force
+
+# Criar link simbólico do storage
+sudo docker exec store_app php artisan storage:link
+
+# Otimizar (cache de config, rotas e views)
+sudo docker exec store_app php artisan optimize
+```
+
+> **Importante:** não rode `db:seed` sem `--class`. O `DatabaseSeeder` completo
+> cria um tenant de demonstração — use apenas o `RbacSeeder` em produção.
+
+### 3.4 Verificar se a API responde
+```bash
+curl -I http://127.0.0.1:8000/up
+# Esperado: HTTP/1.1 200 OK
 ```
 
 ---
 
-## 3. Proxy reverso + HTTPS (Caddy — mais simples)
+## Etapa 4 — Configurar o Admin (Next.js)
 
-O Nginx interno escuta só em `127.0.0.1:8000`. Coloque um proxy com TLS
-automático na frente. **Caddy** é o caminho mais curto:
-
+### 4.1 Criar o arquivo .env do admin
 ```bash
-sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+cd /var/www/loja
+cat > .env << 'EOF'
+NEXT_PUBLIC_API_URL=https://api.sualoja.com.br/api/v1
+NEXT_PUBLIC_APP_NAME=Sua Loja Admin
+EOF
+```
+
+> `NEXT_PUBLIC_API_URL` é embutido no bundle durante o build. Se mudar o domínio
+> da API depois, precisará fazer rebuild (`--build`).
+
+### 4.2 Subir o container do admin
+```bash
+cd /var/www/loja
+sudo docker compose -f docker-compose.admin.yml up -d --build
+```
+
+Verificar:
+```bash
+sudo docker ps | grep store_admin
+curl -I http://127.0.0.1:3000
+# Esperado: HTTP/1.1 200 OK
+```
+
+---
+
+## Etapa 5 — Proxy Reverso com HTTPS (Caddy)
+
+O Caddy instala certificados Let's Encrypt automaticamente.
+
+### 5.1 Instalar o Caddy
+```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
+  | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
+  | sudo tee /etc/apt/sources.list.d/caddy-stable.list
 sudo apt update && sudo apt install -y caddy
 ```
 
-`/etc/caddy/Caddyfile`:
+### 5.2 Configurar o Caddyfile
+```bash
+sudo nano /etc/caddy/Caddyfile
+```
+
+Conteúdo:
 ```caddy
 api.sualoja.com.br {
     reverse_proxy 127.0.0.1:8000
@@ -202,146 +234,118 @@ admin.sualoja.com.br {
     reverse_proxy 127.0.0.1:3000
 }
 ```
+
 ```bash
 sudo systemctl reload caddy
 ```
-> Caddy obtém e renova o certificado Let's Encrypt automaticamente. (Alternativa:
-> Nginx do host + certbot, se preferir.)
+
+Teste nos dois domínios:
+```bash
+curl -I https://api.sualoja.com.br/up
+curl -I https://admin.sualoja.com.br
+```
 
 ---
 
-## 4. Admin (Next.js)
+## Etapa 6 — Criar o Primeiro Usuário
 
-> **Estado do build (validado na Fase 13):** a imagem do admin foi buildada e
-> testada (Next 15 sobe e responde). Correções aplicadas para destravar o build:
-> criado o componente faltante `src/components/ui/table.tsx` e removidas
-> definições de tipo duplicadas (`SaleStatus`/`PaymentMethod`) em
-> `packages/shared-types`. O `next.config.ts` está com `ignoreBuildErrors`/
-> `ignoreDuringBuilds` (dívida técnica: o type layer do frontend nunca foi
-> type-checado — só `next dev`; ver pendências). Imports de módulo inexistente
-> ainda falham o build (continuam sendo pegos).
-
-O painel é uma app Next.js separada. Duas opções:
-
-### Opção A — rodar com Node + PM2 na VPS
-```bash
-# instalar Node 22 + pnpm
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt install -y nodejs
-sudo npm i -g pnpm pm2
-
-cd /opt/store
-pnpm install --frozen-lockfile
-# configurar a URL da API (inclui o prefixo /api/v1 — confirmado em src/config/env.ts):
-cat > apps/admin/.env.production <<'EOF'
-NEXT_PUBLIC_API_URL=https://api.sualoja.com.br/api/v1
-NEXT_PUBLIC_APP_NAME=Sua Loja Admin
-EOF
-pnpm --filter admin build
-cd apps/admin
-pm2 start "pnpm start" --name store-admin   # sobe na porta 3000
-pm2 save && pm2 startup
-```
-
-### Opção B — containerizar o admin (já incluído no repositório) ✅ recomendado
-Arquivos prontos: **`apps/admin/Dockerfile`** (multi-stage, contexto = raiz do
-monorepo) e **`docker-compose.admin.yml`** (raiz). Publica em `127.0.0.1:3000`.
+Com tudo rodando, registre o primeiro tenant via API:
 
 ```bash
-cd /opt/store
-# NEXT_PUBLIC_* é embutido no BUILD → defina ANTES de buildar (num .env na raiz):
-cat > .env <<'EOF'
-NEXT_PUBLIC_API_URL=https://api.sualoja.com.br/api/v1
-NEXT_PUBLIC_APP_NAME=Sua Loja Admin
-EOF
-
-docker compose -f docker-compose.admin.yml up -d --build
-docker compose -f docker-compose.admin.yml ps   # store_admin "Up" em 127.0.0.1:3000
+curl -s -X POST https://api.sualoja.com.br/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenant_name": "Minha Loja",
+    "name": "Seu Nome",
+    "email": "voce@sualoja.com.br",
+    "password": "senha_segura",
+    "password_confirmation": "senha_segura"
+  }' | jq .
 ```
-> Ao trocar a URL da API depois, rode novamente com `--build` (o valor é
-> compilado no bundle). O Caddy (seção 3) já aponta `admin.sualoja.com.br` →
-> `127.0.0.1:3000`, então serve tanto para a Opção A quanto para a B.
 
-> Variáveis do admin (confirmadas em `apps/admin/src/config/env.ts`):
-> `NEXT_PUBLIC_API_URL` (com `/api/v1`) e `NEXT_PUBLIC_APP_NAME`.
+Guarde o `token` retornado — é com ele que você acessa o painel admin.
 
 ---
 
-## 5. Pós-deploy / operação
+## Operação no Dia a Dia
 
-### 5.1 Atualizar (deploy de nova versão)
+### Atualizar para nova versão
 ```bash
-cd /opt/store
+cd /var/www/loja
 git pull origin main
+
+# Backend
 cd backend
-dcp up -d --build
-dcp exec app composer install --no-dev --optimize-autoloader
-dcp exec app php artisan migrate --force
-dcp exec app php artisan config:cache && dcp exec app php artisan route:cache && dcp exec app php artisan view:cache
-dcp exec app php artisan horizon:terminate    # Horizon reinicia com código novo
-# admin (Opção A - PM2):
-cd /opt/store && pnpm install --frozen-lockfile && pnpm --filter @store/admin build && pm2 restart store-admin
-# admin (Opção B - container):
-cd /opt/store && docker compose -f docker-compose.admin.yml up -d --build
+sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+sudo docker exec store_app composer install --no-dev --optimize-autoloader
+sudo docker exec store_app php artisan migrate --force
+sudo docker exec store_app php artisan optimize
+sudo docker exec store_app php artisan horizon:terminate  # reinicia com código novo
+
+# Admin
+cd /var/www/loja
+sudo docker compose -f docker-compose.admin.yml up -d --build
 ```
 
-### 5.2 Filas (Horizon)
-Já roda no container `store_horizon`. Painel em `…/horizon` (proteja por auth/policy).
+### Ver logs
 ```bash
-dcp logs -f horizon
+# App Laravel
+sudo docker logs store_app -f
+
+# Nginx (acessos e erros HTTP)
+sudo docker logs store_nginx -f
+
+# Filas (Horizon)
+sudo docker logs store_horizon -f
+
+# Log do Laravel dentro do container
+sudo docker exec store_app tail -f storage/logs/laravel.log
 ```
 
-### 5.3 Agendador (scheduler)
-O container `store_scheduler` (override) roda `schedule:run` a cada minuto —
-cobre snapshots de analytics, condicionais vencidos e alertas de certificado.
-
-### 5.4 Backup do banco (diário via cron do host)
+### Reiniciar um container
 ```bash
-# /etc/cron.d/store-backup
-0 3 * * * deploy docker exec store_pgsql pg_dump -U store store | gzip > /opt/store/backups/store_$(date +\%F).sql.gz
+sudo docker restart store_app
+sudo docker restart store_horizon
 ```
-Crie a pasta: `mkdir -p /opt/store/backups`. Considere enviar os dumps para
-storage externo (S3) e testar a restauração periodicamente.
 
-### 5.5 Logs
+### Backup manual do banco
 ```bash
-dcp logs -f app          # PHP-FPM/app
-dcp logs -f nginx        # acesso/erros HTTP
-dcp exec app tail -f storage/logs/laravel.log
+sudo docker exec store_pgsql pg_dump -U store store | gzip \
+  > /var/www/loja/backups/manual_$(date +%Y%m%d_%H%M%S).sql.gz
 ```
+
+> O container `store_backup` já faz backup automático diariamente às 03h,
+> mantendo os últimos 7 dias em `/var/www/loja/backups/`.
 
 ---
 
-## 6. Checklist de segurança (antes de abrir ao público)
+## Checklist Final (antes de abrir ao público)
 
-- [ ] `APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY` gerado.
-- [ ] `DB_PASSWORD` e `REDIS_PASSWORD` fortes; portas 5432/6379 **não** expostas (override aplicado).
-- [ ] HTTPS ativo (Caddy/Let's Encrypt) nos dois domínios.
-- [ ] `SANCTUM_STATEFUL_DOMAINS` e `SESSION_DOMAIN` corretos para o admin.
-- [ ] `RbacSeeder` rodado; `DatabaseSeeder` (demo) **não** rodado em prod.
-- [ ] Firewall só com 22/80/443; login SSH por chave (senha desabilitada).
-- [ ] Backups agendados e restauração testada.
-- [ ] Horizon e rotas internas (`/horizon`, `/telescope` se houver) protegidos.
-
----
-
-## 7. Pendências conhecidas (ver `docs/audits/fase-13-pendencias.md`)
-
-- **GD sem JPEG** no container: produção não processa imagem, mas se for gerar
-  thumbnails no futuro, recompilar o GD com `libjpeg` no `docker/php/Dockerfile`.
-- Decisão de produto `*.view_cost` (ocultar margem por papel) — opcional.
-- Load test com volume antes de escala.
+- [ ] `APP_DEBUG=false` e `APP_KEY` gerado
+- [ ] Senhas fortes em `DB_PASSWORD` e `REDIS_PASSWORD`
+- [ ] HTTPS funcionando nos dois domínios
+- [ ] `CORS_ALLOWED_ORIGINS` e `SANCTUM_STATEFUL_DOMAINS` corretos
+- [ ] `RbacSeeder` rodado com sucesso
+- [ ] Firewall com apenas portas 22, 80 e 443 abertas
+- [ ] Backup funcionando (`sudo docker logs store_backup`)
+- [ ] `curl https://api.sualoja.com.br/up` retorna 200
+- [ ] Login no admin funciona
 
 ---
 
-## Quer que eu suba para você?
+## Problemas Comuns
 
-Recomendo **não** compartilhar senhas de GitHub/VPS comigo (ficariam expostas no
-histórico e um deploy de produção é difícil de reverter). O caminho seguro:
+**`No such container: store_app`**
+→ Os containers não subiram ainda. Rode a Etapa 3.2.
 
-1. Você configura o acesso SSH e roda os comandos; **eu te acompanho em tempo
-   real**, leio as saídas e corrijo erros.
-2. Ou você cola aqui a saída de cada passo e eu indico o próximo.
+**`SQLSTATE: could not connect to server`**
+→ O PostgreSQL ainda está iniciando. Aguarde 10–15 segundos e tente novamente.
 
-Se preferir a Opção B do admin (containerizar) ou um `docker-compose.prod.yml`
-pronto no repositório, eu gero os arquivos agora.
+**`cp: .env.example: Arquivo ou diretório inexistente`**
+→ Certifique que está dentro de `/var/www/loja/backend/` (não na raiz do repo).
+
+**Admin não carrega / CORS error**
+→ Verifique se `CORS_ALLOWED_ORIGINS` no `.env` do backend bate com o domínio exato do admin (com `https://`).
+
+**Porta 3000 não responde**
+→ O build do admin pode ter falhado. Veja: `sudo docker logs store_admin`.
