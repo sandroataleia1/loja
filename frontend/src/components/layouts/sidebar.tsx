@@ -29,7 +29,9 @@ import {
   Monitor,
   Clock,
   Receipt,
+  Download,
 } from 'lucide-react'
+import { useHasUpdate } from '@/hooks/use-latest-release'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
@@ -119,7 +121,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Configurações',
     items: [
-      { label: 'Configurações', href: ROUTES.SETTINGS, icon: Settings, permission: 'settings.view' },
+      { label: 'Configurações', href: ROUTES.SETTINGS,   icon: Settings,  permission: 'settings.view' },
+      { label: 'Downloads',     href: ROUTES.DOWNLOADS,  icon: Download,  permission: 'settings.view' },
     ],
   },
 ]
@@ -131,9 +134,11 @@ interface SidebarProps {
 }
 
 function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
-  const pathname = usePathname()
-  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-  const Icon     = item.icon
+  const pathname  = usePathname()
+  const hasUpdate = useHasUpdate()
+  const isActive  = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+  const Icon      = item.icon
+  const showBadge = item.href === ROUTES.DOWNLOADS && hasUpdate
 
   const link = (
     <Link
@@ -146,8 +151,22 @@ function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
         collapsed && 'justify-center px-2',
       )}
     >
-      <Icon className="h-4 w-4 shrink-0" />
-      {!collapsed && <span>{item.label}</span>}
+      <span className="relative shrink-0">
+        <Icon className="h-4 w-4" />
+        {showBadge && (
+          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />
+        )}
+      </span>
+      {!collapsed && (
+        <span className="flex flex-1 items-center justify-between">
+          {item.label}
+          {showBadge && (
+            <span className="ml-2 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+              NEW
+            </span>
+          )}
+        </span>
+      )}
     </Link>
   )
 

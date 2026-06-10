@@ -32,10 +32,13 @@ export const ROUTES = {
   GRIDS:       '/catalog/grids',
 
   // RBAC
-  USERS:       '/users',
-  ROLES:       '/roles',
-  PERMISSIONS: '/permissions',
+  USERS:        '/users',
+  ROLES:        '/roles',
+  PERMISSIONS:  '/permissions',
   STORE_ACCESS: '/store-access',
+
+  // Sistema
+  DOWNLOADS: '/downloads',
 } as const
 
 export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES]
