@@ -11,7 +11,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 FROM base AS builder
 
 # 1) Manifesto primeiro (cache de layer)
-COPY package.json pnpm-lock.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml .npmrc pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # 2) Código
