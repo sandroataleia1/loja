@@ -66,8 +66,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Quando a integração com a API estiver pronta, adicionar:
-          # VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'http://45.224.239.38:8080/api/v1' }}
         with:
           projectPath: pdv
           tagName: ${{ github.ref_name }}
