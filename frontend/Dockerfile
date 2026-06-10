@@ -12,7 +12,7 @@ FROM base AS builder
 
 # 1) Manifesto primeiro (cache de layer)
 COPY package.json pnpm-lock.yaml .npmrc pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # 2) Código
 COPY . .
