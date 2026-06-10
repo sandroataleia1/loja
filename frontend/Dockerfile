@@ -1,6 +1,6 @@
 # Admin (Next.js) — imagem de produção.
 # IMPORTANTE: o contexto de build é a RAIZ do monorepo (pnpm workspace), não
-# apps/admin. Use o docker-compose.admin.yml na raiz:
+# frontend/. Use o docker-compose.admin.yml na raiz:
 #   docker compose -f docker-compose.admin.yml up -d --build
 #
 # NEXT_PUBLIC_* é embutido em BUILD time → passado via build args.
@@ -18,17 +18,17 @@ FROM base AS builder
 # 1) Manifestos primeiro (cache de layer). Todos os membros do workspace
 #    precisam existir para o --frozen-lockfile validar o lockfile.
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
-COPY apps/admin/package.json            apps/admin/package.json
-COPY packages/contracts/package.json    packages/contracts/package.json
-COPY packages/shared-types/package.json packages/shared-types/package.json
-COPY pdv/package.json                   pdv/package.json
+COPY frontend/package.json                        frontend/package.json
+COPY frontend/packages/contracts/package.json     frontend/packages/contracts/package.json
+COPY frontend/packages/shared-types/package.json  frontend/packages/shared-types/package.json
+COPY pdv/package.json                             pdv/package.json
 
 RUN pnpm install --frozen-lockfile --filter @store/admin...
 
 # 2) Código (admin + packages que ele transpila)
-COPY packages/contracts    packages/contracts
-COPY packages/shared-types packages/shared-types
-COPY apps/admin            apps/admin
+COPY frontend/packages/contracts    frontend/packages/contracts
+COPY frontend/packages/shared-types frontend/packages/shared-types
+COPY frontend                       frontend
 
 # 3) Variáveis públicas embutidas no bundle
 ARG NEXT_PUBLIC_API_URL
@@ -45,6 +45,6 @@ FROM base AS runner
 ENV NODE_ENV=production
 # Copia o workspace já instalado/compilado (preserva symlinks do pnpm)
 COPY --from=builder /app ./
-WORKDIR /app/apps/admin
+WORKDIR /app/frontend
 EXPOSE 3000
 CMD ["pnpm", "start"]

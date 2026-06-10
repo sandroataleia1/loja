@@ -1,6 +1,6 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - 'frontend'
+  - 'frontend/packages/*'
   - 'pdv'
 allowBuilds:
   esbuild: true

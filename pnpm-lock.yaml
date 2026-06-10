@@ -8,7 +8,7 @@ importers:
 
   .: {}
 
-  apps/admin:
+  frontend:
     dependencies:
       '@hookform/resolvers':
         specifier: ^3.9.1
@@ -39,10 +39,10 @@ importers:
         version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@store/contracts':
         specifier: workspace:*
-        version: link:../../packages/contracts
+        version: link:packages/contracts
       '@store/shared-types':
         specifier: workspace:*
-        version: link:../../packages/shared-types
+        version: link:packages/shared-types
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.100.14(react@19.2.6)
@@ -123,7 +123,7 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/contracts:
+  frontend/packages/contracts:
     dependencies:
       '@store/shared-types':
         specifier: workspace:*
@@ -133,7 +133,7 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/shared-types:
+  frontend/packages/shared-types:
     devDependencies:
       typescript:
         specifier: ^5.7.2

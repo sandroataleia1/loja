@@ -34,7 +34,7 @@ pdv/src-tauri/target/
 
 # ── TypeScript ───────────────────────────────────────────────────────────────
 **/*.tsbuildinfo
-apps/admin/next-env.d.ts
+frontend/next-env.d.ts
 
 # ── pnpm ─────────────────────────────────────────────────────────────────────
 .pnpm-store/
