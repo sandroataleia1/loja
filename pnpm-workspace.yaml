@@ -1,8 +1,0 @@
-packages:
-  - 'frontend'
-  - 'frontend/packages/*'
-  - 'pdv'
-allowBuilds:
-  esbuild: true
-  sharp: true
-  unrs-resolver: true

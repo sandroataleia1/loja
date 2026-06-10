@@ -33,15 +33,7 @@ backend/.phpunit.cache/
 # ── PDV (Tauri / Rust) ───────────────────────────────────────────────────────
 pdv/src-tauri/target/
 
-# ── TypeScript ───────────────────────────────────────────────────────────────
-**/*.tsbuildinfo
-frontend/next-env.d.ts
-
-# ── pnpm ─────────────────────────────────────────────────────────────────────
-.pnpm-store/
-
 # ── Arquivos de desenvolvimento local ────────────────────────────────────────
-docker-compose.admin.local.yml
 promptMigrarIa.md
 
 # ── IDE / OS ─────────────────────────────────────────────────────────────────

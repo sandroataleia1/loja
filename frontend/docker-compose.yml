@@ -9,8 +9,8 @@
 services:
   admin:
     build:
-      context: ..          # raiz do monorepo (pnpm workspace)
-      dockerfile: frontend/Dockerfile
+      context: .
+      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Store Admin}

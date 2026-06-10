@@ -15,9 +15,9 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*":                    ["./src/*"],
-      "@store/shared-types":   ["../../packages/shared-types/src/index.ts"],
-      "@store/contracts":      ["../../packages/contracts/src/index.ts"]
+      "@/*":                  ["./src/*"],
+      "@store/shared-types":  ["./src/types/shared-types.ts"],
+      "@store/contracts":     ["./src/types/contracts.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

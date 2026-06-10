@@ -7,7 +7,7 @@ import type {
   ContactType,
   PersonType,
   FiscalPolicyMode,
-} from '@store/shared-types'
+} from './shared-types'
 
 // Re-exports shared domain types
 export type {
@@ -76,7 +76,7 @@ export type {
   FiscalDocument,
   FiscalSettings,
   TaxProfile,
-} from '@store/shared-types'
+} from './shared-types'
 
 // ── Auth contracts ─────────────────────────────────────────────────────────
 
