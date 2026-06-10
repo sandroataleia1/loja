@@ -71,9 +71,8 @@ Estrutura após o clone:
 ```
 /var/www/loja/
 ├── backend/              ← API Laravel
-├── apps/admin/           ← Painel Next.js
-├── packages/             ← tipos e contratos compartilhados
-├── docker-compose.admin.yml
+├── frontend/             ← Admin Next.js + docker-compose.yml
+├── pdv/                  ← App desktop Tauri
 └── docs/
 ```
 
@@ -180,11 +179,15 @@ curl -I http://127.0.0.1:8080/up
 
 ### 4.1 Criar o arquivo .env do admin
 ```bash
-cd /var/www/loja
-cat > .env << 'EOF'
+cd /var/www/loja/frontend
+cp .env.example .env
+nano .env
+```
+
+Preencha com os valores reais:
+```dotenv
 NEXT_PUBLIC_API_URL=https://api.sualoja.com.br/api/v1
 NEXT_PUBLIC_APP_NAME=Sua Loja Admin
-EOF
 ```
 
 > `NEXT_PUBLIC_API_URL` é embutido no bundle durante o build. Se mudar o domínio
@@ -192,8 +195,8 @@ EOF
 
 ### 4.2 Subir o container do admin
 ```bash
-cd /var/www/loja
-sudo docker compose -f docker-compose.admin.yml up -d --build
+cd /var/www/loja/frontend
+sudo docker compose up -d --build
 ```
 
 Verificar:
@@ -283,8 +286,8 @@ sudo docker exec store_app php artisan optimize
 sudo docker exec store_app php artisan horizon:terminate  # reinicia com código novo
 
 # Admin
-cd /var/www/loja
-sudo docker compose -f docker-compose.admin.yml up -d --build
+cd /var/www/loja/frontend
+sudo docker compose up -d --build
 ```
 
 ### Ver logs

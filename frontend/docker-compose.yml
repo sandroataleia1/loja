@@ -1,0 +1,20 @@
+# Admin (Next.js) em container.
+# Publica só em 127.0.0.1:3000 (Caddy/Nginx externo expõe em 443).
+#
+# Uso (rodar dentro de frontend/):
+#   docker compose up -d --build
+#
+# Obs.: NEXT_PUBLIC_* é embutido no BUILD. Ao trocar a URL da API, rebuild.
+
+services:
+  admin:
+    build:
+      context: ..          # raiz do monorepo (pnpm workspace)
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Store Admin}
+    container_name: store_admin
+    restart: always
+    ports:
+      - "127.0.0.1:3000:3000"
