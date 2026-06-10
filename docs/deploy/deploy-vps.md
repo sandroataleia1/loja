@@ -170,7 +170,7 @@ sudo docker exec store_app php artisan optimize
 
 ### 3.4 Verificar se a API responde
 ```bash
-curl -I http://127.0.0.1:8000/up
+curl -I http://127.0.0.1:8080/up
 # Esperado: HTTP/1.1 200 OK
 ```
 
@@ -227,7 +227,7 @@ sudo nano /etc/caddy/Caddyfile
 Conteúdo:
 ```caddy
 api.sualoja.com.br {
-    reverse_proxy 127.0.0.1:8000
+    reverse_proxy 127.0.0.1:8080
 }
 
 admin.sualoja.com.br {
