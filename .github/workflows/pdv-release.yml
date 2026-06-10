@@ -1,0 +1,91 @@
+name: PDV — Build & Release
+
+# Dispara quando você criar uma tag de versão, ex: git tag v1.0.0 && git push --tags
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows
+          - os: ubuntu-22.04
+            label: Linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # 1. Código
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Node.js + pnpm
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      # 3. Rust
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: pdv/src-tauri
+
+      # 4. Dependências do sistema (Linux)
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      # 5. Instalar dependências JS
+      - name: Install JS dependencies
+        working-directory: pdv
+        run: pnpm install --frozen-lockfile
+
+      # 6. Build e publicar release via tauri-action
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Quando a integração com a API estiver pronta, adicionar:
+          # VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        with:
+          projectPath: pdv
+          tagName: ${{ github.ref_name }}
+          releaseName: PDV Fashion ${{ github.ref_name }}
+          releaseBody: |
+            ## PDV Fashion ${{ github.ref_name }}
+
+            ### Download
+
+            | Sistema | Arquivo |
+            |---------|---------|
+            | Windows (recomendado) | `PDV Fashion_*_x64-setup.exe` |
+            | Windows (MSI) | `PDV Fashion_*_x64_en-US.msi` |
+            | Linux (Ubuntu/Debian) | `pdv-fashion_*_amd64.deb` |
+            | Linux (AppImage) | `pdv-fashion_*_amd64.AppImage` |
+
+            ### Como instalar
+            - **Windows:** baixe o `.exe` e execute como administrador
+            - **Linux:** baixe o `.deb` e rode `sudo dpkg -i arquivo.deb`
+          releaseDraft: false
+          prerelease: false
