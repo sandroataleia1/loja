@@ -17,7 +17,7 @@
  *   <SyncIndicator />
  */
 
-import { Cloud, CloudOff, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { CloudOff, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useSyncStore } from '@/stores/syncStore'
 import { cn }          from '@/lib/utils'
 

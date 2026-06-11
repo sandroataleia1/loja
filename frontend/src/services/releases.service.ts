@@ -16,6 +16,7 @@ export interface Release {
 
 export const releasesService = {
   async getLatest(): Promise<Release | null> {
+    if (!REPO) return null
     try {
       const res = await fetch(
         `https://api.github.com/repos/${REPO}/releases/latest`,

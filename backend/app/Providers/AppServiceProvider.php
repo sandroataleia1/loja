@@ -72,7 +72,6 @@ use App\Modules\Sales\Listeners\UpdateSaleFiscalStatusListener;
 use App\Modules\Sales\Models\CashRegister;
 use App\Modules\Sales\Models\CashRegisterSession;
 use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Events\QueryExecuted;
@@ -212,14 +211,6 @@ final class AppServiceProvider extends ServiceProvider
 
     private function configureEmailVerification(): void
     {
-        VerifyEmail::createUrlUsing(function (User $notifiable): string {
-            return URL::temporarySignedRoute(
-                'v1.auth.email.verify',
-                Carbon::now()->addMinutes(60),
-                ['id' => $notifiable->uuid, 'hash' => sha1($notifiable->email)],
-            );
-        });
-
         // O frontend consome o token e chama POST /api/v1/auth/reset-password diretamente.
         // Não há rota Laravel "password.reset" — a URL aponta para o SPA.
         ResetPassword::createUrlUsing(function (User $notifiable, string $token): string {

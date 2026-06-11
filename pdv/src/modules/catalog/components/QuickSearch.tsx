@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Search, Barcode, X } from 'lucide-react'
 import { Input }  from '@/components/ui/input'
 import { Badge }  from '@/components/ui/badge'
-import { cn }     from '@/lib/utils'
 
 import { useCatalogStore }   from '@/stores/catalogStore'
 import { useCatalogSearch }  from '@/modules/catalog/hooks/useCatalogSearch'

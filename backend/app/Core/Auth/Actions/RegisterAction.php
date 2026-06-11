@@ -94,10 +94,6 @@ final readonly class RegisterAction
             });
         });
 
-        // Send verification email after transaction commits to avoid queuing
-        // inside an open transaction (notification is dispatched to the mail queue)
-        $result['user']->sendEmailVerificationNotification();
-
         return $result;
     }
 

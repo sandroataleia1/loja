@@ -37,10 +37,6 @@ final readonly class LoginAction
             throw new BusinessException('Invalid credentials.');
         }
 
-        if (! $user->hasVerifiedEmail()) {
-            throw new BusinessException('E-mail não verificado. Verifique sua caixa de entrada e confirme o e-mail antes de fazer login.');
-        }
-
         $user->tokens()->where('name', $dto->deviceName)->delete();
 
         $token = $user->createToken($dto->deviceName)->plainTextToken;

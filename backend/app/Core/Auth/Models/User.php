@@ -8,8 +8,6 @@ use App\Core\Auth\Traits\HasTenantPermissions;
 use App\Shared\Traits\Auditable;
 use App\Shared\Traits\HasUuid;
 use Database\Factories\UserFactory;
-use Illuminate\Auth\MustVerifyEmail;
-use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,14 +15,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-final class User extends Authenticatable implements MustVerifyEmailContract
+final class User extends Authenticatable
 {
     use Auditable;
     use HasApiTokens;
     use HasTenantPermissions;
     use HasFactory;
     use HasUuid;
-    use MustVerifyEmail;
     use Notifiable;
     use SoftDeletes;
 
