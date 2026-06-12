@@ -1,7 +1,7 @@
 {
   "productName": "PDV Fashion",
   "identifier": "com.pdvfashion.app",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
