@@ -21,7 +21,12 @@ export const ROUTES = {
   CASH_SESSIONS:   '/sales/sessions',
   FISCAL_SETTINGS: '/fiscal/settings',
   FISCAL_DOCS:     '/fiscal/documents',
-  FINANCIAL:   '/financial',
+  FINANCIAL:              '/financial',
+  FINANCIAL_PAYABLE:      '/financial/payable',
+  FINANCIAL_RECEIVABLE:   '/financial/receivable',
+  FINANCIAL_ACCOUNTS:     '/financial/accounts',
+  FINANCIAL_CATEGORIES:   '/financial/categories',
+  FINANCIAL_TRANSFERS:    '/financial/transfers',
   FISCAL:      '/fiscal',
   CRM:         '/crm',
 

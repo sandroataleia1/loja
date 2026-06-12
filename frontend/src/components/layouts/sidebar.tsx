@@ -13,6 +13,11 @@ import {
   Warehouse,
   ShoppingCart,
   Banknote,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+  Tags,
+  ArrowLeftRight,
   FileText,
   HeartHandshake,
   Shield,
@@ -95,7 +100,12 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Financeiro',
     items: [
-      { label: 'Financeiro', href: ROUTES.FINANCIAL, icon: Banknote, permission: 'financial.view' },
+      { label: 'Visão Geral',       href: ROUTES.FINANCIAL,            icon: Banknote,      permission: 'financial.view'   },
+      { label: 'Contas a Pagar',    href: ROUTES.FINANCIAL_PAYABLE,    icon: TrendingDown,  permission: 'financial.view'   },
+      { label: 'Contas a Receber',  href: ROUTES.FINANCIAL_RECEIVABLE, icon: TrendingUp,    permission: 'financial.view'   },
+      { label: 'Transferências',    href: ROUTES.FINANCIAL_TRANSFERS,  icon: ArrowLeftRight,permission: 'financial.view'   },
+      { label: 'Contas Bancárias',  href: ROUTES.FINANCIAL_ACCOUNTS,   icon: Wallet,        permission: 'financial.view'   },
+      { label: 'Categorias',        href: ROUTES.FINANCIAL_CATEGORIES, icon: Tags,          permission: 'financial.create' },
     ],
   },
   {
