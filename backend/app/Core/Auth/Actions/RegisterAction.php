@@ -61,11 +61,12 @@ final readonly class RegisterAction
             // ── 2. User ────────────────────────────────────────────────────────
             /** @var User $user */
             $user = User::create([
-                'tenant_id' => $tenant->uuid,
-                'name'      => $dto->name,
-                'email'     => $dto->email,
-                'password'  => $dto->password,
-                'is_active' => true,
+                'tenant_id'         => $tenant->uuid,
+                'name'              => $dto->name,
+                'email'             => $dto->email,
+                'password'          => $dto->password,
+                'is_active'         => true,
+                'email_verified_at' => now(),
             ]);
 
             // Estabelece o contexto do tenant recém-criado para as operações
