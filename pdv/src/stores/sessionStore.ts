@@ -1,46 +1,70 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { LoginResult } from '@/services/auth.service'
+import { apiLogout } from '@/services/auth.service'
 
 interface SessionStore {
   isLoggedIn:     boolean
+  apiToken:       string | null
   userUuid:       string
   userName:       string
+  userEmail:      string
   tenantUuid:     string
   storeUuid:      string
+  channelUuid:    string
   isOpen:         boolean
   openedAt:       string | null
   openingBalance: number   // centavos — fundo de troca
 
-  login:         (userName: string) => void
+  login:         (result: LoginResult) => void
   logout:        () => void
   openRegister:  (balance: number) => void
   closeRegister: () => void
 }
 
-const DEFAULT_USER_UUID   = '00000000-0000-4000-8000-000000000003'
-const DEFAULT_TENANT_UUID = '00000000-0000-4000-8000-000000000001'
-const DEFAULT_STORE_UUID  = '00000000-0000-4000-8000-000000000002'
-
 export const useSessionStore = create<SessionStore>()(
   persist(
     (set) => ({
       isLoggedIn:     false,
-      userUuid:       DEFAULT_USER_UUID,
-      userName:       'Administrador',
-      tenantUuid:     DEFAULT_TENANT_UUID,
-      storeUuid:      DEFAULT_STORE_UUID,
+      apiToken:       null,
+      userUuid:       '',
+      userName:       '',
+      userEmail:      '',
+      tenantUuid:     '',
+      storeUuid:      '',
+      channelUuid:    '',
       isOpen:         false,
       openedAt:       null,
       openingBalance: 0,
 
-      login: (userName) => set({ isLoggedIn: true, userName }),
-
-      logout: () => set({
-        isLoggedIn:     false,
-        isOpen:         false,
-        openedAt:       null,
-        openingBalance: 0,
+      login: (result) => set({
+        isLoggedIn:  true,
+        apiToken:    result.token,
+        userUuid:    result.user.uuid,
+        userName:    result.user.name,
+        userEmail:   result.user.email,
+        tenantUuid:  result.tenant?.uuid ?? '',
+        storeUuid:   result.store?.uuid   ?? '',
+        channelUuid: result.channel?.uuid ?? '',
       }),
+
+      logout: () => {
+        const token = useSessionStore.getState().apiToken
+        if (token) apiLogout(token).catch(() => {})
+        set({
+          isLoggedIn:     false,
+          apiToken:       null,
+          userUuid:       '',
+          userName:       '',
+          userEmail:      '',
+          tenantUuid:     '',
+          storeUuid:      '',
+          channelUuid:    '',
+          isOpen:         false,
+          openedAt:       null,
+          openingBalance: 0,
+        })
+      },
 
       openRegister: (balance) => set({
         isOpen:         true,
