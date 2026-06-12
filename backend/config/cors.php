@@ -10,7 +10,13 @@ return [
         explode(',', env('CORS_ALLOWED_ORIGINS', env('APP_FRONTEND_URL', 'http://localhost:3000')))
     ),
 
-    'allowed_origins_patterns' => [],
+    // Permite requisições de apps desktop (Tauri/Electron) que enviam Origin: null
+    // e de qualquer esquema tauri:// ou capacitor://
+    'allowed_origins_patterns' => [
+        '#^null$#',
+        '#^tauri://#',
+        '#^capacitor://#',
+    ],
 
     'allowed_headers' => ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'X-Correlation-ID'],
 
