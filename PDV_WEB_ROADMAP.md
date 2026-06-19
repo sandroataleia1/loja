@@ -34,19 +34,19 @@
 
 ---
 
-## ETAPA 3 — Modal de Pagamento
+## ETAPA 3 — Modal de Pagamento ✅
 > Dinheiro, débito e crédito com NSU/autorizador, parcelamento e resumo.
 
-- [ ] 3.1 Criar `PaymentModal.tsx` — orquestrador: gerencia lista de pagamentos adicionados e total restante
-- [ ] 3.2 Criar `PaymentTabs.tsx` — abas Dinheiro / Débito / Crédito / PIX
-- [ ] 3.3 Criar `CashPaymentForm.tsx` — teclado numérico on-screen + cálculo de troco automático
-- [ ] 3.4 Criar `CardPaymentForm.tsx` — campos NSU, código de autorização, bandeira
-- [ ] 3.5 Criar `InstallmentTable.tsx` — tabela de parcelas 1x–12x com cálculo dinâmico (Tabela Price)
-- [ ] 3.6 Criar `PixPaymentForm.tsx` — placeholder estático (QR code real vem na Etapa 5)
-- [ ] 3.7 Criar `PaymentSummaryList.tsx` — lista dos pagamentos já adicionados com botão remover
-- [ ] 3.8 Criar `ChangeDisplay.tsx` — display grande de troco após pagamento em dinheiro
-- [ ] 3.9 Criar `frontend/src/features/pdv/hooks/usePayment.ts` — orquestra criação da venda + pagamentos na API
-- [ ] 3.10 Adicionar atalhos de teclado globais: F4=Cobrar, Escape=Fechar modal, Enter=Confirmar
+- [x] 3.1 Criar `PaymentModal.tsx` — orquestrador: gerencia lista de pagamentos adicionados e total restante
+- [x] 3.2 Criar `PaymentTabs.tsx` — abas Dinheiro / Débito / Crédito / PIX (inline no PaymentModal)
+- [x] 3.3 Criar `CashPaymentForm.tsx` — teclado numérico on-screen + cálculo de troco automático
+- [x] 3.4 Criar `CardPaymentForm.tsx` — campos NSU, código de autorização, bandeira
+- [x] 3.5 Criar `InstallmentTable.tsx` — tabela de parcelas 1x–12x com cálculo dinâmico (Tabela Price)
+- [x] 3.6 Criar `PixPaymentForm.tsx` — placeholder estático (QR code real vem na Etapa 5)
+- [x] 3.7 Criar `PaymentSummaryList.tsx` — lista dos pagamentos já adicionados com botão remover
+- [x] 3.8 Criar `ChangeDisplay.tsx` — display grande de troco após pagamento em dinheiro
+- [x] 3.9 Criar `frontend/src/features/pdv/hooks/usePayment.ts` — orquestra criação da venda + pagamentos na API
+- [x] 3.10 Adicionar atalhos de teclado globais: F4=Cobrar, Escape=Fechar modal, Enter=Confirmar
 
 ---
 
@@ -113,10 +113,10 @@
 |-------|-----------|--------|
 | 1 | Fundação e Navegação | ✅ Concluída |
 | 2 | Carrinho e Produtos | ✅ Concluída |
-| 3 | Modal de Pagamento | ⬜ Pendente |
+| 3 | Modal de Pagamento | ✅ Concluída |
 | 4 | Impressão de Cupom | ⬜ Pendente |
 | 5 | Integração PIX Real | ⬜ Pendente |
 | 6 | Fechamento de Caixa | ⬜ Pendente |
 | 7 | Polimento e Produção | ⬜ Pendente |
 
-**Total: 18 / 50 itens concluídos**
+**Total: 28 / 50 itens concluídos**

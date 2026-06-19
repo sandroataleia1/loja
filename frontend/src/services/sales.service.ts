@@ -11,6 +11,31 @@ import type {
   UpdateFiscalSettingsRequest,
 } from '@store/contracts'
 
+// ── Create Sale Payload ───────────────────────────────────────────────────────
+
+export interface CreateSalePayload {
+  session_id:           string
+  customer_id:          string | null
+  discount_total_cents?: number
+  notes?:               string | null
+  items: Array<{
+    product_uuid:          string
+    variant_uuid?:         string | null
+    product_name:          string
+    product_sku:           string
+    quantity:              number
+    unit_price_cents:      number
+    discount_amount_cents?: number
+  }>
+  payments: Array<{
+    method:        string
+    amount_cents:  number
+    installments?: number
+    reference?:    string
+    metadata?:     Record<string, unknown>
+  }>
+}
+
 // ── Filters ───────────────────────────────────────────────────────────────────
 
 export interface SessionFilters {
@@ -119,6 +144,14 @@ export const salesService = {
 
   cancelSale(uuid: string, data?: { reason?: string }): Promise<Sale> {
     return apiPost<Sale, { reason?: string }>(`/sales/${uuid}/cancel`, data ?? {})
+  },
+
+  createSale(data: CreateSalePayload): Promise<Sale> {
+    return apiPost<Sale, CreateSalePayload>('/sales', data)
+  },
+
+  completeSale(uuid: string): Promise<Sale> {
+    return apiPost<Sale, Record<string, never>>(`/sales/${uuid}/complete`, {})
   },
 
   // ── Fiscal ───────────────────────────────────────────────────────────────────
