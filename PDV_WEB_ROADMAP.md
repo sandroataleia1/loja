@@ -18,19 +18,19 @@
 
 ---
 
-## ETAPA 2 — Carrinho e Produtos
+## ETAPA 2 — Carrinho e Produtos ✅
 > Busca, grade de produtos, carrinho, cliente e desconto.
 
-- [ ] 2.1 Criar `ProductSearchInput.tsx` — input com listener de barcode (keydown acumulador)
-- [ ] 2.2 Criar `ProductGrid.tsx` — grade de produtos por categoria (cards clicáveis)
-- [ ] 2.3 Criar `VariantPicker.tsx` — modal de seleção de variante (tamanho, cor)
-- [ ] 2.4 Criar `CartPanel.tsx` — painel direito com lista de itens do carrinho
-- [ ] 2.5 Criar `CartItemRow.tsx` — linha de item com edição de quantidade inline
-- [ ] 2.6 Criar `CartTotals.tsx` — subtotal, desconto e total formatados em BRL
-- [ ] 2.7 Criar `CustomerSearchBar.tsx` — busca e vinculação de cliente à venda
-- [ ] 2.8 Criar `DiscountDialog.tsx` — aplicar desconto em % ou R$ sobre o total
-- [ ] 2.9 Criar `PdvTopbar.tsx` — barra superior: logo, nome do caixa, sessão, operador, status
-- [ ] 2.10 Criar `PdvKeybar.tsx` — barra inferior com atalhos F1–F9 visíveis
+- [x] 2.1 Criar `ProductSearchInput.tsx` — input com listener de barcode (keydown acumulador)
+- [x] 2.2 Criar `ProductGrid.tsx` — grade de produtos por categoria (cards clicáveis)
+- [x] 2.3 Criar `VariantPicker.tsx` — modal de seleção de variante (tamanho, cor)
+- [x] 2.4 Criar `CartPanel.tsx` — painel direito com lista de itens do carrinho
+- [x] 2.5 Criar `CartItemRow.tsx` — linha de item com edição de quantidade inline
+- [x] 2.6 Criar `CartTotals.tsx` — subtotal, desconto e total formatados em BRL
+- [x] 2.7 Criar `CustomerSearchBar.tsx` — busca e vinculação de cliente à venda
+- [x] 2.8 Criar `DiscountDialog.tsx` — aplicar desconto em % ou R$ sobre o total
+- [x] 2.9 Criar `PdvTopbar.tsx` — barra superior: logo, nome do caixa, sessão, operador, status
+- [x] 2.10 Criar `PdvKeybar.tsx` — barra inferior com atalhos F1–F9 visíveis
 
 ---
 
@@ -112,11 +112,11 @@
 | Etapa | Descrição | Status |
 |-------|-----------|--------|
 | 1 | Fundação e Navegação | ✅ Concluída |
-| 2 | Carrinho e Produtos | ⬜ Pendente |
+| 2 | Carrinho e Produtos | ✅ Concluída |
 | 3 | Modal de Pagamento | ⬜ Pendente |
 | 4 | Impressão de Cupom | ⬜ Pendente |
 | 5 | Integração PIX Real | ⬜ Pendente |
 | 6 | Fechamento de Caixa | ⬜ Pendente |
 | 7 | Polimento e Produção | ⬜ Pendente |
 
-**Total: 8 / 50 itens concluídos**
+**Total: 18 / 50 itens concluídos**
