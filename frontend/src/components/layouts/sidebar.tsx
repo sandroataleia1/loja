@@ -35,6 +35,7 @@ import {
   Clock,
   Receipt,
   Download,
+  Store,
 } from 'lucide-react'
 import { useHasUpdate } from '@/hooks/use-latest-release'
 import { cn } from '@/lib/utils'
@@ -91,6 +92,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'PDV',
     items: [
+      { label: 'Abrir PDV',    href: ROUTES.PDV,            icon: Store,        permission: 'sales.view' },
       { label: 'Caixas',       href: ROUTES.CASH_REGISTERS, icon: Monitor,      permission: 'sales.view' },
       { label: 'Sessões',      href: ROUTES.CASH_SESSIONS,  icon: Clock,        permission: 'sales.view' },
       { label: 'Vendas',       href: ROUTES.SALES,          icon: ShoppingCart, permission: 'sales.view' },

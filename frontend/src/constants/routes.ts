@@ -42,6 +42,13 @@ export const ROUTES = {
   PERMISSIONS:  '/permissions',
   STORE_ACCESS: '/store-access',
 
+  // PDV Web
+  PDV:              '/pdv',
+  PDV_CAIXA:        '/pdv/caixa',
+  PDV_CAIXA_ABRIR:  '/pdv/caixa/abrir',
+  PDV_CAIXA_FECHAR: '/pdv/caixa/fechar',
+  PDV_VENDA:        '/pdv/venda',
+
   // Sistema
   DOWNLOADS: '/downloads',
 } as const
