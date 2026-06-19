@@ -11,6 +11,7 @@ import { Input }         from '@/components/ui/input'
 import { Label }         from '@/components/ui/label'
 import { useAllSuppliers, useCreatePurchaseOrder } from '@/features/purchasing/hooks'
 import { useStores }     from '@/features/inventory/hooks'
+import { genId } from '@/lib/utils'
 import { ROUTES } from '@/constants'
 
 const fmtBRL = (v: number) =>
@@ -24,7 +25,7 @@ interface ItemRow {
 }
 
 function newItem(): ItemRow {
-  return { id: crypto.randomUUID(), product_variant_id: '', quantity: 1, unit_cost: 0 }
+  return { id: genId(), product_variant_id: '', quantity: 1, unit_cost: 0 }
 }
 
 export default function CreatePurchasingPage() {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, CheckCircle2, Loader2, Banknote, CreditCard, Smartphone, AlertCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, genId } from '@/lib/utils'
 import { usePdvCartStore } from '../../stores/pdvCartStore'
 import { usePayment } from '../../hooks/usePayment'
 import { CashPaymentForm } from './CashPaymentForm'
@@ -56,7 +56,7 @@ export function PaymentModal({ onClose, onSuccess }: Props) {
   }, [canConfirm, payment.isPending])
 
   function addPayment(p: Omit<PendingPayment, 'id'>) {
-    setPayments((prev) => [...prev, { ...p, id: crypto.randomUUID() }])
+    setPayments((prev) => [...prev, { ...p, id: genId() }])
     setError(null)
   }
 

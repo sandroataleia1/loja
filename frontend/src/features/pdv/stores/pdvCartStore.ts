@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { genId } from '@/lib/utils'
 
 export interface PdvCartItem {
   id: string
@@ -52,7 +53,7 @@ export const usePdvCartStore = create<PdvCartStore>()((set, get) => ({
         ),
       })
     } else {
-      set({ items: [...items, { ...item, id: crypto.randomUUID() }] })
+      set({ items: [...items, { ...item, id: genId() }] })
     }
   },
 
