@@ -1,0 +1,29 @@
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 4mm 2mm;
+  }
+
+  /* Hide all page content */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the receipt */
+  .receipt-printable,
+  .receipt-printable * {
+    visibility: visible;
+  }
+
+  .receipt-printable {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 76mm;
+    background: #fff;
+    color: #000;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
+}

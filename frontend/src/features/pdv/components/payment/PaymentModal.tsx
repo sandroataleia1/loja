@@ -25,7 +25,7 @@ const TABS: { key: PaymentTabKey; label: string; icon: React.ElementType }[] = [
 
 interface Props {
   onClose:   () => void
-  onSuccess: (sale: Sale) => void
+  onSuccess: (sale: Sale, payments: PendingPayment[]) => void
 }
 
 export function PaymentModal({ onClose, onSuccess }: Props) {
@@ -70,7 +70,7 @@ export function PaymentModal({ onClose, onSuccess }: Props) {
     setError(null)
     try {
       const sale = await payment.mutateAsync(payments)
-      onSuccess(sale)
+      onSuccess(sale, payments)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao processar venda. Tente novamente.'
       setError(msg)

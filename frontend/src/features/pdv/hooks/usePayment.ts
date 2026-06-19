@@ -12,7 +12,6 @@ export function usePayment() {
   const customerUuid  = usePdvCartStore((s) => s.customerUuid)
   const discountCents = usePdvCartStore((s) => s.discountCents)
   const notes         = usePdvCartStore((s) => s.notes)
-  const clear         = usePdvCartStore((s) => s.clear)
   const session       = usePdvSessionStore((s) => s.session)
 
   return useMutation<Sale, Error, PendingPayment[]>({
@@ -46,7 +45,6 @@ export function usePayment() {
         })),
       })
       const completed = await salesService.completeSale(sale.uuid)
-      clear()
       return completed
     },
   })

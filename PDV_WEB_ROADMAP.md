@@ -50,14 +50,14 @@
 
 ---
 
-## ETAPA 4 — Impressão de Cupom
+## ETAPA 4 — Impressão de Cupom ✅
 > Cupom 80mm via CSS @media print e window.print(). Suporta dois modos: NFC-e (fiscal) e Comprovante Interno (não-fiscal).
-> **Regra:** checar `sale.fiscal_status === 'authorized'` para saber se há documento fiscal. Nem toda venda gera NFC-e — a empresa pode operar em modo de faturamento futuro.
+> **Regra:** `sale.fiscal_status === 'issued'` → NFC-e; outros status → comprovante interno.
 
-- [ ] 4.1 Criar `frontend/src/features/pdv/components/receipt/receipt.print.css` — CSS @media print 80mm
-- [ ] 4.2 Criar `ReceiptDocument.tsx` — dois modos: `fiscal` (com chave NFC-e e QR Code SEFAZ) e `internal` (comprovante simples)
-- [ ] 4.3 Criar `ReceiptModal.tsx` — modal pós-venda: detecta `sale.fiscal_status` e exibe botão correto (Imprimir Cupom Fiscal ou Imprimir Comprovante)
-- [ ] 4.4 Criar `frontend/src/features/pdv/hooks/usePrintReceipt.ts` — monta portal no body + dispara window.print()
+- [x] 4.1 Criar `frontend/src/features/pdv/components/receipt/receipt.print.css` — CSS @media print 80mm com truque visibility
+- [x] 4.2 Criar `ReceiptDocument.tsx` — dois modos: `issued` (NFC-e) e comprovante interno; inline styles para fidelidade na impressão
+- [x] 4.3 Criar `ReceiptModal.tsx` — modal pós-venda: sucesso verde, preview do cupom, botões Imprimir / Nova Venda
+- [x] 4.4 Criar `frontend/src/features/pdv/hooks/usePrintReceipt.ts` — ref + addClass receipt-printable + window.print() + afterprint cleanup
 - [ ] 4.5 Testar impressão em impressora térmica 80mm real (Epson, Bematech ou Elgin)
 
 ---
@@ -117,9 +117,9 @@
 | 1 | Fundação e Navegação | ✅ Concluída |
 | 2 | Carrinho e Produtos | ✅ Concluída |
 | 3 | Modal de Pagamento | ✅ Concluída |
-| 4 | Impressão de Cupom | ⬜ Pendente |
+| 4 | Impressão de Cupom | ✅ Concluída |
 | 5 | Integração PIX Real | ⬜ Pendente |
 | 6 | Fechamento de Caixa | ⬜ Pendente |
 | 7 | Polimento e Produção | ⬜ Pendente |
 
-**Total: 28 / 50 itens concluídos**
+**Total: 36 / 51 itens concluídos**
