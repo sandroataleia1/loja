@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Trash2, ExternalLink } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -90,7 +90,12 @@ export function CustomerTable({ customers, isLoading, onDelete }: CustomerTableP
             <tr key={customer.uuid} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
               <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{customer.code}</td>
               <td className="px-4 py-3 font-medium">
-                <div>{customer.name}</div>
+                <Link
+                  href={`${ROUTES.CUSTOMERS}/${customer.uuid}`}
+                  className="hover:text-primary hover:underline underline-offset-2 transition-colors"
+                >
+                  {customer.name}
+                </Link>
                 {customer.trade_name && (
                   <div className="text-xs text-muted-foreground">{customer.trade_name}</div>
                 )}
@@ -113,9 +118,16 @@ export function CustomerTable({ customers, isLoading, onDelete }: CustomerTableP
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link href={`${ROUTES.CUSTOMERS}/${customer.uuid}`} aria-label="Ver detalhes">
-                      <Eye className="h-4 w-4" />
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`${ROUTES.CUSTOMERS}/${customer.uuid}`}>
+                      <Eye className="h-3.5 w-3.5 mr-1.5" />
+                      Visualizar
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={`${ROUTES.CUSTOMERS}/${customer.uuid}/edit`}>
+                      <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                      Editar
                     </Link>
                   </Button>
                   {!customer.is_default_consumer && (
@@ -148,7 +160,7 @@ function TableHead() {
       <th className="px-4 py-3 font-medium text-muted-foreground">E-mail</th>
       <th className="px-4 py-3 font-medium text-muted-foreground">Contato Principal</th>
       <th className="px-4 py-3 font-medium text-muted-foreground">Status</th>
-      <th className="px-4 py-3 font-medium text-muted-foreground">Ações</th>
+      <th className="px-4 py-3 font-medium text-muted-foreground w-52">Ações</th>
     </tr>
   )
 }
