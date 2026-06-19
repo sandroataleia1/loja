@@ -133,12 +133,12 @@ export function CustomerTable({ customers, isLoading, onDelete }: CustomerTableP
                   {!customer.is_default_consumer && (
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      aria-label="Excluir cliente"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => onDelete(customer.uuid)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                      Excluir
                     </Button>
                   )}
                 </div>
