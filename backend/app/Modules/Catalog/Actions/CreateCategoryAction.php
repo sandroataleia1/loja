@@ -21,7 +21,7 @@ final readonly class CreateCategoryAction
     public function execute(CreateCategoryDTO $dto): Category
     {
         if (Category::where('slug', $dto->slug)->exists()) {
-            throw new ConflictException("Categoria com slug '{$dto->slug}' já existe neste tenant.");
+            throw new ConflictException("Categoria com slug '{$dto->slug}' já existe nesta empresa.");
         }
 
         if ($dto->parentId !== null && ! Category::where('uuid', $dto->parentId)->exists()) {

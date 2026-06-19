@@ -21,7 +21,7 @@ final readonly class CreateProductAction
     public function execute(CreateProductDTO $dto): Product
     {
         if (Product::where('slug', $dto->slug)->exists()) {
-            throw new ConflictException("Produto com slug '{$dto->slug}' já existe neste tenant.");
+            throw new ConflictException("Produto com slug '{$dto->slug}' já existe nesta empresa.");
         }
 
         $code = $this->generateCode->execute(

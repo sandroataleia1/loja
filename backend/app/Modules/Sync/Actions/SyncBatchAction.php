@@ -109,7 +109,7 @@ final readonly class SyncBatchAction
 
         if ($device === null) {
             throw new UnprocessableEntityHttpException(
-                "Dispositivo '{$deviceUuid}' não registrado ou inativo neste tenant."
+                "Dispositivo '{$deviceUuid}' não registrado ou inativo nesta empresa."
             );
         }
 

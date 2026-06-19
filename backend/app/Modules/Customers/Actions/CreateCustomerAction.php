@@ -34,7 +34,7 @@ final readonly class CreateCustomerAction
                 ->exists();
 
             if ($exists) {
-                throw new ConflictException("Documento '{$dto->document}' já está cadastrado neste tenant.");
+                throw new ConflictException("Documento '{$dto->document}' já está cadastrado nesta empresa.");
             }
         }
 

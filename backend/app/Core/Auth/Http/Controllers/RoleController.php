@@ -87,7 +87,7 @@ final class RoleController extends Controller
 
         if ($exists) {
             throw ValidationException::withMessages([
-                'name' => ['Já existe uma role com este nome neste tenant.'],
+                'name' => ['Já existe uma role com este nome nesta empresa.'],
             ]);
         }
 
@@ -156,7 +156,7 @@ final class RoleController extends Controller
 
             if ($exists) {
                 throw ValidationException::withMessages([
-                    'name' => ['Já existe uma role com este nome neste tenant.'],
+                    'name' => ['Já existe uma role com este nome nesta empresa.'],
                 ]);
             }
 

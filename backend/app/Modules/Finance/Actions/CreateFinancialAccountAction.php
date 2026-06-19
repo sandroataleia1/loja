@@ -16,7 +16,7 @@ final readonly class CreateFinancialAccountAction
         $tenantId = TenantContext::getIdOrFail();
 
         if (FinancialAccount::where('code', $dto->code)->exists()) {
-            throw new ConflictException("Código '{$dto->code}' já está em uso neste tenant.");
+            throw new ConflictException("Código '{$dto->code}' já está em uso nesta empresa.");
         }
 
         return FinancialAccount::create([

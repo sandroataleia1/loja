@@ -13,7 +13,7 @@ final readonly class CreateAttributeGroupAction
     public function execute(CreateAttributeGroupDTO $dto): AttributeGroup
     {
         if (AttributeGroup::where('slug', $dto->slug)->exists()) {
-            throw new ConflictException("Grupo de atributo '{$dto->slug}' já existe neste tenant.");
+            throw new ConflictException("Grupo de atributo '{$dto->slug}' já existe nesta empresa.");
         }
 
         return AttributeGroup::create([

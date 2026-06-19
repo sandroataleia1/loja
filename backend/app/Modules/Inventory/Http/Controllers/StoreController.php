@@ -40,7 +40,7 @@ final class StoreController extends Controller
     public function store(StoreStoreRequest $request): JsonResponse
     {
         if (Store::where('code', $request->string('code')->toString())->exists()) {
-            throw new ConflictException("Código de loja '{$request->string('code')}' já existe neste tenant.");
+            throw new ConflictException("Código de loja '{$request->string('code')}' já existe nesta empresa.");
         }
 
         $store = Store::create($request->validated());

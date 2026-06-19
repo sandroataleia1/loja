@@ -13,7 +13,7 @@ final readonly class CreateCollectionAction
     public function execute(CreateCollectionDTO $dto): ProductCollection
     {
         if (ProductCollection::where('slug', $dto->slug)->exists()) {
-            throw new ConflictException("Coleção com slug '{$dto->slug}' já existe neste tenant.");
+            throw new ConflictException("Coleção com slug '{$dto->slug}' já existe nesta empresa.");
         }
 
         return ProductCollection::create([

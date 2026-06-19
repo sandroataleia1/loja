@@ -30,7 +30,7 @@ final readonly class CreateVariantAction
         }
 
         if (Variant::where('sku', $dto->sku)->exists()) {
-            throw new ConflictException("SKU '{$dto->sku}' já está em uso neste tenant.");
+            throw new ConflictException("SKU '{$dto->sku}' já está em uso nesta empresa.");
         }
 
         return DB::transaction(function () use ($dto, $product): Variant {

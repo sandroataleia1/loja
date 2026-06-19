@@ -20,7 +20,7 @@ final readonly class CreateBrandAction
     public function execute(CreateBrandDTO $dto): Brand
     {
         if (Brand::where('slug', $dto->slug)->exists()) {
-            throw new ConflictException("Marca com slug '{$dto->slug}' já existe neste tenant.");
+            throw new ConflictException("Marca com slug '{$dto->slug}' já existe nesta empresa.");
         }
 
         $code = $this->generateCode->execute(

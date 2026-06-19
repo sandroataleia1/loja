@@ -25,7 +25,7 @@ final class RevokeRoleAction
             ->first();
 
         if ($tenantUser === null) {
-            throw new NotFoundHttpException("Usuário não possui membership ativa neste tenant.");
+            throw new NotFoundHttpException("Usuário não possui membership ativa nesta empresa.");
         }
 
         DB::transaction(function () use ($tenantUser, $tenantId, $userId, $revokedBy): void {
