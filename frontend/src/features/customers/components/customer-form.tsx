@@ -3,8 +3,8 @@
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, MapPin, Phone, X } from 'lucide-react'
-import { useState } from 'react'
+import { Plus, Trash2, MapPin, Phone, X, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { Button }   from '@/components/ui/button'
 import { Input }    from '@/components/ui/input'
 import { Label }    from '@/components/ui/label'
@@ -65,10 +65,37 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
   onAdd:   (data: AddressValues) => void
   onClose: () => void
 }) {
-  const { register, handleSubmit, formState: { errors } } = useForm<AddressValues>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<AddressValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: { country: 'BR', is_default: isFirst },
   })
+
+  const [cepLoading, setCepLoading] = useState(false)
+  const [cepError,   setCepError]   = useState<string | null>(null)
+  const zipcode = watch('zipcode')
+
+  useEffect(() => {
+    const digits = (zipcode ?? '').replace(/\D/g, '')
+    if (digits.length !== 8) { setCepError(null); return }
+
+    const controller = new AbortController()
+    setCepLoading(true)
+    setCepError(null)
+
+    fetch(`https://viacep.com.br/ws/${digits}/json/`, { signal: controller.signal })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.erro) { setCepError('CEP não encontrado.'); return }
+        setValue('street',   data.logradouro ?? '', { shouldValidate: true })
+        setValue('district', data.bairro     ?? '', { shouldValidate: true })
+        setValue('city',     data.localidade ?? '', { shouldValidate: true })
+        setValue('state',    data.uf         ?? '', { shouldValidate: true })
+      })
+      .catch((e) => { if (e.name !== 'AbortError') setCepError('Erro ao buscar CEP.') })
+      .finally(() => setCepLoading(false))
+
+    return () => controller.abort()
+  }, [zipcode, setValue])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -88,8 +115,15 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>CEP *</Label>
-              <Input placeholder="00000-000" {...register('zipcode')} />
-              {errors.zipcode && <p className="text-xs text-destructive">{errors.zipcode.message}</p>}
+              <div className="relative">
+                <Input placeholder="00000-000" {...register('zipcode')} className={cepLoading ? 'pr-8' : ''} />
+                {cepLoading && (
+                  <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+              {cepError
+                ? <p className="text-xs text-destructive">{cepError}</p>
+                : errors.zipcode && <p className="text-xs text-destructive">{errors.zipcode.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Número *</Label>
