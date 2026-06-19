@@ -4,17 +4,17 @@
 
 ---
 
-## ETAPA 1 — Fundação e Navegação
+## ETAPA 1 — Fundação e Navegação ✅
 > Layout fullscreen, stores Zustand, seleção e abertura de caixa.
 
-- [ ] 1.1 Criar `frontend/src/app/(pdv)/layout.tsx` — fullscreen, dark, sem sidebar
-- [ ] 1.2 Criar `frontend/src/features/pdv/stores/pdvCartStore.ts` — estado do carrinho (Zustand)
-- [ ] 1.3 Criar `frontend/src/features/pdv/stores/pdvSessionStore.ts` — sessão de caixa ativa (Zustand + persist)
-- [ ] 1.4 Criar `frontend/src/app/(pdv)/caixa/page.tsx` — listagem de caixas disponíveis
-- [ ] 1.5 Criar `frontend/src/app/(pdv)/caixa/abrir/page.tsx` — formulário de abertura com valor inicial
-- [ ] 1.6 Criar `frontend/src/features/pdv/hooks/usePdvSession.ts` — guard: redireciona se sem sessão ativa
-- [ ] 1.7 Criar `frontend/src/app/(pdv)/venda/page.tsx` — shell com layout 2 painéis (esquerdo + direito)
-- [ ] 1.8 Criar `frontend/src/app/(pdv)/page.tsx` — redirect automático para /pdv/caixa ou /pdv/venda
+- [x] 1.1 Criar `frontend/src/app/(pdv)/layout.tsx` — fullscreen, dark, sem sidebar
+- [x] 1.2 Criar `frontend/src/features/pdv/stores/pdvCartStore.ts` — estado do carrinho (Zustand)
+- [x] 1.3 Criar `frontend/src/features/pdv/stores/pdvSessionStore.ts` — sessão de caixa ativa (Zustand + persist)
+- [x] 1.4 Criar `frontend/src/app/(pdv)/pdv/caixa/page.tsx` — listagem de caixas disponíveis
+- [x] 1.5 Criar `frontend/src/app/(pdv)/pdv/caixa/abrir/page.tsx` — formulário de abertura com valor inicial
+- [x] 1.6 Criar `frontend/src/features/pdv/hooks/usePdvSession.ts` — guard: redireciona se sem sessão ativa
+- [x] 1.7 Criar `frontend/src/app/(pdv)/pdv/venda/page.tsx` — shell com layout 2 painéis (esquerdo + direito)
+- [x] 1.8 Criar `frontend/src/app/(pdv)/pdv/page.tsx` — redirect automático para /pdv/caixa ou /pdv/venda
 
 ---
 
@@ -111,7 +111,7 @@
 
 | Etapa | Descrição | Status |
 |-------|-----------|--------|
-| 1 | Fundação e Navegação | ⬜ Pendente |
+| 1 | Fundação e Navegação | ✅ Concluída |
 | 2 | Carrinho e Produtos | ⬜ Pendente |
 | 3 | Modal de Pagamento | ⬜ Pendente |
 | 4 | Impressão de Cupom | ⬜ Pendente |
@@ -119,4 +119,4 @@
 | 6 | Fechamento de Caixa | ⬜ Pendente |
 | 7 | Polimento e Produção | ⬜ Pendente |
 
-**Total: 0 / 50 itens concluídos**
+**Total: 8 / 50 itens concluídos**
