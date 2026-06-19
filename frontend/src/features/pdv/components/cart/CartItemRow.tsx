@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { Minus, Plus, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { usePdvCartStore, type PdvCartItem } from '@/features/pdv/stores/pdvCartStore'
 
 const fmtBRL = (cents: number) =>
@@ -15,10 +17,22 @@ export function CartItemRow({ item, index }: Props) {
   const updateQty  = usePdvCartStore((s) => s.updateQty)
   const removeItem = usePdvCartStore((s) => s.removeItem)
 
+  const [highlight, setHighlight] = useState(true)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Brief green highlight on mount (item just added)
+  useEffect(() => {
+    timerRef.current = setTimeout(() => setHighlight(false), 500)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [])
+
   const lineTotal = item.unitPriceCents * item.quantity - item.discountCents
 
   return (
-    <div className="flex items-start gap-2 py-2 border-b last:border-0 group">
+    <div className={cn(
+      'flex items-start gap-2 py-2 border-b last:border-0 group rounded-lg px-1 -mx-1 transition-colors duration-300',
+      highlight ? 'bg-green-50 dark:bg-green-950/30' : 'bg-transparent',
+    )}>
       {/* Sequência */}
       <span className="text-[10px] text-muted-foreground/50 w-4 shrink-0 mt-1 tabular-nums">
         {index + 1}

@@ -119,6 +119,23 @@ export function useFiscalDocuments(filters?: { status?: string; per_page?: numbe
   return useQuery({ queryKey: SALES_KEYS.FISCAL_DOCS(filters), queryFn: () => salesService.getFiscalDocuments(filters), staleTime: 30_000 })
 }
 
+export function useCancelFiscalDocument() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ uuid, reason }: { uuid: string; reason?: string }) =>
+      salesService.cancelFiscalDocument(uuid, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SALES_KEYS.FISCAL_DOCS() }),
+  })
+}
+
+export function useRetryFiscalDocument() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (uuid: string) => salesService.retryFiscalDocument(uuid),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SALES_KEYS.FISCAL_DOCS() }),
+  })
+}
+
 export function useTaxProfiles() {
   return useQuery({ queryKey: SALES_KEYS.TAX_PROFILES, queryFn: () => salesService.getTaxProfiles(), staleTime: 10 * 60_000 })
 }

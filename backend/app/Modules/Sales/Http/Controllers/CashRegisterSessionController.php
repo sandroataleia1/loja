@@ -50,6 +50,8 @@ final class CashRegisterSessionController extends Controller
 
     public function open(OpenSessionRequest $request, OpenCashRegisterSessionAction $action): JsonResponse
     {
+        $this->authorize('open', CashRegisterSession::class);
+
         $session = $action->execute(OpenSessionDTO::fromRequest($request));
 
         return $this->created(new CashRegisterSessionResource($session));

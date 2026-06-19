@@ -535,14 +535,23 @@ export interface Sale {
 }
 
 export interface FiscalDocument {
-  uuid: string
-  type: string
-  status: FiscalDocumentStatus
-  access_key: string | null
-  issued_at: string | null
-  cancelled_at: string | null
+  uuid:          string
+  sale_id:       string | null
+  type:          string
+  type_label:    string
+  status:        FiscalDocumentStatus
+  status_label:  string
+  provider:      string
+  access_key:    string | null
+  protocol:      string | null
+  pdf_path:      string | null
+  issued_at:     string | null
+  cancelled_at:  string | null
   error_message: string | null
-  created_at: string
+  can_cancel:    boolean
+  can_retry:     boolean
+  created_at:    string
+  updated_at:    string
 }
 
 export interface FiscalSettings {
@@ -594,6 +603,54 @@ export interface ConditionalStatusHistory {
   current_status: ConditionalStatus
   changed_by: string | null
   changed_at: string
+}
+
+// ── Purchasing ────────────────────────────────────────────────────────────────
+
+export interface Supplier {
+  uuid:        string
+  code:        string
+  person_type: 'INDIVIDUAL' | 'COMPANY'
+  name:        string
+  trade_name:  string | null
+  document:    string | null
+  email:       string | null
+  phone:       string | null
+  is_active:   boolean
+  notes:       string | null
+  created_at:  string
+  updated_at:  string
+}
+
+export type PurchaseOrderStatus = 'draft' | 'sent' | 'partially_received' | 'received' | 'cancelled'
+
+export interface PurchaseOrderItem {
+  uuid:                string
+  product_variant_id:  string
+  quantity:            number
+  unit_cost:           number
+  total_cost:          number
+  received_quantity:   number
+  pending_quantity:    number
+  variant?:            { uuid: string; sku: string; name: string }
+}
+
+export interface PurchaseOrder {
+  uuid:                   string
+  code:                   string
+  status:                 PurchaseOrderStatus
+  status_label:           string
+  order_date:             string | null
+  expected_delivery_date: string | null
+  subtotal:               number
+  discount:               number
+  total:                  number
+  notes:                  string | null
+  supplier?:              { uuid: string; name: string; code: string }
+  items?:                 PurchaseOrderItem[]
+  receipts_count?:        number
+  created_at:             string
+  updated_at:             string
 }
 
 export interface Conditional {

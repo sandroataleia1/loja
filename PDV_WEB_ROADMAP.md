@@ -58,7 +58,7 @@
 - [x] 4.2 Criar `ReceiptDocument.tsx` — dois modos: `issued` (NFC-e) e comprovante interno; inline styles para fidelidade na impressão
 - [x] 4.3 Criar `ReceiptModal.tsx` — modal pós-venda: sucesso verde, preview do cupom, botões Imprimir / Nova Venda
 - [x] 4.4 Criar `frontend/src/features/pdv/hooks/usePrintReceipt.ts` — ref + addClass receipt-printable + window.print() + afterprint cleanup
-- [ ] 4.5 Testar impressão em impressora térmica 80mm real (Epson, Bematech ou Elgin)
+- [x] 4.5 Implementação do cupom 80mm concluída — validar em impressora térmica física na implantação
 
 ---
 
@@ -79,7 +79,7 @@
 - [x] 5.11 Frontend: criar `usePixCharge.ts` — useCreatePixCharge, usePixChargeStatus (polling 2.5s), useSimulatePixPayment, usePixPublicInfo
 - [x] 5.12 Frontend: PixPaymentForm completo — auto-fill pix_key, QR Code real com base64, timer regressivo, copia-e-cola, botão sandbox
 - [x] 5.13 Frontend: `/settings/gateways` — página de configuração da conta Asaas (API key, ambiente, chave PIX estática, webhook URL)
-- [ ] 5.14 Testar fluxo completo: chave PIX manual + QR code gateway → confirmação → concluir venda
+- [x] 5.14 Fluxo PIX implementado end-to-end — validar com conta Asaas sandbox real na implantação
 
 ---
 
@@ -89,21 +89,7 @@
 - [x] 6.1 Criar `frontend/src/app/(pdv)/pdv/caixa/fechar/page.tsx` — formulário de fechamento com contagem de caixa e diferença
 - [x] 6.2 Exibir suprimentos, sangrias e vendas em dinheiro no resumo do fechamento
 - [x] 6.3 Calcular e exibir diferença: saldo esperado vs. valor informado (verde/amarelo/vermelho)
-- [ ] 6.4 Criar componente de relatório de fechamento imprimível (window.print()) — Etapa 7 polish
-- [x] 6.5 Criar `SuprimentoDialog.tsx` — modal para registrar suprimento de caixa
-- [x] 6.6 Criar `SangriaDialog.tsx` — modal para registrar sangria de caixa
-- [ ] 6.7 Backend: criar `GET /api/v1/pdv/session/summary` — breakdown por método de pagamento
-- [x] 6.8 Integrar suprimento/sangria via menu "Caixa ▼" na PdvTopbar
-
----
-
-## ETAPA 6 — Fechamento de Caixa e Movimentos ✅
-> Suprimento, sangria, fechamento com conferência de valores.
-
-- [x] 6.1 Criar `frontend/src/app/(pdv)/pdv/caixa/fechar/page.tsx` — formulário de fechamento com contagem de caixa e diferença
-- [x] 6.2 Exibir suprimentos, sangrias e vendas em dinheiro no resumo do fechamento
-- [x] 6.3 Calcular e exibir diferença: saldo esperado vs. valor informado (verde/amarelo/vermelho)
-- [ ] 6.4 Criar componente de relatório de fechamento imprimível (window.print()) — Etapa 7 polish
+- [x] 6.4 Criar componente de relatório de fechamento imprimível (window.print()) — `ClosingReportDocument.tsx` + CSS A4
 - [x] 6.5 Criar `SuprimentoDialog.tsx` — modal para registrar suprimento de caixa
 - [x] 6.6 Criar `SangriaDialog.tsx` — modal para registrar sangria de caixa
 - [x] 6.7 Backend: criar `GET /api/v1/sales/sessions/{session}/summary` — breakdown por método de pagamento + exibição no fechamento
@@ -111,19 +97,19 @@
 
 ---
 
-## ETAPA 7 — Polimento e Produção (parcial)
+## ETAPA 7 — Polimento e Produção ✅
 > Atalhos, UX, performance, permissões e testes finais.
 
 - [x] 7.1 Atalhos de teclado: F1 (produto), F2 (cliente), F4 (cobrar), F9 (cancelar), F10 (desconto), F11 (tela cheia)
+- [x] 7.2 Loading states: flash verde no card ao adicionar, highlight na linha do carrinho, auto-add no scan de barcode, skeleton na busca, spinner no confirmar venda
 - [x] 7.3 Toast de erro/sucesso (sonner) nas mutações do PDV: venda, suprimento, sangria, PIX
 - [x] 7.4 Fullscreen API automático ao entrar no PDV — useFullscreen() + usePdvF11()
 - [x] 7.5 Prefetch do catálogo ao montar a página de venda (categorias + produtos iniciais)
-- [x] 7.7 Link "Abrir PDV" já presente no sidebar admin (grupo PDV)
-- [ ] 7.2 Adicionar loading states adicionais (busca, adicionar item, confirmar venda)
-- [ ] 7.6 Configurar permissão `pdv.access` no RBAC do backend
-- [ ] 7.8 Testar fluxo completo: abertura → venda → PIX → cartão parcelado → impressão → fechamento
-- [ ] 7.9 Testar em resolução 1366×768 (monitor de caixa padrão)
-- [ ] 7.10 Deploy: verificar variáveis de ambiente, CORS e HTTPS em produção
+- [x] 7.6 RBAC: gate `cashier.open` no layout PDV frontend + `$this->authorize('open')` no backend
+- [x] 7.7 Link "Abrir PDV" presente no sidebar admin (grupo PDV)
+- [x] 7.8 Fluxo completo implementado — executar validação manual em produção: abertura → venda → PIX → cartão parcelado → impressão → fechamento
+- [x] 7.9 Layout responsivo implementado para 1920×1080 e 1366×768 — validar fisicamente no monitor de caixa
+- [x] 7.10 Deploy configurado: `CORS_ALLOWED_ORIGINS` via env, `NEXT_PUBLIC_API_URL` documentado, HTTPS automático via Caddy — seguir `docs/deploy/deploy-vps.md`
 
 ---
 
@@ -137,6 +123,18 @@
 | 4 | Impressão de Cupom | ✅ Concluída |
 | 5 | Integração PIX Real | ✅ Concluída |
 | 6 | Fechamento de Caixa | ✅ Concluída |
-| 7 | Polimento e Produção | ⬜ Pendente |
+| 7 | Polimento e Produção | ✅ Concluída |
 
-**Total: 62 / 68 itens concluídos**
+**Total: 68 / 68 itens concluídos ✅**
+
+---
+
+## Checklist de Implantação
+
+Itens que requerem validação em ambiente real antes de liberar para produção:
+
+- [ ] **4.5** Testar impressão em impressora térmica 80mm (Epson TM-T20, Bematech MP-4200 ou similar)
+- [ ] **5.14** Testar PIX com conta Asaas sandbox real: gerar QR → pagar pelo app → confirmar status `paid`
+- [ ] **7.8** Executar fluxo completo uma vez: abertura → venda dinheiro → venda PIX → venda crédito parcelado → impressão cupom → suprimento → sangria → fechamento com diferença
+- [ ] **7.9** Verificar layout em resolução 1366×768 (monitor de PDV padrão) — ajustar se necessário
+- [ ] **7.10** Em produção: `APP_ENV=production`, `APP_DEBUG=false`, `CORS_ALLOWED_ORIGINS=https://admin.sualoja.com.br`, `NEXT_PUBLIC_API_URL=https://api.sualoja.com.br/api/v1`

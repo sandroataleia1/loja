@@ -50,6 +50,11 @@ export const ROUTES = {
   PDV_CAIXA_FECHAR: '/pdv/caixa/fechar',
   PDV_VENDA:        '/pdv/venda',
 
+  // Compras
+  PURCHASING:           '/purchasing',
+  PURCHASING_CREATE:    '/purchasing/create',
+  SUPPLIERS:            '/purchasing/suppliers',
+
   // Sistema
   DOWNLOADS: '/downloads',
 } as const

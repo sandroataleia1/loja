@@ -112,7 +112,13 @@ export const salesService = {
     session_uuid:     string
     sale_count:       number
     total_sales:      number
-    by_method:        Record<string, number>
+    by_method: {
+      cash:         number
+      pix:          number
+      credit_card:  number
+      debit_card:   number
+      store_credit: number
+    }
     supply_total:     number
     withdrawal_total: number
     expected_balance: number
@@ -191,6 +197,14 @@ export const salesService = {
       data: body.data,
       meta: (body.meta as PaginationMeta) ?? { current_page: 1, per_page: 20, total: 0, last_page: 1 },
     }
+  },
+
+  cancelFiscalDocument(uuid: string, reason?: string): Promise<FiscalDocument> {
+    return apiPost<FiscalDocument, { reason?: string }>(`/fiscal/documents/${uuid}/cancel`, { reason })
+  },
+
+  retryFiscalDocument(uuid: string): Promise<FiscalDocument> {
+    return apiPost<FiscalDocument>(`/fiscal/documents/${uuid}/retry`)
   },
 
   getTaxProfiles(): Promise<TaxProfile[]> {

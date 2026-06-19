@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Package } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
@@ -16,27 +16,52 @@ const fmtBRL = (cents: number) =>
 export function ProductGrid() {
   const addItem = usePdvCartStore((s) => s.addItem)
 
-  const [query,    setQuery]    = useState('')
-  const [search,   setSearch]   = useState('')       // valor efetivo (pós-debounce ou Enter)
-  const [catId,    setCatId]    = useState<string>('')
-  const [picking,  setPicking]  = useState<Product | null>(null)  // produto para VariantPicker
+  const [query,        setQuery]        = useState('')
+  const [search,       setSearch]       = useState('')
+  const [catId,        setCatId]        = useState<string>('')
+  const [picking,      setPicking]      = useState<Product | null>(null)
+  const [flashId,      setFlashId]      = useState<string | null>(null)
+  const [autoAddDone,  setAutoAddDone]  = useState(false)  // guard: only auto-add once per scan
 
   const { data: categories } = usePdvCategories()
   const { data: result, isFetching } = useProductSearch(search, catId)
   const products = result?.data ?? []
 
-  // Debounce: 400ms após digitar → dispara busca
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Debounce: 400ms after typing → trigger search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
+    setAutoAddDone(false)
     debounceRef.current = setTimeout(() => setSearch(query), 400)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [query])
 
-  // Enter → busca imediata (barcode scanners)
+  // Auto-add: when a barcode scan yields exactly 1 product with 1 active variant
+  useEffect(() => {
+    if (isFetching || autoAddDone || products.length !== 1) return
+    const product = products[0]
+    const active = (product.variants ?? []).filter((v) => v.is_active)
+    if (active.length !== 1) return
+    // Only auto-add if the query looks like a barcode (no spaces, length >= 6)
+    const looksLikeBarcode = search.length >= 6 && !search.includes(' ')
+    if (!looksLikeBarcode) return
+    setAutoAddDone(true)
+    addToCart(product, active[0])
+    triggerFlash(product.uuid)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, isFetching, autoAddDone])
+
+  // Enter → immediate search (barcode scanners) + reset auto-add guard
   function handleSearch(v: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current)
+    setAutoAddDone(false)
     setSearch(v)
+  }
+
+  function triggerFlash(uuid: string) {
+    setFlashId(uuid)
+    setTimeout(() => setFlashId(null), 600)
   }
 
   function handleProductClick(product: Product) {
@@ -44,6 +69,7 @@ export function ProductGrid() {
     if (active.length === 0) return
     if (active.length === 1) {
       addToCart(product, active[0])
+      triggerFlash(product.uuid)
     } else {
       setPicking(product)
     }
@@ -132,21 +158,37 @@ export function ProductGrid() {
               const firstVariant = (product.variants ?? []).find((v) => v.is_active)
               const price = firstVariant?.price_cents ?? 0
               const hasVariants = (product.variants ?? []).filter((v) => v.is_active).length > 1
+              const isFlashing  = flashId === product.uuid
 
               return (
                 <button
                   key={product.uuid}
                   onClick={() => handleProductClick(product)}
-                  className="group flex flex-col gap-1 rounded-xl border bg-card p-3 text-left transition-all hover:border-primary/40 hover:bg-accent active:scale-[0.97]"
+                  className={cn(
+                    'group flex flex-col gap-1 rounded-xl border bg-card p-3 text-left transition-all active:scale-[0.97]',
+                    isFlashing
+                      ? 'border-green-500 bg-green-50 dark:bg-green-950/40 ring-2 ring-green-500/30'
+                      : 'hover:border-primary/40 hover:bg-accent',
+                  )}
                 >
-                  {/* Placeholder de imagem */}
-                  <div className="flex items-center justify-center h-12 rounded-lg bg-muted/60 mb-1">
-                    <Package className="w-5 h-5 text-muted-foreground/50" />
+                  <div className={cn(
+                    'flex items-center justify-center h-12 rounded-lg mb-1 transition-colors',
+                    isFlashing ? 'bg-green-100 dark:bg-green-900/40' : 'bg-muted/60',
+                  )}>
+                    <Package className={cn(
+                      'w-5 h-5 transition-colors',
+                      isFlashing ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground/50',
+                    )} />
                   </div>
                   <p className="text-xs font-medium leading-tight line-clamp-2">{product.name}</p>
                   <p className="text-[10px] text-muted-foreground">{product.code}</p>
                   <div className="flex items-center justify-between mt-auto pt-1">
-                    <span className="text-xs font-bold text-primary">{fmtBRL(price)}</span>
+                    <span className={cn(
+                      'text-xs font-bold transition-colors',
+                      isFlashing ? 'text-green-600 dark:text-green-400' : 'text-primary',
+                    )}>
+                      {fmtBRL(price)}
+                    </span>
                     {hasVariants && (
                       <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
                         variantes
@@ -164,7 +206,7 @@ export function ProductGrid() {
       {picking && (
         <VariantPicker
           product={picking}
-          onSelect={(v) => addToCart(picking, v)}
+          onSelect={(v) => { addToCart(picking, v); triggerFlash(picking.uuid); setPicking(null) }}
           onClose={() => setPicking(null)}
         />
       )}

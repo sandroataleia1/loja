@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Pix\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Core\Auth\Enums\PermissionEnum;
 use App\Modules\Pix\Http\Requests\CreatePixChargeRequest;
 use App\Modules\Pix\Http\Resources\PixChargeResource;
 use App\Modules\Pix\Models\PixCharge;
@@ -24,6 +25,8 @@ final class PixController extends Controller
      */
     public function createCharge(CreatePixChargeRequest $request): JsonResponse
     {
+        abort_unless($request->user()->hasPermission(PermissionEnum::SalesCreate), 403);
+
         $gateway = $this->resolver->resolveForCurrentTenant();
 
         $saleUuid   = $request->string('sale_uuid')->value() ?: null;

@@ -36,6 +36,8 @@ import {
   Receipt,
   Download,
   Store,
+  PackagePlus,
+  Building2,
 } from 'lucide-react'
 import { useHasUpdate } from '@/hooks/use-latest-release'
 import { cn } from '@/lib/utils'
@@ -108,6 +110,13 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Transferências',    href: ROUTES.FINANCIAL_TRANSFERS,  icon: ArrowLeftRight,permission: 'financial.view'   },
       { label: 'Contas Bancárias',  href: ROUTES.FINANCIAL_ACCOUNTS,   icon: Wallet,        permission: 'financial.view'   },
       { label: 'Categorias',        href: ROUTES.FINANCIAL_CATEGORIES, icon: Tags,          permission: 'financial.create' },
+    ],
+  },
+  {
+    label: 'Compras',
+    items: [
+      { label: 'Pedidos de Compra', href: ROUTES.PURCHASING, icon: PackagePlus,  permission: 'purchase_orders.view' },
+      { label: 'Fornecedores',      href: ROUTES.SUPPLIERS,  icon: Building2,    permission: 'suppliers.view'       },
     ],
   },
   {
