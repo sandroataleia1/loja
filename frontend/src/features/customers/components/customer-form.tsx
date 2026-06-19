@@ -13,6 +13,31 @@ import { CustomerTagSelector } from './customer-tag-selector'
 import type { CreateCustomerRequest } from '@store/contracts'
 import type { ContactType } from '@store/shared-types'
 
+// ── Validadores de documento ──────────────────────────────────────────────────
+
+function isValidCPF(digits: string): boolean {
+  if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false
+  const calc = (len: number) => {
+    const sum = digits.slice(0, len).split('').reduce((acc, d, i) => acc + Number(d) * (len + 1 - i), 0)
+    const rem = (sum * 10) % 11
+    return rem === 10 ? 0 : rem
+  }
+  return calc(9) === Number(digits[9]) && calc(10) === Number(digits[10])
+}
+
+function isValidCNPJ(digits: string): boolean {
+  if (digits.length !== 14 || /^(\d)\1{13}$/.test(digits)) return false
+  const calc = (weights: number[]) => {
+    const sum = weights.reduce((acc, w, i) => acc + Number(digits[i]) * w, 0)
+    const rem = sum % 11
+    return rem < 2 ? 0 : 11 - rem
+  }
+  return (
+    calc([5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(digits[12]) &&
+    calc([6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(digits[13])
+  )
+}
+
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
 const addressSchema = z.object({
@@ -45,6 +70,19 @@ const customerSchema = z.object({
   addresses:   z.array(addressSchema).optional(),
   contacts:    z.array(contactSchema).optional(),
   tags:        z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+  const digits = (data.document ?? '').replace(/\D/g, '')
+  if (data.person_type === 'INDIVIDUAL') {
+    if (!digits) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['document'], message: 'CPF obrigatório.' })
+    } else if (!isValidCPF(digits)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['document'], message: 'CPF inválido.' })
+    }
+  } else if (data.person_type === 'COMPANY' && digits) {
+    if (!isValidCNPJ(digits)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['document'], message: 'CNPJ inválido.' })
+    }
+  }
 })
 
 type CustomerFormValues  = z.infer<typeof customerSchema>
