@@ -20,23 +20,25 @@ Tudo sobe via **Docker Compose**. O Caddy cuida do TLS automaticamente.
 
 ## Pré-requisitos
 
-| Item | Mínimo recomendado |
-|------|-------------------|
-| VPS | Ubuntu 22.04 ou 24.04 |
-| CPU / RAM | 2 vCPU / 4 GB |
-| Domínios | `api.sualoja.com.br` e `admin.sualoja.com.br` apontando para o IP da VPS |
-| Acesso | `sudo` |
+| Item      | Mínimo recomendado                                                       |
+| --------- | ------------------------------------------------------------------------ |
+| VPS       | Ubuntu 22.04 ou 24.04                                                    |
+| CPU / RAM | 2 vCPU / 4 GB                                                            |
+| Domínios  | `api.sualoja.com.br` e `admin.sualoja.com.br` apontando para o IP da VPS |
+| Acesso    | `sudo`                                                                   |
 
 ---
 
 ## Etapa 1 — Preparar o servidor
 
 ### 1.1 Atualizar o sistema
+
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
 
 ### 1.2 Instalar Docker
+
 ```bash
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER
@@ -46,6 +48,7 @@ docker compose version   # precisa ser v2.24+
 ```
 
 ### 1.3 Firewall
+
 ```bash
 sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp
@@ -68,6 +71,7 @@ git clone https://github.com/sandroataleia1/loja.git .
 ```
 
 Estrutura após o clone:
+
 ```
 /var/www/loja/
 ├── backend/              ← API Laravel
@@ -81,6 +85,7 @@ Estrutura após o clone:
 ## Etapa 3 — Configurar o Backend
 
 ### 3.1 Criar o arquivo .env
+
 ```bash
 cd /var/www/loja/backend
 cp .env.example .env
@@ -116,6 +121,7 @@ CORS_ALLOWED_ORIGINS=https://admin.sualoja.com.br
 > `SESSION_ENCRYPT=true`) já vêm corretos no `.env.example`.
 
 ### 3.2 Subir os containers
+
 ```bash
 cd /var/www/loja/backend
 sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
@@ -130,15 +136,15 @@ sudo docker ps
 
 Você deve ver os containers:
 
-| Nome | Função |
-|------|--------|
-| `store_app` | PHP 8.4-FPM (API Laravel) |
-| `store_nginx` | Nginx (proxy interno :8000) |
-| `store_pgsql` | PostgreSQL 16 |
-| `store_redis` | Redis 7 |
-| `store_horizon` | Filas (Laravel Horizon) |
-| `store_scheduler` | Agendador (cron do Laravel) |
-| `store_backup` | Backup diário do banco às 03h |
+| Nome              | Função                        |
+| ----------------- | ----------------------------- |
+| `store_app`       | PHP 8.4-FPM (API Laravel)     |
+| `store_nginx`     | Nginx (proxy interno :8000)   |
+| `store_pgsql`     | PostgreSQL 16                 |
+| `store_redis`     | Redis 7                       |
+| `store_horizon`   | Filas (Laravel Horizon)       |
+| `store_scheduler` | Agendador (cron do Laravel)   |
+| `store_backup`    | Backup diário do banco às 03h |
 
 ### 3.3 Inicializar a aplicação
 
@@ -168,6 +174,7 @@ sudo docker exec store_app php artisan optimize
 > cria um tenant de demonstração — use apenas o `RbacSeeder` em produção.
 
 ### 3.4 Verificar se a API responde
+
 ```bash
 curl -I http://127.0.0.1:8080/up
 # Esperado: HTTP/1.1 200 OK
@@ -178,6 +185,7 @@ curl -I http://127.0.0.1:8080/up
 ## Etapa 4 — Configurar o Admin (Next.js)
 
 ### 4.1 Criar o arquivo .env do admin
+
 ```bash
 cd /var/www/loja/frontend
 cp .env.example .env
@@ -185,6 +193,7 @@ nano .env
 ```
 
 Preencha com os valores reais:
+
 ```dotenv
 NEXT_PUBLIC_API_URL=https://api.sualoja.com.br/api/v1
 NEXT_PUBLIC_APP_NAME=Sua Loja Admin
@@ -194,12 +203,14 @@ NEXT_PUBLIC_APP_NAME=Sua Loja Admin
 > da API depois, precisará fazer rebuild (`--build`).
 
 ### 4.2 Subir o container do admin
+
 ```bash
 cd /var/www/loja/frontend
 sudo docker compose up -d --build
 ```
 
 Verificar:
+
 ```bash
 sudo docker ps | grep store_admin
 curl -I http://127.0.0.1:3000
@@ -213,6 +224,7 @@ curl -I http://127.0.0.1:3000
 O Caddy instala certificados Let's Encrypt automaticamente.
 
 ### 5.1 Instalar o Caddy
+
 ```bash
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
@@ -223,11 +235,13 @@ sudo apt update && sudo apt install -y caddy
 ```
 
 ### 5.2 Configurar o Caddyfile
+
 ```bash
 sudo nano /etc/caddy/Caddyfile
 ```
 
 Conteúdo:
+
 ```caddy
 api.sualoja.com.br {
     reverse_proxy 127.0.0.1:8080
@@ -243,6 +257,7 @@ sudo systemctl reload caddy
 ```
 
 Teste nos dois domínios:
+
 ```bash
 curl -I https://api.sualoja.com.br/up
 curl -I https://admin.sualoja.com.br
@@ -273,6 +288,7 @@ Guarde o `token` retornado — é com ele que você acessa o painel admin.
 ## Operação no Dia a Dia
 
 ### Atualizar para nova versão
+
 ```bash
 cd /var/www/loja
 git pull origin main
@@ -291,6 +307,7 @@ sudo docker compose up -d --build
 ```
 
 ### Ver logs
+
 ```bash
 # App Laravel
 sudo docker logs store_app -f
@@ -306,12 +323,14 @@ sudo docker exec store_app tail -f storage/logs/laravel.log
 ```
 
 ### Reiniciar um container
+
 ```bash
 sudo docker restart store_app
 sudo docker restart store_horizon
 ```
 
 ### Backup manual do banco
+
 ```bash
 sudo docker exec store_pgsql pg_dump -U store store | gzip \
   > /var/www/loja/backups/manual_$(date +%Y%m%d_%H%M%S).sql.gz

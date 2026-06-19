@@ -4,7 +4,17 @@ declare(strict_types=1);
 
 use App\Core\Auth\Http\Controllers\AuthController;
 use App\Core\Platform\Http\Controllers\PlatformAuthController;
+use App\Modules\Pix\Http\Controllers\PixWebhookController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| PIX Webhooks (public — called by Asaas, no auth middleware)
+|--------------------------------------------------------------------------
+*/
+Route::post('webhooks/pix/{tenantUuid}', [PixWebhookController::class, 'handle'])
+    ->name('webhooks.pix')
+    ->middleware('throttle:60,1');
 
 /*
 |--------------------------------------------------------------------------
@@ -103,7 +113,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
 
     /*
     |----------------------------------------------------------------------
-    | POS Module
+    | POS Module (includes PIX gateway routes)
     |----------------------------------------------------------------------
     */
     Route::prefix('pos')->name('pos.')->group(base_path('routes/api/v1/pos.php'));

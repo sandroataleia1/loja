@@ -62,21 +62,24 @@
 
 ---
 
-## ETAPA 5 — Integração PIX Real
-> Dois modos: **Chave PIX** (manual, já funcional desde Etapa 3) e **QR Code dinâmico** (gateway Asaas/Efí, confirmação automática).
+## ETAPA 5 — Integração PIX Real ✅
+> Dois modos: **Chave PIX** (manual, já funcional desde Etapa 3) e **QR Code dinâmico** (gateway Asaas multi-tenant, confirmação automática).
+> **Arquitetura multi-tenant**: cada empresa tem sua própria conta Asaas; API key armazenada encriptada em `tenant_payment_gateways`.
 
-- [ ] 5.1 Backend: adicionar campo `pix_key` e `pix_key_type` à tabela de configurações da loja (`Store` ou `FiscalSettings`)
-- [ ] 5.2 Backend: criar `PixGatewayContract.php` — interface do gateway PIX
-- [ ] 5.3 Backend: criar `MockPixGateway.php` — simulação para dev/sandbox
-- [ ] 5.4 Backend: criar `AsaasPixGateway.php` (ou `EfiPixGateway.php`) — implementação real
-- [ ] 5.5 Backend: criar `PixController.php` — endpoints POST /charge, GET /charge/{id}, DELETE /charge/{id}
-- [ ] 5.6 Backend: registrar rotas em `routes/api/v1/pdv.php`
-- [ ] 5.7 Backend: criar webhook receiver + `UpdatePixPaymentStatusAction`
-- [ ] 5.8 Backend: adicionar credenciais do gateway em `.env` e `config/services.php`
-- [ ] 5.9 Frontend: buscar `store.pix_key` e pré-preencher o campo de chave PIX no `PixPaymentForm`
-- [ ] 5.10 Frontend: criar `frontend/src/features/pdv/hooks/usePixCharge.ts` — polling 2.5s com auto-stop ao pagar/expirar
-- [ ] 5.11 Frontend: modo QR Code real no `PixPaymentForm` — QR code dinâmico + timer regressivo + botão copia-e-cola
-- [ ] 5.12 Testar fluxo completo: chave PIX manual + QR code gateway → confirmação → concluir venda
+- [x] 5.1 Backend: criar tabela `tenant_payment_gateways` (api_key encrypted, pix_key, pix_key_type, webhook_token, environment)
+- [x] 5.2 Backend: criar tabela `pix_charges` (rastreamento de cobranças por charge_uuid, external_id, status, qr_code_image, pix_copy_paste)
+- [x] 5.3 Backend: criar `PixGatewayContract.php` — interface `createCharge()` + `getChargeStatus()`
+- [x] 5.4 Backend: criar `MockPixGateway.php` — simulação para dev/sandbox (retorna QR fake, botão "simular pagamento")
+- [x] 5.5 Backend: criar `AsaasPixGateway.php` — resolve default customer Asaas + cria charge + busca QR code
+- [x] 5.6 Backend: criar `PixGatewayResolver.php` — resolve o gateway certo por tenant (suporta bypass de TenantScope para webhook)
+- [x] 5.7 Backend: criar `PixController.php` — POST /pos/pix/charges, GET /pos/pix/charges/{charge}, POST /pos/pix/charges/{charge}/simulate-payment
+- [x] 5.8 Backend: criar `TenantGatewayController.php` — GET/PUT /pos/pix/settings, GET /pos/pix/public-info
+- [x] 5.9 Backend: criar `PixWebhookController.php` — POST /webhooks/pix/{tenantUuid} (público, valida via webhook_token no header)
+- [x] 5.10 Frontend: criar `pix.service.ts` — createCharge, getCharge, simulatePayment, getGatewayConfig, updateGatewayConfig
+- [x] 5.11 Frontend: criar `usePixCharge.ts` — useCreatePixCharge, usePixChargeStatus (polling 2.5s), useSimulatePixPayment, usePixPublicInfo
+- [x] 5.12 Frontend: PixPaymentForm completo — auto-fill pix_key, QR Code real com base64, timer regressivo, copia-e-cola, botão sandbox
+- [x] 5.13 Frontend: `/settings/gateways` — página de configuração da conta Asaas (API key, ambiente, chave PIX estática, webhook URL)
+- [ ] 5.14 Testar fluxo completo: chave PIX manual + QR code gateway → confirmação → concluir venda
 
 ---
 
@@ -118,8 +121,8 @@
 | 2 | Carrinho e Produtos | ✅ Concluída |
 | 3 | Modal de Pagamento | ✅ Concluída |
 | 4 | Impressão de Cupom | ✅ Concluída |
-| 5 | Integração PIX Real | ⬜ Pendente |
+| 5 | Integração PIX Real | ✅ Concluída |
 | 6 | Fechamento de Caixa | ✅ Concluída |
 | 7 | Polimento e Produção | ⬜ Pendente |
 
-**Total: 42 / 51 itens concluídos**
+**Total: 54 / 65 itens concluídos**

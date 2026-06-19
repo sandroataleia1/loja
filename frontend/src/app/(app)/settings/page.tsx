@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Building2, Users, ShieldCheck, FileText, User, ChevronRight, Store } from 'lucide-react'
+import { Building2, Users, ShieldCheck, FileText, User, ChevronRight, Store, Banknote } from 'lucide-react'
 import { AppPageHeader } from '@/components/shared/app-page-header'
 import { AppCard } from '@/components/shared/app-card'
 import { Badge } from '@/components/ui/badge'
@@ -164,6 +164,14 @@ export default function SettingsPage() {
             description="Restrinja usuários a lojas específicas."
             href={ROUTES.STORE_ACCESS}
             permission="users.view"
+            hasPermission={hasPermission}
+          />
+          <QuickLink
+            icon={Banknote}
+            title="Gateway PIX"
+            description="Configure sua conta Asaas para recebimento via QR Code."
+            href={ROUTES.SETTINGS_GATEWAYS}
+            permission="settings.view"
             hasPermission={hasPermission}
           />
         </div>

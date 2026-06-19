@@ -8,7 +8,8 @@ export const ROUTES = {
   // App
   HOME:        '/dashboard',
   DASHBOARD:   '/dashboard',
-  SETTINGS:    '/settings',
+  SETTINGS:            '/settings',
+  SETTINGS_GATEWAYS:   '/settings/gateways',
   CUSTOMERS:   '/customers',
   PRODUCTS:    '/products',
   INVENTORY:              '/inventory',
