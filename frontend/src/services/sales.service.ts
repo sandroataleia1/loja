@@ -108,6 +108,19 @@ export const salesService = {
     return apiGet<CashMovement[]>(`/sales/sessions/${sessionUuid}/movements`)
   },
 
+  getSessionSummary(sessionUuid: string): Promise<{
+    session_uuid:     string
+    sale_count:       number
+    total_sales:      number
+    by_method:        Record<string, number>
+    supply_total:     number
+    withdrawal_total: number
+    expected_balance: number
+    opening_balance:  number
+  }> {
+    return apiGet(`/sales/sessions/${sessionUuid}/summary`)
+  },
+
   recordWithdrawal(sessionUuid: string, data: { amount_cents: number; description: string }): Promise<void> {
     return apiPost<void, typeof data>(`/sales/sessions/${sessionUuid}/withdrawal`, data)
   },

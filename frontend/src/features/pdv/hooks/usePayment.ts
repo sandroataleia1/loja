@@ -1,6 +1,7 @@
 'use client'
 
 import { useMutation } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { salesService } from '@/services/sales.service'
 import { usePdvCartStore } from '../stores/pdvCartStore'
 import { usePdvSessionStore } from '../stores/pdvSessionStore'
@@ -15,6 +16,7 @@ export function usePayment() {
   const session       = usePdvSessionStore((s) => s.session)
 
   return useMutation<Sale, Error, PendingPayment[]>({
+    onError: (err) => toast.error(`Erro ao registrar venda: ${err.message}`),
     mutationFn: async (pendingPayments) => {
       const sale = await salesService.createSale({
         session_id:           session!.sessionUuid,

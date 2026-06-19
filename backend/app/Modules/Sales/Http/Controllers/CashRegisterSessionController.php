@@ -103,4 +103,39 @@ final class CashRegisterSessionController extends Controller
 
         return $this->success(CashMovementResource::collection($movements));
     }
+
+    /**
+     * GET /sessions/{session}/summary
+     * Aggregated breakdown for the closing report: sales by payment method + movements.
+     */
+    public function summary(CashRegisterSession $cashRegisterSession): JsonResponse
+    {
+        $agg      = $cashRegisterSession->computeAggregates();
+        $expected = $cashRegisterSession->computeExpectedBalanceCents();
+        $saleCount = $cashRegisterSession->sales()->where('status', 'completed')->count();
+        $totalSales = array_sum([
+            $agg['cash_total'],
+            $agg['pix_total'],
+            $agg['credit_card_total'],
+            $agg['debit_card_total'],
+            $agg['store_credit_total'],
+        ]);
+
+        return $this->success([
+            'session_uuid'    => $cashRegisterSession->uuid,
+            'sale_count'      => $saleCount,
+            'total_sales'     => $totalSales,
+            'by_method'       => [
+                'cash'         => $agg['cash_total'],
+                'pix'          => $agg['pix_total'],
+                'credit_card'  => $agg['credit_card_total'],
+                'debit_card'   => $agg['debit_card_total'],
+                'store_credit' => $agg['store_credit_total'],
+            ],
+            'supply_total'    => $agg['supply_total'],
+            'withdrawal_total'=> $agg['withdrawal_total'],
+            'expected_balance'=> $expected,
+            'opening_balance' => $cashRegisterSession->opening_amount_cents,
+        ]);
+    }
 }

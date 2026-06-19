@@ -1,6 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { pixService, type CreatePixChargeParams, type PixCharge } from '@/services/pix.service'
 
 const PIX_KEYS = {
@@ -19,6 +20,7 @@ export function useCreatePixCharge() {
     onSuccess: (charge) => {
       qc.setQueryData(PIX_KEYS.charge(charge.uuid), charge)
     },
+    onError: (err) => toast.error(`Erro ao gerar QR Code PIX: ${err.message}`),
   })
 }
 

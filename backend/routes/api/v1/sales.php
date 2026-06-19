@@ -31,6 +31,7 @@ Route::post('sessions/{cashRegisterSession}/close',          [CashRegisterSessio
 Route::post('sessions/{cashRegisterSession}/withdrawal',     [CashRegisterSessionController::class, 'withdrawal'])->name('sessions.withdrawal');
 Route::post('sessions/{cashRegisterSession}/supply',         [CashRegisterSessionController::class, 'supply'])->name('sessions.supply');
 Route::get('sessions/{cashRegisterSession}/movements',       [CashRegisterSessionController::class, 'movements'])->name('sessions.movements');
+Route::get('sessions/{cashRegisterSession}/summary',         [CashRegisterSessionController::class, 'summary'])->name('sessions.summary');
 
 /*
 |--------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, DoorOpen, Loader2, AlertCircle } from 'lucide-react'
 import { usePdvSessionStore } from '@/features/pdv/stores/pdvSessionStore'
 import { usePdvCartStore }    from '@/features/pdv/stores/pdvCartStore'
-import { useSessionMovements, useCloseSession } from '@/features/pdv/hooks'
+import { useSessionMovements, useSessionSummary, useCloseSession } from '@/features/pdv/hooks'
 import { ROUTES } from '@/constants'
 import type { CashMovement } from '@/types/shared-types'
 
@@ -62,6 +62,7 @@ export default function FecharCaixaPage() {
   const [error,      setError]      = useState<string | null>(null)
 
   const { data: movements = [], isLoading } = useSessionMovements(session?.sessionUuid ?? null)
+  const { data: summary }                   = useSessionSummary(session?.sessionUuid ?? null)
 
   if (!session) {
     router.replace(ROUTES.PDV)
@@ -151,6 +152,33 @@ export default function FecharCaixaPage() {
             </div>
           )}
         </div>
+
+        {/* Resumo de vendas por método */}
+        {summary && summary.sale_count > 0 && (
+          <div className="bg-card border rounded-2xl overflow-hidden">
+            <p className="px-4 py-3 text-xs text-muted-foreground font-medium uppercase tracking-wide border-b">
+              Vendas — {summary.sale_count} {summary.sale_count === 1 ? 'transação' : 'transações'}
+            </p>
+            <div className="divide-y">
+              {[
+                ['Dinheiro',        summary.by_method.cash,         'text-green-600 dark:text-green-400'],
+                ['PIX',             summary.by_method.pix,          'text-blue-600 dark:text-blue-400'],
+                ['Cartão Crédito',  summary.by_method.credit_card,  ''],
+                ['Cartão Débito',   summary.by_method.debit_card,   ''],
+                ['Crédito da Loja', summary.by_method.store_credit, ''],
+              ].filter(([, v]) => (v as number) > 0).map(([label, value, cls]) => (
+                <div key={label as string} className="flex justify-between items-center px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">{label as string}</span>
+                  <span className={`font-bold tabular-nums ${cls as string}`}>{fmtBRL(value as number)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="border-t px-4 py-2.5 flex justify-between text-sm font-bold">
+              <span>Total vendas</span>
+              <span>{fmtBRL(summary.total_sales)}</span>
+            </div>
+          </div>
+        )}
 
         {/* Movimentações */}
         {isLoading ? (

@@ -4,6 +4,7 @@ const KEYS = [
   ['F4', 'Cobrar'],
   ['F9', 'Cancelar'],
   ['F10', 'Desconto'],
+  ['F11', 'Tela cheia'],
   ['Esc', 'Fechar'],
 ]
 

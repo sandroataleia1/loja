@@ -97,16 +97,30 @@
 
 ---
 
-## ETAPA 7 — Polimento e Produção
+## ETAPA 6 — Fechamento de Caixa e Movimentos ✅
+> Suprimento, sangria, fechamento com conferência de valores.
+
+- [x] 6.1 Criar `frontend/src/app/(pdv)/pdv/caixa/fechar/page.tsx` — formulário de fechamento com contagem de caixa e diferença
+- [x] 6.2 Exibir suprimentos, sangrias e vendas em dinheiro no resumo do fechamento
+- [x] 6.3 Calcular e exibir diferença: saldo esperado vs. valor informado (verde/amarelo/vermelho)
+- [ ] 6.4 Criar componente de relatório de fechamento imprimível (window.print()) — Etapa 7 polish
+- [x] 6.5 Criar `SuprimentoDialog.tsx` — modal para registrar suprimento de caixa
+- [x] 6.6 Criar `SangriaDialog.tsx` — modal para registrar sangria de caixa
+- [x] 6.7 Backend: criar `GET /api/v1/sales/sessions/{session}/summary` — breakdown por método de pagamento + exibição no fechamento
+- [x] 6.8 Integrar suprimento/sangria via menu "Caixa ▼" na PdvTopbar
+
+---
+
+## ETAPA 7 — Polimento e Produção (parcial)
 > Atalhos, UX, performance, permissões e testes finais.
 
-- [ ] 7.1 Implementar atalhos de teclado completos: F1–F12, Escape, Enter, Backspace no carrinho
-- [ ] 7.2 Adicionar loading states em todas as ações (busca, adicionar item, confirmar venda)
-- [ ] 7.3 Adicionar toast de erro com botão "Tentar novamente" nas falhas de API
-- [ ] 7.4 Ativar modo tela cheia automático ao entrar no PDV (Fullscreen API)
-- [ ] 7.5 Prefetch do catálogo ao abrir sessão (React Query com staleTime 5min)
+- [x] 7.1 Atalhos de teclado: F1 (produto), F2 (cliente), F4 (cobrar), F9 (cancelar), F10 (desconto), F11 (tela cheia)
+- [x] 7.3 Toast de erro/sucesso (sonner) nas mutações do PDV: venda, suprimento, sangria, PIX
+- [x] 7.4 Fullscreen API automático ao entrar no PDV — useFullscreen() + usePdvF11()
+- [x] 7.5 Prefetch do catálogo ao montar a página de venda (categorias + produtos iniciais)
+- [x] 7.7 Link "Abrir PDV" já presente no sidebar admin (grupo PDV)
+- [ ] 7.2 Adicionar loading states adicionais (busca, adicionar item, confirmar venda)
 - [ ] 7.6 Configurar permissão `pdv.access` no RBAC do backend
-- [ ] 7.7 Adicionar link "Acessar PDV" no admin (menu lateral ou card no dashboard)
 - [ ] 7.8 Testar fluxo completo: abertura → venda → PIX → cartão parcelado → impressão → fechamento
 - [ ] 7.9 Testar em resolução 1366×768 (monitor de caixa padrão)
 - [ ] 7.10 Deploy: verificar variáveis de ambiente, CORS e HTTPS em produção
@@ -125,4 +139,4 @@
 | 6 | Fechamento de Caixa | ✅ Concluída |
 | 7 | Polimento e Produção | ⬜ Pendente |
 
-**Total: 54 / 65 itens concluídos**
+**Total: 62 / 68 itens concluídos**

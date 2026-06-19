@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { salesService } from '@/services/sales.service'
 import { catalogService } from '@/services/catalog.service'
 import { customerService } from '@/services/customer.service'
@@ -7,6 +8,7 @@ export const PDV_KEYS = {
   REGISTERS:  ['pdv', 'registers']                              as const,
   SESSIONS:   ['pdv', 'sessions']                               as const,
   MOVEMENTS:  (uuid: string) => ['pdv', 'movements', uuid]      as const,
+  SUMMARY:    (uuid: string) => ['pdv', 'summary', uuid]        as const,
   PRODUCTS:   (q: string, cat?: string) => ['pdv', 'products', q, cat] as const,
   CATEGORIES: ['pdv', 'categories']                             as const,
   CUSTOMERS:  (q: string) => ['pdv', 'customers', q]            as const,
@@ -77,6 +79,15 @@ export function useSessionMovements(sessionUuid: string | null) {
   })
 }
 
+export function useSessionSummary(sessionUuid: string | null) {
+  return useQuery({
+    queryKey: PDV_KEYS.SUMMARY(sessionUuid ?? ''),
+    queryFn:  () => salesService.getSessionSummary(sessionUuid!),
+    enabled:  Boolean(sessionUuid),
+    staleTime: 30_000,
+  })
+}
+
 export function useRecordSupply() {
   const qc = useQueryClient()
   return useMutation({
@@ -84,8 +95,11 @@ export function useRecordSupply() {
       sessionUuid: string
       data: { amount_cents: number; description: string }
     }) => salesService.recordSupply(sessionUuid, data),
-    onSuccess: (_, { sessionUuid }) =>
-      qc.invalidateQueries({ queryKey: PDV_KEYS.MOVEMENTS(sessionUuid) }),
+    onSuccess: (_, { sessionUuid }) => {
+      toast.success('Suprimento registrado.')
+      qc.invalidateQueries({ queryKey: PDV_KEYS.MOVEMENTS(sessionUuid) })
+    },
+    onError: (err: Error) => toast.error(`Erro ao registrar suprimento: ${err.message}`),
   })
 }
 
@@ -96,8 +110,11 @@ export function useRecordWithdrawal() {
       sessionUuid: string
       data: { amount_cents: number; description: string }
     }) => salesService.recordWithdrawal(sessionUuid, data),
-    onSuccess: (_, { sessionUuid }) =>
-      qc.invalidateQueries({ queryKey: PDV_KEYS.MOVEMENTS(sessionUuid) }),
+    onSuccess: (_, { sessionUuid }) => {
+      toast.success('Sangria registrada.')
+      qc.invalidateQueries({ queryKey: PDV_KEYS.MOVEMENTS(sessionUuid) })
+    },
+    onError: (err: Error) => toast.error(`Erro ao registrar sangria: ${err.message}`),
   })
 }
 
