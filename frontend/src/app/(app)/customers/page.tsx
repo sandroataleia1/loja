@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
@@ -14,13 +14,19 @@ import { ROUTES } from '@/constants'
 import type { CustomerFilters } from '@/services/customer.service'
 
 export default function CustomersPage() {
-  const [search,   setSearch]   = useState('')
-  const [page,     setPage]     = useState(1)
-  const [deleteUuid, setDeleteUuid] = useState<string | null>(null)
+  const [search,         setSearch]         = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page,           setPage]           = useState(1)
+  const [deleteUuid,     setDeleteUuid]     = useState<string | null>(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(t)
+  }, [search])
 
   // Build filters
   const filters: CustomerFilters = {
-    q:        search  || undefined,
+    q:        debouncedSearch || undefined,
     page,
     per_page: 20,
   }
@@ -40,7 +46,6 @@ export default function CustomersPage() {
       },
       onError: (err) => {
         toast.error(err instanceof Error ? err.message : 'Erro ao excluir cliente.')
-        setDeleteUuid(null)
       },
     })
   }

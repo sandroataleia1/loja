@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -115,7 +115,7 @@ export function CustomerTable({ customers, isLoading, onDelete }: CustomerTableP
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="icon" asChild>
                     <Link href={`${ROUTES.CUSTOMERS}/${customer.uuid}`} aria-label="Ver detalhes">
-                      <Pencil className="h-4 w-4" />
+                      <Eye className="h-4 w-4" />
                     </Link>
                   </Button>
                   {!customer.is_default_consumer && (

@@ -52,10 +52,15 @@ function CustomerDetailContent({ uuid }: { uuid: string }) {
 
   function handleDetachTag(tagUuid: string) {
     detachTag(tagUuid, {
-      onSuccess: () => toast.success('Tag removida.'),
-      onError:   (err) => toast.error(err instanceof Error ? err.message : 'Erro ao remover tag.'),
+      onSuccess: () => {
+        toast.success('Tag removida.')
+        setRemoveTagUuid(null)
+      },
+      onError: (err) => {
+        toast.error(err instanceof Error ? err.message : 'Erro ao remover tag.')
+        setRemoveTagUuid(null)
+      },
     })
-    setRemoveTagUuid(null)
   }
 
   return (
