@@ -51,11 +51,25 @@ apiClient.interceptors.response.use(
   (error: AxiosError<ApiResponse>) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       clearToken()
-      // Avoid redirect loops on the login page itself
       if (!window.location.pathname.startsWith('/auth')) {
         window.location.href = ROUTES.LOGIN
       }
     }
+
+    // Extrai mensagem legível do corpo da resposta do backend.
+    // Laravel retorna { message, errors? } para 409, 422, 403, etc.
+    const data = error.response?.data as
+      | { message?: string; errors?: Record<string, string[]> }
+      | undefined
+
+    if (data?.message) {
+      // Para 422, prefere a primeira mensagem de validação
+      const firstValidation = data.errors
+        ? Object.values(data.errors).flat()[0]
+        : undefined
+      return Promise.reject(new Error(firstValidation ?? data.message))
+    }
+
     return Promise.reject(error)
   }
 )
