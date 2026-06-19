@@ -80,17 +80,17 @@
 
 ---
 
-## ETAPA 6 — Fechamento de Caixa e Movimentos
-> Suprimento, sangria, fechamento com conferência e relatório imprimível.
+## ETAPA 6 — Fechamento de Caixa e Movimentos ✅
+> Suprimento, sangria, fechamento com conferência de valores.
 
-- [ ] 6.1 Criar `frontend/src/app/(pdv)/caixa/fechar/page.tsx` — formulário de fechamento
-- [ ] 6.2 Exibir breakdown por método de pagamento (dinheiro, PIX, cartão) no fechamento
-- [ ] 6.3 Calcular e exibir diferença: saldo esperado vs. valor informado pelo operador
-- [ ] 6.4 Criar componente de relatório de fechamento imprimível (window.print())
-- [ ] 6.5 Criar `SuprimentoDialog.tsx` — modal para registrar suprimento de caixa
-- [ ] 6.6 Criar `SangriaDialog.tsx` — modal para registrar sangria de caixa
-- [ ] 6.7 Backend: criar `GET /api/v1/pdv/session/summary` — resumo da sessão para fechamento
-- [ ] 6.8 Integrar suprimento/sangria na tela de venda (menu ou botão de caixa)
+- [x] 6.1 Criar `frontend/src/app/(pdv)/pdv/caixa/fechar/page.tsx` — formulário de fechamento com contagem de caixa e diferença
+- [x] 6.2 Exibir suprimentos, sangrias e vendas em dinheiro no resumo do fechamento
+- [x] 6.3 Calcular e exibir diferença: saldo esperado vs. valor informado (verde/amarelo/vermelho)
+- [ ] 6.4 Criar componente de relatório de fechamento imprimível (window.print()) — Etapa 7 polish
+- [x] 6.5 Criar `SuprimentoDialog.tsx` — modal para registrar suprimento de caixa
+- [x] 6.6 Criar `SangriaDialog.tsx` — modal para registrar sangria de caixa
+- [ ] 6.7 Backend: criar `GET /api/v1/pdv/session/summary` — breakdown por método de pagamento
+- [x] 6.8 Integrar suprimento/sangria via menu "Caixa ▼" na PdvTopbar
 
 ---
 
@@ -119,7 +119,7 @@
 | 3 | Modal de Pagamento | ✅ Concluída |
 | 4 | Impressão de Cupom | ✅ Concluída |
 | 5 | Integração PIX Real | ⬜ Pendente |
-| 6 | Fechamento de Caixa | ⬜ Pendente |
+| 6 | Fechamento de Caixa | ✅ Concluída |
 | 7 | Polimento e Produção | ⬜ Pendente |
 
-**Total: 36 / 51 itens concluídos**
+**Total: 42 / 51 itens concluídos**

@@ -4,11 +4,12 @@ import { catalogService } from '@/services/catalog.service'
 import { customerService } from '@/services/customer.service'
 
 export const PDV_KEYS = {
-  REGISTERS:  ['pdv', 'registers']                         as const,
-  SESSIONS:   ['pdv', 'sessions']                          as const,
+  REGISTERS:  ['pdv', 'registers']                              as const,
+  SESSIONS:   ['pdv', 'sessions']                               as const,
+  MOVEMENTS:  (uuid: string) => ['pdv', 'movements', uuid]      as const,
   PRODUCTS:   (q: string, cat?: string) => ['pdv', 'products', q, cat] as const,
-  CATEGORIES: ['pdv', 'categories']                        as const,
-  CUSTOMERS:  (q: string) => ['pdv', 'customers', q]       as const,
+  CATEGORIES: ['pdv', 'categories']                             as const,
+  CUSTOMERS:  (q: string) => ['pdv', 'customers', q]            as const,
 }
 
 // ── Caixa ─────────────────────────────────────────────────────────────────────
@@ -61,6 +62,42 @@ export function usePdvCategories() {
     queryKey: PDV_KEYS.CATEGORIES,
     queryFn:  () => catalogService.getCategories(),
     staleTime: 5 * 60_000,
+  })
+}
+
+// ── Movimentos de Caixa ───────────────────────────────────────────────────────
+
+export function useSessionMovements(sessionUuid: string | null) {
+  return useQuery({
+    queryKey: PDV_KEYS.MOVEMENTS(sessionUuid ?? ''),
+    queryFn:  () => salesService.getMovements(sessionUuid!),
+    enabled:  Boolean(sessionUuid),
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  })
+}
+
+export function useRecordSupply() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ sessionUuid, data }: {
+      sessionUuid: string
+      data: { amount_cents: number; description: string }
+    }) => salesService.recordSupply(sessionUuid, data),
+    onSuccess: (_, { sessionUuid }) =>
+      qc.invalidateQueries({ queryKey: PDV_KEYS.MOVEMENTS(sessionUuid) }),
+  })
+}
+
+export function useRecordWithdrawal() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ sessionUuid, data }: {
+      sessionUuid: string
+      data: { amount_cents: number; description: string }
+    }) => salesService.recordWithdrawal(sessionUuid, data),
+    onSuccess: (_, { sessionUuid }) =>
+      qc.invalidateQueries({ queryKey: PDV_KEYS.MOVEMENTS(sessionUuid) }),
   })
 }
 
