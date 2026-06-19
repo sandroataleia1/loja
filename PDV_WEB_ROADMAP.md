@@ -51,29 +51,32 @@
 ---
 
 ## ETAPA 4 — Impressão de Cupom
-> Cupom 80mm via CSS @media print e window.print().
+> Cupom 80mm via CSS @media print e window.print(). Suporta dois modos: NFC-e (fiscal) e Comprovante Interno (não-fiscal).
+> **Regra:** checar `sale.fiscal_status === 'authorized'` para saber se há documento fiscal. Nem toda venda gera NFC-e — a empresa pode operar em modo de faturamento futuro.
 
 - [ ] 4.1 Criar `frontend/src/features/pdv/components/receipt/receipt.print.css` — CSS @media print 80mm
-- [ ] 4.2 Criar `ReceiptDocument.tsx` — HTML do cupom: cabeçalho, itens, pagamentos, NFC-e, rodapé
-- [ ] 4.3 Criar `ReceiptModal.tsx` — modal pós-venda: botões Imprimir / Nova Venda / Ver Detalhes
+- [ ] 4.2 Criar `ReceiptDocument.tsx` — dois modos: `fiscal` (com chave NFC-e e QR Code SEFAZ) e `internal` (comprovante simples)
+- [ ] 4.3 Criar `ReceiptModal.tsx` — modal pós-venda: detecta `sale.fiscal_status` e exibe botão correto (Imprimir Cupom Fiscal ou Imprimir Comprovante)
 - [ ] 4.4 Criar `frontend/src/features/pdv/hooks/usePrintReceipt.ts` — monta portal no body + dispara window.print()
 - [ ] 4.5 Testar impressão em impressora térmica 80mm real (Epson, Bematech ou Elgin)
 
 ---
 
 ## ETAPA 5 — Integração PIX Real
-> Gateway Asaas/Efí no backend + QR code dinâmico + polling de status.
+> Dois modos: **Chave PIX** (manual, já funcional desde Etapa 3) e **QR Code dinâmico** (gateway Asaas/Efí, confirmação automática).
 
-- [ ] 5.1 Backend: criar `PixGatewayContract.php` — interface do gateway PIX
-- [ ] 5.2 Backend: criar `MockPixGateway.php` — simulação para dev/sandbox
-- [ ] 5.3 Backend: criar `AsaasPixGateway.php` (ou `EfiPixGateway.php`) — implementação real
-- [ ] 5.4 Backend: criar `PixController.php` — endpoints POST /charge, GET /charge/{id}, DELETE /charge/{id}
-- [ ] 5.5 Backend: registrar rotas em `routes/api/v1/pdv.php`
-- [ ] 5.6 Backend: criar webhook receiver + `UpdatePixPaymentStatusAction`
-- [ ] 5.7 Backend: adicionar credenciais do gateway em `.env` e `config/services.php`
-- [ ] 5.8 Frontend: criar `frontend/src/features/pdv/hooks/usePixCharge.ts` — polling 2.5s com auto-stop ao pagar/expirar
-- [ ] 5.9 Frontend: atualizar `PixPaymentForm.tsx` — QR code real + timer regressivo + botão copia-e-cola
-- [ ] 5.10 Testar fluxo completo PIX: criação → QR → pagamento → confirmação → concluir venda
+- [ ] 5.1 Backend: adicionar campo `pix_key` e `pix_key_type` à tabela de configurações da loja (`Store` ou `FiscalSettings`)
+- [ ] 5.2 Backend: criar `PixGatewayContract.php` — interface do gateway PIX
+- [ ] 5.3 Backend: criar `MockPixGateway.php` — simulação para dev/sandbox
+- [ ] 5.4 Backend: criar `AsaasPixGateway.php` (ou `EfiPixGateway.php`) — implementação real
+- [ ] 5.5 Backend: criar `PixController.php` — endpoints POST /charge, GET /charge/{id}, DELETE /charge/{id}
+- [ ] 5.6 Backend: registrar rotas em `routes/api/v1/pdv.php`
+- [ ] 5.7 Backend: criar webhook receiver + `UpdatePixPaymentStatusAction`
+- [ ] 5.8 Backend: adicionar credenciais do gateway em `.env` e `config/services.php`
+- [ ] 5.9 Frontend: buscar `store.pix_key` e pré-preencher o campo de chave PIX no `PixPaymentForm`
+- [ ] 5.10 Frontend: criar `frontend/src/features/pdv/hooks/usePixCharge.ts` — polling 2.5s com auto-stop ao pagar/expirar
+- [ ] 5.11 Frontend: modo QR Code real no `PixPaymentForm` — QR code dinâmico + timer regressivo + botão copia-e-cola
+- [ ] 5.12 Testar fluxo completo: chave PIX manual + QR code gateway → confirmação → concluir venda
 
 ---
 
