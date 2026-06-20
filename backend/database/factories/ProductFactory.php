@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Modules\Catalog\Enums\ProductGenderEnum;
 use App\Modules\Catalog\Enums\ProductStatusEnum;
 use App\Modules\Catalog\Enums\ProductTypeEnum;
+use App\Modules\Catalog\Enums\UnitOfMeasureEnum;
 use App\Modules\Catalog\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -26,7 +26,7 @@ final class ProductFactory extends Factory
             'name'              => $name,
             'slug'              => Str::slug($name) . '-' . Str::random(4),
             'type'              => ProductTypeEnum::Simple,
-            'gender'            => ProductGenderEnum::All,
+            'unit_of_measure'   => UnitOfMeasureEnum::UN,
             'status'            => ProductStatusEnum::Draft,
             'is_featured'       => false,
             'is_digital'        => false,

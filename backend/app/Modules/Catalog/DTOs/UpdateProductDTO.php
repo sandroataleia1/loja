@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Modules\Catalog\DTOs;
 
-use App\Modules\Catalog\Enums\ProductGenderEnum;
 use App\Modules\Catalog\Enums\ProductStatusEnum;
 use App\Modules\Catalog\Enums\ProductTypeEnum;
+use App\Modules\Catalog\Enums\UnitOfMeasureEnum;
 use App\Shared\DTOs\BaseDTO;
 use Illuminate\Http\Request;
 
 final readonly class UpdateProductDTO extends BaseDTO
 {
     public function __construct(
-        public ?string            $name,
-        public ?ProductTypeEnum   $type,
-        public ?ProductGenderEnum $gender,
-        public ?ProductStatusEnum $status,
+        public ?string             $name,
+        public ?ProductTypeEnum    $type,
+        public ?UnitOfMeasureEnum  $unitOfMeasure,
+        public ?ProductStatusEnum  $status,
         public ?string            $brandId,
         public ?array            $categoryUuids,
         public ?string           $collectionId,
@@ -34,7 +34,9 @@ final readonly class UpdateProductDTO extends BaseDTO
         return new static(
             name:             $request->string('name')->value() ?: null,
             type:             $request->has('type') ? ProductTypeEnum::from($request->string('type')->toString()) : null,
-            gender:           $request->has('gender') ? ProductGenderEnum::from($request->string('gender')->toString()) : null,
+            unitOfMeasure:    $request->has('unit_of_measure')
+                                ? ($request->filled('unit_of_measure') ? UnitOfMeasureEnum::from($request->string('unit_of_measure')->toString()) : null)
+                                : null,
             status:           $request->has('status') ? ProductStatusEnum::from($request->string('status')->toString()) : null,
             brandId:          $request->has('brand_id') ? ($request->string('brand_id')->value() ?: null) : null,
             categoryUuids:    $request->has('category_uuids') ? $request->array('category_uuids') : null,

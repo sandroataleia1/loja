@@ -144,8 +144,8 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
             <AppCard title="Informações Gerais">
               <dl className="grid gap-3 sm:grid-cols-2 text-sm">
                 <div>
-                  <dt className="font-medium text-muted-foreground">Gênero</dt>
-                  <dd>{product.gender_label}</dd>
+                  <dt className="font-medium text-muted-foreground">Unidade de Medida</dt>
+                  <dd>{product.unit_of_measure_label ?? product.unit_of_measure ?? '—'}</dd>
                 </div>
                 <div>
                   <dt className="font-medium text-muted-foreground">Visibilidade</dt>

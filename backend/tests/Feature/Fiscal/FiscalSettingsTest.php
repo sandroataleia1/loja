@@ -12,19 +12,19 @@ beforeEach(function (): void {
 describe('PUT /fiscal/settings — configuração fiscal', function (): void {
     it('manager configura fiscal settings pela primeira vez', function (): void {
         $this->putJson('/api/v1/fiscal/settings', [
-            'company_name' => 'Loja Moda S/A',
+            'company_name' => 'Construtora Demo S/A',
             'cnpj'         => '12.345.678/0001-90',
             'ie'           => '123.456.789.000',
             'crt'          => 1,
             'is_active'    => true,
         ])->assertOk()
-            ->assertJsonPath('data.company_name', 'Loja Moda S/A')
+            ->assertJsonPath('data.company_name', 'Construtora Demo S/A')
             ->assertJsonPath('data.crt', 1)
             ->assertJsonPath('data.has_csc', false);
 
         $this->assertDatabaseHas('tenant_fiscal_settings', [
             'tenant_id'    => $this->tenant->uuid,
-            'company_name' => 'Loja Moda S/A',
+            'company_name' => 'Construtora Demo S/A',
         ]);
     });
 
@@ -108,10 +108,10 @@ describe('GET /fiscal/settings — consulta configuração', function (): void {
 describe('Tax Profiles — perfis tributários', function (): void {
     it('cria perfil fiscal', function (): void {
         $this->postJson('/api/v1/fiscal/tax-profiles', [
-            'name'   => 'Vestuário Simples',
+            'name'   => 'Materiais Construção Simples',
             'regime' => 'simples_nacional',
         ])->assertStatus(201)
-            ->assertJsonPath('data.name', 'Vestuário Simples')
+            ->assertJsonPath('data.name', 'Materiais Construção Simples')
             ->assertJsonPath('data.regime', 'simples_nacional');
     });
 

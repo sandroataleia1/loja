@@ -41,6 +41,7 @@ function AbrirCaixaForm() {
         sessionUuid:         session.uuid,
         registerUuid:        regUuid,
         registerName:        regName,
+        storeUuid:           session.store_id,
         openedAt:            session.opened_at,
         openingBalanceCents: valueCents,
       })

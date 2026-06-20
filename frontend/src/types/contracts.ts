@@ -1,8 +1,8 @@
 import type {
   ProductType,
-  ProductGender,
   ProductStatus,
   ProductVisibility,
+  UnitOfMeasure,
   AttributeType,
   ContactType,
   PersonType,
@@ -26,8 +26,8 @@ export type {
   UserRole,
   ProductStatus,
   ProductType,
-  ProductGender,
   ProductVisibility,
+  UnitOfMeasure,
   AttributeType,
   SaleStatus,
   PaymentMethod,
@@ -114,7 +114,7 @@ export interface ResetPasswordRequest {
 export interface CreateProductRequest {
   name:               string
   type?:              ProductType
-  gender?:            ProductGender
+  unit_of_measure?:   UnitOfMeasure | null
   status?:            ProductStatus
   visibility?:        ProductVisibility
   brand_id?:          string | null

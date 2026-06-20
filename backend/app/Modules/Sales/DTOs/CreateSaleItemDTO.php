@@ -11,7 +11,7 @@ final readonly class CreateSaleItemDTO
         public string  $skuSnapshot,
         public string  $nameSnapshot,
         public array   $attributesSnapshot,
-        public int     $quantity,
+        public float   $quantity,
         public int     $unitPriceCents,
         public ?int    $costPriceCents,
         public int     $discountAmountCents,
@@ -24,7 +24,7 @@ final readonly class CreateSaleItemDTO
             skuSnapshot:        $data['sku_snapshot'],
             nameSnapshot:       $data['name_snapshot'],
             attributesSnapshot: $data['attributes_snapshot'] ?? [],
-            quantity:           (int) $data['quantity'],
+            quantity:           (float) $data['quantity'],
             unitPriceCents:     (int) $data['unit_price_cents'],
             costPriceCents:     isset($data['cost_price_cents']) ? (int) $data['cost_price_cents'] : null,
             discountAmountCents: (int) ($data['discount_amount_cents'] ?? 0),
@@ -33,7 +33,7 @@ final readonly class CreateSaleItemDTO
 
     public function subtotalCents(): int
     {
-        return $this->quantity * $this->unitPriceCents;
+        return (int) round($this->quantity * $this->unitPriceCents);
     }
 
     public function totalCents(): int

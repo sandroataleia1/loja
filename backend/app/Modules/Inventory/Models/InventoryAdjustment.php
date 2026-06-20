@@ -35,9 +35,9 @@ final class InventoryAdjustment extends Model
     protected function casts(): array
     {
         return [
-            'previous_quantity' => 'integer',
-            'new_quantity'      => 'integer',
-            'difference'        => 'integer',
+            'previous_quantity' => 'decimal:3',
+            'new_quantity'      => 'decimal:3',
+            'difference'        => 'decimal:3',
             'created_at'        => 'datetime',
             'updated_at'        => 'datetime',
         ];

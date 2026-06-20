@@ -30,8 +30,8 @@ describe('POST /sales', function (): void {
             'store_id' => $this->store->uuid,
             'items'    => [[
                 'variant_id'       => $this->variant->uuid,
-                'sku_snapshot'     => 'CAM-001',
-                'name_snapshot'    => 'Camiseta Branca M',
+                'sku_snapshot'     => 'ARG-001',
+                'name_snapshot'    => 'Argamassa ACIII 20kg',
                 'quantity'         => 2,
                 'unit_price_cents' => 5000,
             ]],
@@ -47,8 +47,8 @@ describe('POST /sales', function (): void {
             'store_id'  => $this->store->uuid,
             'sync_uuid' => $syncUuid,
             'items'     => [[
-                'sku_snapshot'     => 'CAM-001',
-                'name_snapshot'    => 'Camiseta',
+                'sku_snapshot'     => 'CIM-001',
+                'name_snapshot'    => 'Cimento CP II-E 50kg',
                 'quantity'         => 1,
                 'unit_price_cents' => 3000,
             ]],
@@ -58,8 +58,8 @@ describe('POST /sales', function (): void {
             'store_id'  => $this->store->uuid,
             'sync_uuid' => $syncUuid,
             'items'     => [[
-                'sku_snapshot'     => 'CAM-001',
-                'name_snapshot'    => 'Camiseta',
+                'sku_snapshot'     => 'CIM-001',
+                'name_snapshot'    => 'Cimento CP II-E 50kg',
                 'quantity'         => 1,
                 'unit_price_cents' => 3000,
             ]],

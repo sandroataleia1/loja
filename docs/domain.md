@@ -1,4 +1,4 @@
-# Documento de Domínio — Plataforma Operacional SaaS para Varejo Moda
+# Documento de Domínio — Plataforma Operacional SaaS para Varejo de Material de Construção
 
 ## Objetivo
 
@@ -21,7 +21,7 @@ A plataforma NÃO é um ERP contábil tradicional.
 
 A plataforma é:
 
-> uma plataforma operacional omnichannel para varejo moda.
+> uma plataforma operacional omnichannel para varejo de material de construção.
 
 Foco principal:
 
@@ -83,9 +83,9 @@ Toda operação pertence obrigatoriamente a um tenant.
 
 ## Exemplos
 
-- Loja Moda Center
-- Fashion Prime
-- Urban Wear
+- Construção Center
+- Depósito & Ferragens Prime
+- Material Total
 
 ---
 
@@ -126,7 +126,7 @@ Uma empresa pode possuir múltiplas lojas.
 ## Exemplos
 
 Empresa:
-Moda Center
+Construção Center
 
 Lojas:
 
@@ -708,7 +708,7 @@ A arquitetura deve suportar:
 
 # Objetivo Final
 
-Construir uma plataforma operacional sólida, escalável e sustentável para varejo moda, evitando:
+Construir uma plataforma operacional sólida, escalável e sustentável para varejo de material de construção, evitando:
 
 - dívida técnica
 - acoplamento excessivo

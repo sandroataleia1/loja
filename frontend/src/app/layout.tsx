@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     template: '%s | Store Admin',
     default:  'Store Admin',
   },
-  description: 'Plataforma operacional para varejo moda',
+  description: 'Plataforma operacional para varejo de material de construção',
   icons: {
     apple: '/icon-light.png',
   },

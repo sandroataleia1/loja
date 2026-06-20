@@ -26,7 +26,7 @@ final class SaleReturnItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity_returned'  => 'integer',
+            'quantity_returned'  => 'decimal:3',
             'unit_price_cents'   => 'integer',
             'refund_amount_cents' => 'integer',
             'created_at'         => 'datetime',

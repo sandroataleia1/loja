@@ -24,7 +24,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
           />
           <span className="text-3xl font-bold tracking-tight text-foreground">Loomi</span>
         </div>
-        <p className="text-sm text-muted-foreground">Plataforma operacional para varejo moda</p>
+        <p className="text-sm text-muted-foreground">Plataforma operacional para varejo de material de construção</p>
       </div>
       <div className="w-full max-w-md">{children}</div>
     </div>

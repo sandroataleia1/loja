@@ -14,25 +14,24 @@ import type {
 // ── Create Sale Payload ───────────────────────────────────────────────────────
 
 export interface CreateSalePayload {
-  session_id:           string
-  customer_id:          string | null
-  discount_total_cents?: number
-  notes?:               string | null
+  store_id:              string
+  session_id:            string
+  customer_id:           string | null
+  notes?:                string | null
   items: Array<{
-    product_uuid:          string
-    variant_uuid?:         string | null
-    product_name:          string
-    product_sku:           string
+    variant_id?:           string | null
+    sku_snapshot:          string
+    name_snapshot:         string
     quantity:              number
     unit_price_cents:      number
     discount_amount_cents?: number
   }>
   payments: Array<{
-    method:        string
-    amount_cents:  number
-    installments?: number
-    reference?:    string
-    metadata?:     Record<string, unknown>
+    method:               string
+    amount_cents:         number
+    external_reference?:  string
+    notes?:               string
+    metadata?:            Record<string, unknown>
   }>
 }
 

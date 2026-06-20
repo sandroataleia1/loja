@@ -54,21 +54,21 @@ final class InventoryBalance extends BaseModel
     protected function casts(): array
     {
         return array_merge(parent::casts(), [
-            'quantity'          => 'integer',
-            'reserved_quantity' => 'integer',
+            'quantity'          => 'decimal:3',
+            'reserved_quantity' => 'decimal:3',
         ]);
     }
 
     // ── Computed ──────────────────────────────────────────────────────────────
 
-    public function getAvailableQuantityAttribute(): int
+    public function getAvailableQuantityAttribute(): float
     {
-        return $this->quantity - $this->reserved_quantity;
+        return (float) $this->quantity - (float) $this->reserved_quantity;
     }
 
     // ── Controlled mutators (use only via Actions) ────────────────────────────
 
-    public function applyQuantityChange(int $delta, int $reservedDelta = 0): void
+    public function applyQuantityChange(float|int $delta, float|int $reservedDelta = 0): void
     {
         $this->getConnection()->table($this->table)
             ->where($this->getKeyName(), $this->getKey())

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Catalog\Http\Requests;
 
-use App\Modules\Catalog\Enums\ProductGenderEnum;
 use App\Modules\Catalog\Enums\ProductStatusEnum;
 use App\Modules\Catalog\Enums\ProductTypeEnum;
 use App\Modules\Catalog\Enums\ProductVisibilityEnum;
+use App\Modules\Catalog\Enums\UnitOfMeasureEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +18,7 @@ final class StoreProductRequest extends FormRequest
         return [
             'name'              => ['required', 'string', 'max:200'],
             'type'              => ['sometimes', Rule::enum(ProductTypeEnum::class)],
-            'gender'            => ['sometimes', Rule::enum(ProductGenderEnum::class)],
+            'unit_of_measure'   => ['nullable', Rule::enum(UnitOfMeasureEnum::class)],
             'status'            => ['sometimes', Rule::enum(ProductStatusEnum::class)],
             'visibility'        => ['sometimes', Rule::enum(ProductVisibilityEnum::class)],
             'base_price'        => ['sometimes', 'nullable', 'numeric', 'min:0'],

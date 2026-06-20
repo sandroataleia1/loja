@@ -26,22 +26,22 @@ describe('Criar variante', function (): void {
 
         $response = $this->postJson('/api/v1/catalog/variants', [
             'product_id'  => $product->uuid,
-            'sku'         => 'CAM-P-AZ',
+            'sku'         => 'CBL-2P5-100M',
             'price_cents' => 5990,
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.sku', 'CAM-P-AZ')
+            ->assertJsonPath('data.sku', 'CBL-2P5-100M')
             ->assertJsonPath('data.price_cents', 5990);
     });
 
     it('rejeita SKU duplicado', function (): void {
         $product = Product::factory()->create();
-        Variant::factory()->for($product, 'product')->create(['sku' => 'CAM-P-AZ']);
+        Variant::factory()->for($product, 'product')->create(['sku' => 'CBL-2P5-100M']);
 
         $this->postJson('/api/v1/catalog/variants', [
             'product_id'  => $product->uuid,
-            'sku'         => 'CAM-P-AZ',
+            'sku'         => 'CBL-2P5-100M',
             'price_cents' => 3990,
         ])->assertConflict();
     });

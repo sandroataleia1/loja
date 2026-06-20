@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Catalog\DTOs;
 
-use App\Modules\Catalog\Enums\ProductGenderEnum;
 use App\Modules\Catalog\Enums\ProductStatusEnum;
 use App\Modules\Catalog\Enums\ProductTypeEnum;
+use App\Modules\Catalog\Enums\UnitOfMeasureEnum;
 use App\Shared\DTOs\BaseDTO;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -14,11 +14,11 @@ use Illuminate\Support\Str;
 final readonly class CreateProductDTO extends BaseDTO
 {
     public function __construct(
-        public string            $name,
-        public string            $slug,
-        public ProductTypeEnum   $type,
-        public ProductGenderEnum $gender,
-        public ProductStatusEnum $status,
+        public string             $name,
+        public string             $slug,
+        public ProductTypeEnum    $type,
+        public ?UnitOfMeasureEnum $unitOfMeasure,
+        public ProductStatusEnum  $status,
         public ?string           $brandId,
         public ?array            $categoryUuids,
         public ?string           $collectionId,
@@ -41,7 +41,9 @@ final readonly class CreateProductDTO extends BaseDTO
             name:                 $request->string('name')->toString(),
             slug:                 Str::slug($request->string('name')->toString()),
             type:                 ProductTypeEnum::from($request->string('type', 'simple')->toString()),
-            gender:               ProductGenderEnum::from($request->string('gender', 'all')->toString()),
+            unitOfMeasure:        $request->filled('unit_of_measure')
+                                    ? UnitOfMeasureEnum::from($request->string('unit_of_measure')->toString())
+                                    : null,
             status:               ProductStatusEnum::from($request->string('status', 'draft')->toString()),
             brandId:              $request->string('brand_id')->value() ?: null,
             categoryUuids:        $request->has('category_uuids') ? $request->array('category_uuids') : null,

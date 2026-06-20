@@ -5,6 +5,9 @@ import type { ReceiptData } from '../../types'
 const fmtBRL = (cents: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100)
 
+const fmtQty = (qty: number) =>
+  qty.toLocaleString('pt-BR', { maximumFractionDigits: 3 })
+
 const fmtDateTime = (iso: string) =>
   new Date(iso).toLocaleString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -94,13 +97,13 @@ export function ReceiptDocument({ data }: Props) {
 
       {/* ── Itens ─────────────────────────────────────────────────── */}
       {items.map((item) => {
-        const lineTotal = item.unitPriceCents * item.quantity - item.discountCents
+        const lineTotal = Math.round(item.unitPriceCents * item.quantity) - item.discountCents
         return (
           <div key={item.id} style={{ marginBottom: '4px' }}>
             <p style={{ wordBreak: 'break-word' }}>{item.name}</p>
             <div style={{ ...S.row, ...S.small }}>
               <span>
-                {item.quantity}x {fmtBRL(item.unitPriceCents)}
+                {fmtQty(item.quantity)}{item.unitOfMeasure ? ` ${item.unitOfMeasure}` : ''}{' × '}{fmtBRL(item.unitPriceCents)}
                 {item.sku ? <span style={{ color: '#666' }}> ({item.sku})</span> : null}
               </span>
               <span style={S.bold}>{fmtBRL(lineTotal)}</span>

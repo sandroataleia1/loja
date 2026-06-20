@@ -21,14 +21,14 @@ beforeEach(function (): void {
 describe('POST /catalog/products — conteúdo comercial', function (): void {
     it('cria produto com campos de conteúdo comercial', function (): void {
         $this->postJson('/api/v1/catalog/products', [
-            'name'                   => 'Vestido Floral',
-            'marketing_description'  => 'O vestido mais vendido da estação!',
-            'internal_notes'         => 'Fornecedor: ABC Têxtil — prazo 15 dias.',
+            'name'                   => 'Porcelanato Polido Cinza 60x60cm',
+            'marketing_description'  => 'O porcelanato mais vendido da temporada!',
+            'internal_notes'         => 'Fornecedor: Portobello — prazo 15 dias.',
             'season'                 => 'Verão 2026',
             'launch_date'            => '2026-09-01',
             'is_publishable'         => true,
         ])->assertStatus(201)
-            ->assertJsonPath('data.marketing_description', 'O vestido mais vendido da estação!')
+            ->assertJsonPath('data.marketing_description', 'O porcelanato mais vendido da temporada!')
             ->assertJsonPath('data.season', 'Verão 2026')
             ->assertJsonPath('data.launch_date', '2026-09-01')
             ->assertJsonPath('data.is_publishable', true);

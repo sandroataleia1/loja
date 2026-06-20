@@ -104,11 +104,11 @@ function generateSalesChart(): DashboardSalesChartPoint[] {
 const MOCK_SALES_CHART: DashboardSalesChartPoint[] = generateSalesChart()
 
 const MOCK_CATEGORY_CHART: DashboardCategoryChartPoint[] = [
-  { category: 'Roupas',       revenue: 52_400, orders: 420 },
-  { category: 'Calçados',     revenue: 38_100, orders: 310 },
-  { category: 'Acessórios',   revenue: 21_800, orders: 280 },
-  { category: 'Eletrônicos',  revenue: 19_600, orders: 95  },
-  { category: 'Casa & Deco',  revenue: 16_420, orders: 179 },
+  { category: 'Cimento e Areia',       revenue: 52_400, orders: 420 },
+  { category: 'Pisos e Revestimentos', revenue: 38_100, orders: 310 },
+  { category: 'Hidráulica',            revenue: 21_800, orders: 280 },
+  { category: 'Elétrica',              revenue: 19_600, orders: 95  },
+  { category: 'Ferragens',             revenue: 16_420, orders: 179 },
 ]
 
 const MOCK_CHANNEL_CHART: DashboardChannelChartPoint[] = [
@@ -162,19 +162,19 @@ const MOCK_RECENT_SALES: DashboardRecentSale[] = [
 ]
 
 const MOCK_TOP_PRODUCTS: DashboardTopProduct[] = [
-  { id: 'p1', name: 'Tênis Casual Conforto',   sku: 'TEN-001', revenue: 18_200, quantity: 182, trend: 'up'      },
-  { id: 'p2', name: 'Camiseta Premium Branca',  sku: 'CAM-012', revenue: 12_400, quantity: 310, trend: 'up'      },
-  { id: 'p3', name: 'Calça Jeans Slim',         sku: 'CAL-008', revenue: 9_800,  quantity: 98,  trend: 'neutral' },
-  { id: 'p4', name: 'Bolsa Couro Feminina',     sku: 'BOL-003', revenue: 8_650,  quantity: 55,  trend: 'up'      },
-  { id: 'p5', name: 'Óculos de Sol Polarizado', sku: 'OCS-021', revenue: 6_300,  quantity: 126, trend: 'down'    },
+  { id: 'p1', name: 'Cimento CP II-E 50kg',       sku: 'CIM-001', revenue: 18_200, quantity: 182, trend: 'up'      },
+  { id: 'p2', name: 'Porcelanato Polido 60x60cm',  sku: 'POR-012', revenue: 12_400, quantity: 310, trend: 'up'      },
+  { id: 'p3', name: 'Cabo Flexível 2,5mm² 100m',   sku: 'CBL-008', revenue: 9_800,  quantity: 98,  trend: 'neutral' },
+  { id: 'p4', name: 'Argamassa AC-III 20kg',       sku: 'ARG-003', revenue: 8_650,  quantity: 55,  trend: 'up'      },
+  { id: 'p5', name: 'Tubo PVC Soldável 50mm',      sku: 'TUB-021', revenue: 6_300,  quantity: 126, trend: 'down'    },
 ]
 
 const MOCK_STALE_PRODUCTS: DashboardStaleProduct[] = [
-  { id: 'sp1', name: 'Blusa Tricô Inverno',    sku: 'BLU-044', stock: 28, lastSoldAt: '2026-03-10', daysSinceSale: 81  },
-  { id: 'sp2', name: 'Chapéu Panamá',          sku: 'CHA-007', stock: 15, lastSoldAt: '2026-03-22', daysSinceSale: 69  },
-  { id: 'sp3', name: 'Meias Femininas Kit 6',  sku: 'MEI-002', stock: 52, lastSoldAt: '2026-04-01', daysSinceSale: 59  },
-  { id: 'sp4', name: 'Cinto Clássico Marrom',  sku: 'CIN-011', stock: 9,  lastSoldAt: '2026-04-05', daysSinceSale: 55  },
-  { id: 'sp5', name: 'Perfume Importado 50ml', sku: 'PER-019', stock: 6,  lastSoldAt: null,          daysSinceSale: 120 },
+  { id: 'sp1', name: 'Impermeabilizante Tegla 18L', sku: 'IMP-044', stock: 28, lastSoldAt: '2026-03-10', daysSinceSale: 81  },
+  { id: 'sp2', name: 'Telha Ondulada 2,13m',        sku: 'TEL-007', stock: 15, lastSoldAt: '2026-03-22', daysSinceSale: 69  },
+  { id: 'sp3', name: 'Kit Registro + Válvula',       sku: 'KIT-002', stock: 52, lastSoldAt: '2026-04-01', daysSinceSale: 59  },
+  { id: 'sp4', name: 'Disjuntor Bipolar 40A',        sku: 'DIS-011', stock: 9,  lastSoldAt: '2026-04-05', daysSinceSale: 55  },
+  { id: 'sp5', name: 'Tinta Esmalte 900ml',          sku: 'TIN-019', stock: 6,  lastSoldAt: null,          daysSinceSale: 120 },
 ]
 
 export const MOCK_DASHBOARD_DATA: DashboardData = {

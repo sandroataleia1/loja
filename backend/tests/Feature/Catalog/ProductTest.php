@@ -68,22 +68,22 @@ describe('Listar produtos', function (): void {
 describe('Criar produto', function (): void {
     it('cria produto simples com dados mínimos', function (): void {
         $response = $this->postJson('/api/v1/catalog/products', [
-            'name' => 'Camiseta Básica',
+            'name' => 'Tijolo Cerâmico 9x19x19cm',
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.name', 'Camiseta Básica')
+            ->assertJsonPath('data.name', 'Tijolo Cerâmico 9x19x19cm')
             ->assertJsonPath('data.type', 'simple')
             ->assertJsonPath('data.status', 'draft');
 
-        $this->assertDatabaseHas('catalog_products', ['name' => 'Camiseta Básica']);
+        $this->assertDatabaseHas('catalog_products', ['name' => 'Tijolo Cerâmico 9x19x19cm']);
     });
 
     it('cria produto com brand_id', function (): void {
         $brand = Brand::factory()->create();
 
         $this->postJson('/api/v1/catalog/products', [
-            'name'     => 'Calça Jeans',
+            'name'     => 'Parafuso Philips 4,2x38mm c/100',
             'brand_id' => $brand->uuid,
         ])->assertCreated();
     });
@@ -94,10 +94,10 @@ describe('Criar produto', function (): void {
     });
 
     it('rejeita slug duplicado', function (): void {
-        Product::factory()->create(['name' => 'Camiseta', 'slug' => 'camiseta']);
+        Product::factory()->create(['name' => 'Argamassa', 'slug' => 'argamassa']);
 
         // mesmo slug será gerado para o mesmo nome
-        $this->postJson('/api/v1/catalog/products', ['name' => 'Camiseta'])
+        $this->postJson('/api/v1/catalog/products', ['name' => 'Argamassa'])
             ->assertConflict();
     });
 
@@ -106,23 +106,23 @@ describe('Criar produto', function (): void {
         $tenant2 = Tenant::factory()->create();
 
         $this->actingAsTenantUser($tenant1);
-        Product::factory()->create(['name' => 'Camiseta', 'slug' => 'camiseta']);
+        Product::factory()->create(['name' => 'Argamassa', 'slug' => 'argamassa']);
 
         $this->actingAsTenantUser($tenant2);
 
-        $this->postJson('/api/v1/catalog/products', ['name' => 'Camiseta'])
+        $this->postJson('/api/v1/catalog/products', ['name' => 'Argamassa'])
             ->assertCreated();
     });
 });
 
 describe('Exibir produto', function (): void {
     it('retorna produto com relacionamentos', function (): void {
-        $product = Product::factory()->create(['name' => 'Vestido Floral']);
+        $product = Product::factory()->create(['name' => 'Porcelanato Polido 60x60cm']);
 
         $this->getJson("/api/v1/catalog/products/{$product->uuid}")
             ->assertOk()
             ->assertJsonPath('data.uuid', $product->uuid)
-            ->assertJsonPath('data.name', 'Vestido Floral')
+            ->assertJsonPath('data.name', 'Porcelanato Polido 60x60cm')
             ->assertJsonStructure(['data' => ['variants', 'images', 'tags']]);
     });
 

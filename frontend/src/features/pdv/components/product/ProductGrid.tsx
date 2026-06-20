@@ -85,6 +85,7 @@ export function ProductGrid() {
       unitPriceCents: variant.price_cents,
       quantity:       1,
       discountCents:  0,
+      unitOfMeasure:  product.unit_of_measure ?? null,
     })
   }
 

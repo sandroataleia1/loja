@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Catalog\Models;
 
-use App\Modules\Catalog\Enums\ProductGenderEnum;
 use App\Modules\Catalog\Enums\ProductStatusEnum;
 use App\Modules\Catalog\Enums\ProductTypeEnum;
 use App\Modules\Catalog\Enums\ProductVisibilityEnum;
+use App\Modules\Catalog\Enums\UnitOfMeasureEnum;
 use App\Modules\Media\Models\MediaAsset;
 use App\Shared\Models\BaseModel;
 use Database\Factories\ProductFactory;
@@ -40,7 +40,7 @@ final class Product extends BaseModel
         'marketing_description',
         'internal_notes',
         'type',
-        'gender',
+        'unit_of_measure',
         'status',
         'visibility',
         'base_price',
@@ -63,7 +63,7 @@ final class Product extends BaseModel
     {
         return array_merge(parent::casts(), [
             'type'              => ProductTypeEnum::class,
-            'gender'            => ProductGenderEnum::class,
+            'unit_of_measure'   => UnitOfMeasureEnum::class,
             'status'            => ProductStatusEnum::class,
             'visibility'        => ProductVisibilityEnum::class,
             'base_price'        => 'decimal:2',

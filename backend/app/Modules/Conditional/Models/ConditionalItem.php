@@ -33,10 +33,10 @@ final class ConditionalItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity'          => 'integer',
+            'quantity'          => 'decimal:3',
             'unit_price_cents'  => 'integer',
-            'returned_quantity' => 'integer',
-            'sold_quantity'     => 'integer',
+            'returned_quantity' => 'decimal:3',
+            'sold_quantity'     => 'decimal:3',
         ];
     }
 
@@ -54,13 +54,13 @@ final class ConditionalItem extends Model
 
     // ── Domain helpers ────────────────────────────────────────────────────────
 
-    public function pendingQuantity(): int
+    public function pendingQuantity(): float
     {
-        return $this->quantity - $this->returned_quantity - $this->sold_quantity;
+        return (float) $this->quantity - (float) $this->returned_quantity - (float) $this->sold_quantity;
     }
 
     public function totalCents(): int
     {
-        return $this->quantity * $this->unit_price_cents;
+        return (int) round((float) $this->quantity * (int) $this->unit_price_cents);
     }
 }

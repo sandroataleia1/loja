@@ -26,7 +26,7 @@ final class PurchaseReceiptItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity_received' => 'integer',
+            'quantity_received' => 'decimal:3',
             'unit_cost'         => 'decimal:2',
         ];
     }

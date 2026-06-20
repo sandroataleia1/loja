@@ -19,7 +19,7 @@ enum ReturnReasonEnum: string
         return match ($this) {
             self::Defective        => 'Produto com defeito',
             self::WrongItem        => 'Item errado enviado',
-            self::DoesNotFit       => 'Não serviu / tamanho errado',
+            self::DoesNotFit       => 'Produto inadequado / medida incorreta',
             self::CustomerChanged  => 'Desistência do cliente',
             self::DamagedInTransit => 'Avariado no transporte',
             self::QualityIssue     => 'Problema de qualidade',

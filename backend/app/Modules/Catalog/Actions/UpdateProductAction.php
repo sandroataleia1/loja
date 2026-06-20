@@ -21,7 +21,7 @@ final readonly class UpdateProductAction
                 'name'              => $dto->name,
                 'slug'              => $dto->name !== null ? Str::slug($dto->name) : null,
                 'type'              => $dto->type?->value,
-                'gender'            => $dto->gender?->value,
+                'unit_of_measure'   => $dto->unitOfMeasure?->value,
                 'status'            => $dto->status?->value,
                 'brand_id'          => $dto->brandId,
                 'collection_id'     => $dto->collectionId,

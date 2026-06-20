@@ -130,7 +130,7 @@ describe('Código de variante derivado do produto', function (): void {
 describe('Código gerado na criação via API', function (): void {
     it('produto criado via API recebe código PRO', function (): void {
         $this->postJson('/api/v1/catalog/products', [
-            'name' => 'Camiseta Básica',
+            'name' => 'Tijolo Cerâmico',
             'type' => 'simple',
         ])->assertStatus(201)
             ->assertJsonPath('data.code', 'PRO000001');

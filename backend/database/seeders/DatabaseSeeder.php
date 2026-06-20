@@ -36,6 +36,10 @@ final class DatabaseSeeder extends Seeder
 
         User::factory()->forTenant($tenant)->count(5)->create();
 
+        $this->call(ConstructionCategorySeeder::class);
+        $this->call(ConstructionAttributeSeeder::class);
+        $this->call(ConstructionGridSeeder::class);
+
         TenantContext::clear();
 
         $this->command->info("Tenant: {$tenant->name} ({$tenant->uuid})");

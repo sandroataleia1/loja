@@ -1,10 +1,10 @@
-# ERP Moda SaaS - Product Vision
+# ERP Construção SaaS - Product Vision
 
 ## Visão
 
-Construir uma plataforma operacional moderna para varejo de moda.
+Construir uma plataforma operacional moderna para varejo de material de construção.
 
-O sistema deve atender pequenas e médias lojas de roupas, calçados e acessórios.
+O sistema deve atender pequenas e médias lojas de materiais de construção, ferragens e acabamentos.
 
 Inicialmente o foco será:
 
@@ -42,24 +42,24 @@ O sistema deve permitir:
 
 ## Público-alvo
 
-- Lojas de roupas
-- Boutiques
-- Lojas de calçados
-- Lojas de acessórios
+- Lojas de materiais de construção
+- Ferragens e fixação
+- Lojas de acabamentos e revestimentos
+- Depósitos de material de construção
 - Redes com múltiplas lojas
 
 ---
 
 ## Diferenciais
 
-### Catálogo orientado à moda
+### Catálogo orientado à construção
 
 Suporte nativo para:
 
-- Grades
-- Tamanhos
-- Cores
-- Variantes
+- Grades técnicas (Bitola, Diâmetro, Espessura)
+- Atributos de engenharia (Volume, Potência, Tensão)
+- Cores e acabamentos
+- Variantes por medida técnica
 
 ---
 

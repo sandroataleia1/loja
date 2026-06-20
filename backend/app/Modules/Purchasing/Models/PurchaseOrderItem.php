@@ -26,10 +26,10 @@ final class PurchaseOrderItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity'          => 'integer',
+            'quantity'          => 'decimal:3',
             'unit_cost'         => 'decimal:2',
-            'total_cost'        => 'decimal:2',
-            'received_quantity' => 'integer',
+            'total_cost'        => 'decimal:3',
+            'received_quantity' => 'decimal:3',
         ];
     }
 
@@ -43,8 +43,8 @@ final class PurchaseOrderItem extends Model
         return $this->belongsTo(Variant::class, 'product_variant_id', 'uuid');
     }
 
-    public function pendingQuantity(): int
+    public function pendingQuantity(): float
     {
-        return $this->quantity - $this->received_quantity;
+        return (float) $this->quantity - (float) $this->received_quantity;
     }
 }

@@ -41,7 +41,7 @@ final readonly class CreateProductAction
             'marketing_description' => $dto->marketingDescription,
             'internal_notes'        => $dto->internalNotes,
             'type'                  => $dto->type,
-            'gender'                => $dto->gender,
+            'unit_of_measure'       => $dto->unitOfMeasure,
             'status'                => $dto->status,
             'season'                => $dto->season,
             'launch_date'           => $dto->launchDate,

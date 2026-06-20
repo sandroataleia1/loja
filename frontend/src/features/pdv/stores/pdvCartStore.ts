@@ -11,6 +11,7 @@ export interface PdvCartItem {
   unitPriceCents: number
   quantity: number
   discountCents: number
+  unitOfMeasure: string | null
 }
 
 interface PdvCartStore {
@@ -81,7 +82,7 @@ export const usePdvCartStore = create<PdvCartStore>()((set, get) => ({
 
   subtotalCents: () =>
     get().items.reduce(
-      (sum, item) => sum + item.unitPriceCents * item.quantity - item.discountCents,
+      (sum, item) => sum + Math.round(item.unitPriceCents * item.quantity) - item.discountCents,
       0,
     ),
 

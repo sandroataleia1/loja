@@ -48,11 +48,11 @@ final class StockMovement extends Model
     {
         return [
             'type'            => MovementTypeEnum::class,
-            'quantity'        => 'integer',
-            'quantity_before' => 'integer',
-            'quantity_after'  => 'integer',
-            'reserved_before' => 'integer',
-            'reserved_after'  => 'integer',
+            'quantity'        => 'decimal:3',
+            'quantity_before' => 'decimal:3',
+            'quantity_after'  => 'decimal:3',
+            'reserved_before' => 'decimal:3',
+            'reserved_after'  => 'decimal:3',
             'metadata'        => 'array',
             'created_at'      => 'datetime',
         ];

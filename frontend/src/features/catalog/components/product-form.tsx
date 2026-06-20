@@ -29,15 +29,24 @@ function slugify(str: string): string {
 
 // ── Zod Schema ────────────────────────────────────────────────────────────────
 
+const UNIT_OPTIONS = [
+  { value: 'UN', label: 'UN — Unidade' },
+  { value: 'M',  label: 'M — Metro linear' },
+  { value: 'M2', label: 'M² — Metro quadrado' },
+  { value: 'M3', label: 'M³ — Metro cúbico' },
+  { value: 'KG', label: 'KG — Quilograma' },
+  { value: 'LT', label: 'LT — Litro' },
+  { value: 'CX', label: 'CX — Caixa' },
+  { value: 'SC', label: 'SC — Saco' },
+] as const
+
 const productSchema = z.object({
   name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
   slug: z.string().min(2, 'Slug obrigatório'),
   type: z.enum(['simple', 'variable', 'kit'] as const, {
     required_error: 'Tipo obrigatório',
   }),
-  gender: z.enum(['male', 'female', 'unisex', 'child', 'all'] as const, {
-    required_error: 'Gênero obrigatório',
-  }),
+  unit_of_measure: z.enum(['UN', 'M', 'M2', 'M3', 'KG', 'LT', 'CX', 'SC'] as const).nullable().optional(),
   status: z.enum(['draft', 'active', 'inactive', 'archived', 'seasonal'] as const, {
     required_error: 'Status obrigatório',
   }),
@@ -83,7 +92,7 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
       name:              defaultValues?.name              ?? '',
       slug:              defaultValues?.slug              ?? '',
       type:              defaultValues?.type              ?? 'simple',
-      gender:            defaultValues?.gender            ?? 'unisex',
+      unit_of_measure:   defaultValues?.unit_of_measure   ?? 'UN',
       status:            defaultValues?.status            ?? 'draft',
       visibility:        defaultValues?.visibility        ?? 'PRIVATE',
       base_price:        defaultValues?.base_price        ?? '',
@@ -111,7 +120,7 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
     const payload: CreateProductRequest = {
       name:              values.name,
       type:              values.type,
-      gender:            values.gender,
+      unit_of_measure:   values.unit_of_measure ?? undefined,
       status:            values.status,
       visibility:        values.visibility,
       base_price:        values.base_price ? Number(values.base_price) : undefined,
@@ -163,21 +172,19 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
             {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
           </div>
 
-          {/* gender */}
+          {/* unit_of_measure */}
           <div className="space-y-1.5">
-            <Label htmlFor="gender">Gênero *</Label>
+            <Label htmlFor="unit_of_measure">Unidade de Medida</Label>
             <select
-              id="gender"
+              id="unit_of_measure"
               className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              {...register('gender')}
+              {...register('unit_of_measure')}
             >
-              <option value="unisex">Unissex</option>
-              <option value="male">Masculino</option>
-              <option value="female">Feminino</option>
-              <option value="child">Infantil</option>
-              <option value="all">Todos</option>
+              {UNIT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
-            {errors.gender && <p className="text-xs text-destructive">{errors.gender.message}</p>}
+            {errors.unit_of_measure && <p className="text-xs text-destructive">{errors.unit_of_measure.message}</p>}
           </div>
         </div>
       </AppCard>

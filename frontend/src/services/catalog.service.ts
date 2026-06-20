@@ -32,7 +32,6 @@ export interface ProductFilters {
   q?:           string
   status?:      string
   type?:        string
-  gender?:      string
   brand_id?:    string
   category_id?: string
   per_page?:    number
@@ -129,7 +128,6 @@ export const catalogService = {
     if (filters?.q)           params.set('q', filters.q)
     if (filters?.status)      params.set('status', filters.status)
     if (filters?.type)        params.set('type', filters.type)
-    if (filters?.gender)      params.set('gender', filters.gender)
     if (filters?.brand_id)    params.set('brand_id', filters.brand_id)
     if (filters?.category_id) params.set('category_id', filters.category_id)
     if (filters?.per_page)    params.set('per_page', String(filters.per_page))

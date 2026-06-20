@@ -26,7 +26,12 @@ export function CartItemRow({ item, index }: Props) {
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [])
 
-  const lineTotal = item.unitPriceCents * item.quantity - item.discountCents
+  const lineTotal = Math.round(item.unitPriceCents * item.quantity) - item.discountCents
+
+  const DECIMAL_UNITS = ['M', 'M2', 'M3', 'KG', 'LT']
+  const step = item.unitOfMeasure && DECIMAL_UNITS.includes(item.unitOfMeasure) ? 0.5 : 1
+  const fmtQty = (qty: number) =>
+    Number.isInteger(qty) ? String(qty) : qty.toLocaleString('pt-BR', { maximumFractionDigits: 3 })
 
   return (
     <div className={cn(
@@ -46,16 +51,16 @@ export function CartItemRow({ item, index }: Props) {
         {/* Qty controls */}
         <div className="flex items-center gap-1.5 mt-1.5">
           <button
-            onClick={() => updateQty(item.id, item.quantity - 1)}
+            onClick={() => updateQty(item.id, Math.max(step, parseFloat((item.quantity - step).toFixed(3))))}
             className="flex items-center justify-center w-5 h-5 rounded border border-border hover:bg-accent transition-colors"
           >
             <Minus className="w-2.5 h-2.5" />
           </button>
-          <span className="text-xs font-semibold tabular-nums w-6 text-center">
-            {item.quantity}
+          <span className="text-xs font-semibold tabular-nums w-10 text-center">
+            {fmtQty(item.quantity)}{item.unitOfMeasure ? ` ${item.unitOfMeasure}` : ''}
           </span>
           <button
-            onClick={() => updateQty(item.id, item.quantity + 1)}
+            onClick={() => updateQty(item.id, parseFloat((item.quantity + step).toFixed(3)))}
             className="flex items-center justify-center w-5 h-5 rounded border border-border hover:bg-accent transition-colors"
           >
             <Plus className="w-2.5 h-2.5" />

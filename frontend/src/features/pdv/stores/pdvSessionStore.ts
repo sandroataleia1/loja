@@ -5,6 +5,7 @@ export interface PdvSessionData {
   sessionUuid:         string
   registerUuid:        string
   registerName:        string
+  storeUuid:           string
   openedAt:            string
   openingBalanceCents: number
 }

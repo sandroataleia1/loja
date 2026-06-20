@@ -86,7 +86,7 @@ function GenerateVariantsForm({ productUuid, onSuccess, onClose }: GenerateVaria
               type="text"
               value={skuPrefix}
               onChange={(e) => setSkuPrefix(e.target.value)}
-              placeholder="Ex.: CAMISETA-001"
+              placeholder="Ex.: PORTO-001"
               required
               className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />

@@ -97,11 +97,11 @@ Os instaladores ficam em:
 
 | Sistema | Arquivo gerado |
 |---------|---------------|
-| **Windows** | `pdv/src-tauri/target/release/bundle/msi/PDV Fashion_0.1.0_x64_en-US.msi` |
-| **Windows** | `pdv/src-tauri/target/release/bundle/nsis/PDV Fashion_0.1.0_x64-setup.exe` |
-| **Linux** | `pdv/src-tauri/target/release/bundle/deb/pdv-fashion_0.1.0_amd64.deb` |
-| **Linux** | `pdv/src-tauri/target/release/bundle/appimage/pdv-fashion_0.1.0_amd64.AppImage` |
-| **macOS** | `pdv/src-tauri/target/release/bundle/dmg/PDV Fashion_0.1.0_x64.dmg` |
+| **Windows** | `pdv/src-tauri/target/release/bundle/msi/PDV Construção_0.1.0_x64_en-US.msi` |
+| **Windows** | `pdv/src-tauri/target/release/bundle/nsis/PDV Construção_0.1.0_x64-setup.exe` |
+| **Linux** | `pdv/src-tauri/target/release/bundle/deb/pdv-construcao_0.1.0_amd64.deb` |
+| **Linux** | `pdv/src-tauri/target/release/bundle/appimage/pdv-construcao_0.1.0_amd64.AppImage` |
+| **macOS** | `pdv/src-tauri/target/release/bundle/dmg/PDV Construção_0.1.0_x64.dmg` |
 
 > O build gera apenas o instalador para o sistema operacional onde está sendo compilado.
 > Para gerar para Windows + Linux ao mesmo tempo é necessário usar CI/CD (ex: GitHub Actions).
@@ -116,16 +116,16 @@ Após gerar o instalador:
 1. Copie o `.msi` ou `.exe` para o computador do caixa (pendrive, rede local, etc.)
 2. Execute como administrador
 3. Siga o assistente de instalação
-4. O PDV aparece no menu Iniciar como **"PDV Fashion"**
+4. O PDV aparece no menu Iniciar como **"PDV Construção"**
 
 **Linux:**
 ```bash
 # .deb (Ubuntu/Debian)
-sudo dpkg -i pdv-fashion_0.1.0_amd64.deb
+sudo dpkg -i pdv-construcao_0.1.0_amd64.deb
 
 # .AppImage (qualquer distribuição)
-chmod +x pdv-fashion_0.1.0_amd64.AppImage
-./pdv-fashion_0.1.0_amd64.AppImage
+chmod +x pdv-construcao_0.1.0_amd64.AppImage
+./pdv-construcao_0.1.0_amd64.AppImage
 ```
 
 ---
@@ -136,9 +136,9 @@ O PDV usa **SQLite** armazenado no diretório de dados do usuário:
 
 | Sistema | Localização |
 |---------|------------|
-| Windows | `C:\Users\<usuario>\AppData\Roaming\com.pdvfashion.app\` |
-| Linux | `~/.local/share/com.pdvfashion.app/` |
-| macOS | `~/Library/Application Support/com.pdvfashion.app/` |
+| Windows | `C:\Users\<usuario>\AppData\Roaming\com.pdvconstrucao.app\` |
+| Linux | `~/.local/share/com.pdvconstrucao.app/` |
+| macOS | `~/Library/Application Support/com.pdvconstrucao.app/` |
 
 > O banco é criado automaticamente na primeira execução. Não é necessário configurar nada.
 

@@ -50,7 +50,7 @@ export function PdvTopbar() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 font-bold text-primary">
             <Monitor className="w-4 h-4" />
-            PDV Fashion
+            PDV
           </div>
           {session && (
             <>

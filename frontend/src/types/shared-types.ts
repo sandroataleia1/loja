@@ -126,10 +126,10 @@ export type UserRole =
   | 'estoque'
   | 'financeiro'
 
-export type ProductStatus     = 'draft' | 'active' | 'inactive' | 'archived' | 'seasonal'
-export type ProductType      = 'simple' | 'variable' | 'kit'
-export type ProductGender    = 'male' | 'female' | 'unisex' | 'child' | 'all'
-export type ProductVisibility = 'PRIVATE' | 'PUBLIC' | 'UNLISTED'
+export type ProductStatus      = 'draft' | 'active' | 'inactive' | 'archived' | 'seasonal'
+export type ProductType        = 'simple' | 'variable' | 'kit'
+export type ProductVisibility  = 'PRIVATE' | 'PUBLIC' | 'UNLISTED'
+export type UnitOfMeasure      = 'UN' | 'M' | 'M2' | 'M3' | 'KG' | 'LT' | 'CX' | 'SC'
 export type AttributeType    = 'text' | 'color' | 'number' | 'boolean'
 
 // SaleStatus e PaymentMethod são definidos na seção "PDV / Sales" (versões
@@ -209,11 +209,11 @@ export interface Product {
   slug:              string
   description:       string | null
   short_description: string | null
-  type:              ProductType
-  type_label:        string
-  gender:            ProductGender
-  gender_label:      string
-  status:            ProductStatus
+  type:                   ProductType
+  type_label:             string
+  unit_of_measure:        UnitOfMeasure | null
+  unit_of_measure_label:  string | null
+  status:                 ProductStatus
   status_label:      string
   visibility:        ProductVisibility
   visibility_label:  string

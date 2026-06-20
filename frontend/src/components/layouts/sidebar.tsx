@@ -231,12 +231,14 @@ function NavGroupSection({
 }
 
 export function Sidebar({ collapsed: externalCollapsed, onCollapse, className }: SidebarProps) {
-  const [internalCollapsed, setInternalCollapsed] = useState(false)
-  const collapsed = externalCollapsed ?? internalCollapsed
+  const [internalCollapsed, setInternalCollapsed] = useState(true)
+  const [hovered, setHovered] = useState(false)
+  const pinnedCollapsed = externalCollapsed ?? internalCollapsed
+  const collapsed = pinnedCollapsed && !hovered
   const { hasPermission, permissions, isLoading } = useAuth()
 
   function toggle() {
-    const next = !collapsed
+    const next = !pinnedCollapsed
     setInternalCollapsed(next)
     onCollapse?.(next)
   }
@@ -262,6 +264,8 @@ export function Sidebar({ collapsed: externalCollapsed, onCollapse, className }:
           collapsed ? 'w-16' : 'w-65',
           className,
         )}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
       >
         {/* Logo */}
         <div className={cn(

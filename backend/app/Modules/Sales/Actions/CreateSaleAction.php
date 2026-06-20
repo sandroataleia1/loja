@@ -7,7 +7,9 @@ namespace App\Modules\Sales\Actions;
 use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Fiscal\Enums\FiscalModeEnum;
 use App\Modules\Fiscal\Models\TenantFiscalSettings;
+use App\Modules\Sales\DTOs\AddPaymentDTO;
 use App\Modules\Sales\DTOs\CreateSaleDTO;
+use App\Modules\Sales\Enums\PaymentMethodEnum;
 use App\Modules\Sales\Enums\SaleStatusEnum;
 use App\Modules\Sales\Events\SaleCreated;
 use App\Modules\Sales\Models\Sale;
@@ -20,6 +22,7 @@ final readonly class CreateSaleAction
 {
     public function __construct(
         private GenerateInternalCodeAction $generateCode,
+        private AddPaymentAction           $addPayment,
     ) {}
 
     /**
@@ -105,6 +108,16 @@ final readonly class CreateSaleAction
 
             foreach ($itemsData as $data) {
                 $sale->items()->create($data);
+            }
+
+            foreach ($dto->payments as $paymentData) {
+                $this->addPayment->execute($sale, new AddPaymentDTO(
+                    method:            PaymentMethodEnum::from($paymentData['method']),
+                    amountCents:       (int) $paymentData['amount_cents'],
+                    externalReference: $paymentData['external_reference'] ?? null,
+                    notes:             $paymentData['notes'] ?? null,
+                    metadata:          $paymentData['metadata'] ?? null,
+                ));
             }
 
             $sale->load(['items', 'payments', 'discounts', 'store', 'seller']);

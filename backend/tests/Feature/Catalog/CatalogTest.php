@@ -71,24 +71,24 @@ describe('Brands', function (): void {
 describe('Categories', function (): void {
     it('cria categoria com código automático (201)', function (): void {
         $response = $this->postJson('/api/v1/catalog/categories', [
-            'name'      => 'Camisetas',
+            'name'      => 'Revestimentos',
             'is_active' => true,
         ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.name', 'Camisetas');
+            ->assertJsonPath('data.name', 'Revestimentos');
 
         expect($response->json('data.code'))->not->toBeNull();
     });
 
     it('suporta hierarquia parent → child', function (): void {
-        $parent = $this->postJson('/api/v1/catalog/categories', ['name' => 'Masculino'])
+        $parent = $this->postJson('/api/v1/catalog/categories', ['name' => 'Alvenaria'])
             ->assertStatus(201)
             ->json('data');
 
         $child = $this->postJson('/api/v1/catalog/categories', [
-            'name'      => 'Camisetas',
+            'name'      => 'Argamassa e Cimento',
             'parent_id' => $parent['uuid'],
         ])->assertStatus(201)->json('data');
 
@@ -109,15 +109,15 @@ describe('Categories', function (): void {
 describe('Products', function (): void {
     it('cria produto simples (201)', function (): void {
         $response = $this->postJson('/api/v1/catalog/products', [
-            'name'   => 'Camiseta Oversized Preta',
-            'type'   => 'simple',
-            'gender' => 'unisex',
-            'status' => 'draft',
+            'name'            => 'Cimento CP II-E 50kg',
+            'type'            => 'simple',
+            'unit_of_measure' => 'SC',
+            'status'          => 'draft',
         ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.name', 'Camiseta Oversized Preta');
+            ->assertJsonPath('data.name', 'Cimento CP II-E 50kg');
 
         expect($response->json('data.code'))->not->toBeNull()
             ->and($response->json('data.slug'))->not->toBeNull();
@@ -126,14 +126,14 @@ describe('Products', function (): void {
     it('produto tem código único por tenant (dois tenants, mesmo nome)', function (): void {
         // Create product in tenant1 (already active via beforeEach)
         $r1 = $this->postJson('/api/v1/catalog/products', [
-            'name' => 'Camiseta Básica', 'type' => 'simple', 'gender' => 'unisex', 'status' => 'draft',
+            'name' => 'Argamassa ACIII 20kg', 'type' => 'simple', 'unit_of_measure' => 'SC', 'status' => 'draft',
         ])->assertStatus(201)->json('data');
 
         // Switch to a second tenant and create same product name — should succeed
         $this->actingAsTenantUser(); // new tenant with new user and RBAC
 
         $r2 = $this->postJson('/api/v1/catalog/products', [
-            'name' => 'Camiseta Básica', 'type' => 'simple', 'gender' => 'unisex', 'status' => 'draft',
+            'name' => 'Argamassa ACIII 20kg', 'type' => 'simple', 'unit_of_measure' => 'SC', 'status' => 'draft',
         ])->assertStatus(201)->json('data');
 
         // Codes must both exist (sequences are independent per tenant)
@@ -180,7 +180,6 @@ describe('Products', function (): void {
         $response = $this->postJson('/api/v1/catalog/products', [
             'name'           => 'Produto Multi-Cat',
             'type'           => 'simple',
-            'gender'         => 'all',
             'status'         => 'draft',
             'category_uuids' => [$cat1->uuid, $cat2->uuid],
         ])->assertStatus(201);

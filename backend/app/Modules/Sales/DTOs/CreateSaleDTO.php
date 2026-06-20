@@ -12,7 +12,8 @@ use Illuminate\Http\Request;
 final readonly class CreateSaleDTO extends BaseDTO
 {
     /**
-     * @param CreateSaleItemDTO[] $items
+     * @param CreateSaleItemDTO[]                                                              $items
+     * @param array<array{method:string,amount_cents:int,external_reference?:string,notes?:string,metadata?:array}> $payments
      */
     public function __construct(
         public string         $storeId,
@@ -25,6 +26,7 @@ final readonly class CreateSaleDTO extends BaseDTO
         public ?array         $metadata,
         public ?FiscalModeEnum   $fiscalMode    = null,
         public SalesChannelEnum  $salesChannel  = SalesChannelEnum::Pdv,
+        public array             $payments      = [],
     ) {}
 
     public static function fromRequest(Request $request): static
@@ -45,6 +47,7 @@ final readonly class CreateSaleDTO extends BaseDTO
             metadata:     $request->array('metadata') ?: null,
             fiscalMode:   $fiscalModeRaw !== null ? FiscalModeEnum::from($fiscalModeRaw) : null,
             salesChannel: SalesChannelEnum::tryFrom($request->string('sales_channel')->value() ?: '') ?? SalesChannelEnum::Pdv,
+            payments:     $request->array('payments') ?: [],
         );
     }
 }

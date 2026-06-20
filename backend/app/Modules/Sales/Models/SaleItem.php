@@ -47,7 +47,7 @@ final class SaleItem extends Model
     {
         return [
             'attributes_snapshot'   => 'array',
-            'quantity'              => 'integer',
+            'quantity'              => 'decimal:3',
             'unit_price_cents'      => 'integer',
             'cost_price_cents'      => 'integer',
             'discount_amount_cents' => 'integer',
@@ -62,7 +62,7 @@ final class SaleItem extends Model
 
     public static function buildFromVariantInput(array $input): array
     {
-        $subtotal = $input['quantity'] * $input['unit_price_cents'];
+        $subtotal = (int) round((float) $input['quantity'] * (int) $input['unit_price_cents']);
         $discount = $input['discount_amount_cents'] ?? 0;
 
         return [

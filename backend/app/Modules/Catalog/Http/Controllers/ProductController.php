@@ -33,7 +33,6 @@ final class ProductController extends Controller
             ->with(['brand', 'categories', 'images'])
             ->when($request->string('status')->value(), fn ($q, $v) => $q->where('status', $v))
             ->when($request->string('type')->value(),   fn ($q, $v) => $q->where('type', $v))
-            ->when($request->string('gender')->value(), fn ($q, $v) => $q->where('gender', $v))
             ->when($request->string('brand_id')->value(), fn ($q, $v) => $q->where('brand_id', $v))
             ->when($request->string('category_id')->value(), fn ($q, $v) => $q->whereHas('categories', fn ($q2) => $q2->where('uuid', $v)))
             ->when($request->boolean('featured'), fn ($q) => $q->where('is_featured', true))
