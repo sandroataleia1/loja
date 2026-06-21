@@ -37,6 +37,12 @@ final class StoreProductRequest extends FormRequest
             'is_publishable'        => ['boolean'],
             'season'                => ['nullable', 'string', 'max:50'],
             'launch_date'           => ['nullable', 'date'],
+            // Fiscal
+            'ncm'              => ['nullable', 'string', 'max:10'],
+            'cest'             => ['nullable', 'string', 'max:9'],
+            'cfop_default'     => ['nullable', 'string', 'max:5'],
+            'origin_code'      => ['nullable', 'integer', 'between:0,8'],
+            // SEO
             'seo'               => ['nullable', 'array'],
             'seo.title'         => ['nullable', 'string', 'max:70'],
             'seo.description'   => ['nullable', 'string', 'max:160'],

@@ -25,6 +25,11 @@ final readonly class CreateVariantDTO extends BaseDTO
         public int     $sortOrder,
         /** @var string[] */
         public array   $attributeIds,
+        public ?string $ncm,
+        public ?string $cest,
+        public ?string $cfopDefault,
+        public ?int    $originCode,
+        public ?string $taxProfileId,
     ) {}
 
     public static function fromRequest(Request $request): static
@@ -44,6 +49,11 @@ final readonly class CreateVariantDTO extends BaseDTO
             isDefault:      $request->boolean('is_default', false),
             sortOrder:      $request->integer('sort_order', 0),
             attributeIds:   $request->array('attribute_ids'),
+            ncm:            $request->string('ncm')->value() ?: null,
+            cest:           $request->string('cest')->value() ?: null,
+            cfopDefault:    $request->string('cfop_default')->value() ?: null,
+            originCode:     $request->has('origin_code') ? $request->integer('origin_code') : null,
+            taxProfileId:   $request->string('tax_profile_id')->value() ?: null,
         );
     }
 }

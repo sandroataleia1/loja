@@ -58,6 +58,11 @@ final readonly class CreateVariantAction
                 'is_active'        => $dto->isActive,
                 'is_default'       => $dto->isDefault,
                 'sort_order'       => $dto->sortOrder,
+                'ncm'              => $dto->ncm,
+                'cest'             => $dto->cest,
+                'cfop_default'     => $dto->cfopDefault,
+                'origin_code'      => $dto->originCode,
+                'tax_profile_id'   => $dto->taxProfileId,
             ]);
 
             if ($dto->attributeIds !== []) {

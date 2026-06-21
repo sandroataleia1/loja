@@ -126,6 +126,11 @@ export interface CreateProductRequest {
   is_featured?:       boolean
   is_digital?:        boolean
   is_publishable?:    boolean
+  // Fiscal
+  ncm?:               string | null
+  cest?:              string | null
+  cfop_default?:      string | null
+  origin_code?:       number | null
 }
 
 // ── RBAC contracts ─────────────────────────────────────────────────────────

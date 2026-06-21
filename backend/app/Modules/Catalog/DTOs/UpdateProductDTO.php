@@ -16,6 +16,10 @@ final readonly class UpdateProductDTO extends BaseDTO
         public ?string             $name,
         public ?ProductTypeEnum    $type,
         public ?UnitOfMeasureEnum  $unitOfMeasure,
+        public ?string            $ncm,
+        public ?string            $cest,
+        public ?string            $cfopDefault,
+        public ?int               $originCode,
         public ?ProductStatusEnum  $status,
         public ?string            $brandId,
         public ?array            $categoryUuids,
@@ -37,6 +41,10 @@ final readonly class UpdateProductDTO extends BaseDTO
             unitOfMeasure:    $request->has('unit_of_measure')
                                 ? ($request->filled('unit_of_measure') ? UnitOfMeasureEnum::from($request->string('unit_of_measure')->toString()) : null)
                                 : null,
+            ncm:              $request->has('ncm') ? ($request->string('ncm')->value() ?: null) : null,
+            cest:             $request->has('cest') ? ($request->string('cest')->value() ?: null) : null,
+            cfopDefault:      $request->has('cfop_default') ? ($request->string('cfop_default')->value() ?: null) : null,
+            originCode:       $request->has('origin_code') ? $request->integer('origin_code') : null,
             status:           $request->has('status') ? ProductStatusEnum::from($request->string('status')->toString()) : null,
             brandId:          $request->has('brand_id') ? ($request->string('brand_id')->value() ?: null) : null,
             categoryUuids:    $request->has('category_uuids') ? $request->array('category_uuids') : null,

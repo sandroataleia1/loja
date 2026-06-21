@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -51,7 +52,7 @@ export function QuickCreateBrandModal({ open, onClose, onCreated }: Props) {
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
@@ -100,6 +101,7 @@ export function QuickCreateBrandModal({ open, onClose, onCreated }: Props) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

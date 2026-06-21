@@ -55,6 +55,12 @@ export const ROUTES = {
   PURCHASING_CREATE:    '/purchasing/create',
   SUPPLIERS:            '/purchasing/suppliers',
 
+  // Pedidos e Orçamentos
+  QUOTES:       '/quotes',
+  QUOTES_NEW:   '/quotes/new',
+  ORDERS:       '/orders',
+  ORDERS_NEW:   '/orders/new',
+
   // Sistema
   DOWNLOADS: '/downloads',
 } as const

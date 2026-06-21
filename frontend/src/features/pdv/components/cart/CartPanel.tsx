@@ -12,10 +12,11 @@ const fmtBRL = (cents: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100)
 
 interface Props {
-  onCheckout: () => void
+  onCheckout:    () => void
+  onSearchOrder?: () => void
 }
 
-export function CartPanel({ onCheckout }: Props) {
+export function CartPanel({ onCheckout, onSearchOrder }: Props) {
   const items     = usePdvCartStore((s) => s.items)
   const total     = usePdvCartStore((s) => s.totalCents())
   const itemCount = usePdvCartStore((s) => s.itemCount())
@@ -26,13 +27,14 @@ export function CartPanel({ onCheckout }: Props) {
   // F4 → checkout; F9 → cancelar; F10 → desconto
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (e.key === 'F3')  { e.preventDefault(); onSearchOrder?.() }
       if (e.key === 'F4')  { e.preventDefault(); if (itemCount > 0) onCheckout() }
       if (e.key === 'F9')  { e.preventDefault(); if (itemCount > 0 && confirm('Cancelar a venda?')) clear() }
       if (e.key === 'F10') { e.preventDefault(); if (itemCount > 0) setDiscountOpen(true) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [itemCount, onCheckout, clear])
+  }, [itemCount, onCheckout, onSearchOrder, clear])
 
   return (
     <div className="flex flex-col w-96 shrink-0 bg-card border-l overflow-hidden">

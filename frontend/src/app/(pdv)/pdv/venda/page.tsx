@@ -11,6 +11,7 @@ import { ProductGrid }       from '@/features/pdv/components/product/ProductGrid
 import { CartPanel }         from '@/features/pdv/components/cart/CartPanel'
 import { PaymentModal }      from '@/features/pdv/components/payment/PaymentModal'
 import { ReceiptModal }      from '@/features/pdv/components/receipt/ReceiptModal'
+import { OrderSearchModal }  from '@/features/pdv/components/cart/OrderSearchModal'
 import type { Sale }         from '@/types/shared-types'
 import type { PendingPayment, ReceiptData } from '@/features/pdv/types'
 
@@ -25,8 +26,9 @@ export default function VendaPage() {
   const items         = usePdvCartStore((s) => s.items)
   const clearCart     = usePdvCartStore((s) => s.clear)
 
-  const [checkoutOpen, setCheckoutOpen] = useState(false)
-  const [receiptData,  setReceiptData]  = useState<ReceiptData | null>(null)
+  const [checkoutOpen,    setCheckoutOpen]    = useState(false)
+  const [receiptData,     setReceiptData]     = useState<ReceiptData | null>(null)
+  const [orderSearchOpen, setOrderSearchOpen] = useState(false)
 
   // 7.4 — auto-fullscreen when PDV opens; 7.1 — F11 toggle
   useFullscreen()
@@ -55,10 +57,13 @@ export default function VendaPage() {
         <div className="flex flex-col flex-1 overflow-hidden">
           <ProductGrid />
         </div>
-        <CartPanel onCheckout={() => setCheckoutOpen(true)} />
+        <CartPanel
+          onCheckout={() => setCheckoutOpen(true)}
+          onSearchOrder={() => setOrderSearchOpen(true)}
+        />
       </div>
 
-      <PdvKeybar />
+      <PdvKeybar onSearchOrder={() => setOrderSearchOpen(true)} />
 
       {checkoutOpen && (
         <PaymentModal
@@ -73,6 +78,11 @@ export default function VendaPage() {
           onClose={handleReceiptClose}
         />
       )}
+
+      <OrderSearchModal
+        open={orderSearchOpen}
+        onClose={() => setOrderSearchOpen(false)}
+      />
     </div>
   )
 }

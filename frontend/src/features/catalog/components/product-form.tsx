@@ -40,6 +40,18 @@ const UNIT_OPTIONS = [
   { value: 'SC', label: 'SC — Saco' },
 ] as const
 
+const ORIGIN_OPTIONS = [
+  { value: 0, label: '0 – Nacional' },
+  { value: 1, label: '1 – Estrangeira (importação direta)' },
+  { value: 2, label: '2 – Estrangeira (adquirida internamente)' },
+  { value: 3, label: '3 – Nacional, conteúdo importado > 40%' },
+  { value: 4, label: '4 – Nacional (processos produtivos básicos)' },
+  { value: 5, label: '5 – Estrangeira (importação direta, sem similar)' },
+  { value: 6, label: '6 – Estrangeira (interna, sem similar)' },
+  { value: 7, label: '7 – Nacional, conteúdo importado ≤ 40%' },
+  { value: 8, label: '8 – Nacional, conteúdo importado > 40% e ≤ 70%' },
+] as const
+
 const productSchema = z.object({
   name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
   slug: z.string().min(2, 'Slug obrigatório'),
@@ -60,6 +72,11 @@ const productSchema = z.object({
   is_featured:    z.boolean().optional(),
   is_digital:     z.boolean().optional(),
   is_publishable: z.boolean().optional(),
+  // Fiscal
+  ncm:          z.string().max(10).optional().or(z.literal('')),
+  cest:         z.string().max(9).optional().or(z.literal('')),
+  cfop_default: z.string().max(5).optional().or(z.literal('')),
+  origin_code:  z.coerce.number().int().min(0).max(8).optional(),
 })
 
 type ProductFormValues = z.infer<typeof productSchema>
@@ -104,6 +121,10 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
       is_featured:       defaultValues?.is_featured       ?? false,
       is_digital:        defaultValues?.is_digital        ?? false,
       is_publishable:    defaultValues?.is_publishable    ?? false,
+      ncm:               defaultValues?.ncm          ?? '',
+      cest:              defaultValues?.cest         ?? '',
+      cfop_default:      defaultValues?.cfop_default ?? '',
+      origin_code:       defaultValues?.origin_code  ?? 0,
     },
   })
 
@@ -132,6 +153,10 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
       is_featured:       values.is_featured,
       is_digital:        values.is_digital,
       is_publishable:    values.is_publishable,
+      ncm:               values.ncm          || undefined,
+      cest:              values.cest         || undefined,
+      cfop_default:      values.cfop_default || undefined,
+      origin_code:       values.origin_code  ?? 0,
     }
     onSubmit(payload)
   }
@@ -353,6 +378,67 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
             <input type="checkbox" {...register('is_publishable')} className="accent-primary" />
             <span className="text-sm">Pode ser publicado</span>
           </label>
+        </div>
+      </AppCard>
+
+      {/* ── Section 7: Dados Fiscais ── */}
+      <AppCard title="Dados Fiscais">
+        <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+
+          {/* NCM */}
+          <div className="space-y-1.5">
+            <Label htmlFor="ncm">NCM</Label>
+            <Input
+              id="ncm"
+              placeholder="00000000"
+              maxLength={10}
+              {...register('ncm')}
+            />
+            <p className="text-xs text-muted-foreground">Nomenclatura Comum do Mercosul (8 dígitos)</p>
+            {errors.ncm && <p className="text-xs text-destructive">{errors.ncm.message}</p>}
+          </div>
+
+          {/* CEST */}
+          <div className="space-y-1.5">
+            <Label htmlFor="cest">CEST</Label>
+            <Input
+              id="cest"
+              placeholder="0000000"
+              maxLength={9}
+              {...register('cest')}
+            />
+            <p className="text-xs text-muted-foreground">Código Especificador da Substituição Tributária (7 dígitos)</p>
+            {errors.cest && <p className="text-xs text-destructive">{errors.cest.message}</p>}
+          </div>
+
+          {/* CFOP */}
+          <div className="space-y-1.5">
+            <Label htmlFor="cfop_default">CFOP Padrão</Label>
+            <Input
+              id="cfop_default"
+              placeholder="5102"
+              maxLength={5}
+              {...register('cfop_default')}
+            />
+            <p className="text-xs text-muted-foreground">Código Fiscal de Operações — saída padrão (4 dígitos)</p>
+            {errors.cfop_default && <p className="text-xs text-destructive">{errors.cfop_default.message}</p>}
+          </div>
+
+          {/* Origem */}
+          <div className="space-y-1.5">
+            <Label htmlFor="origin_code">Origem da Mercadoria</Label>
+            <select
+              id="origin_code"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              {...register('origin_code')}
+            >
+              {ORIGIN_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            {errors.origin_code && <p className="text-xs text-destructive">{errors.origin_code.message}</p>}
+          </div>
+
         </div>
       </AppCard>
 

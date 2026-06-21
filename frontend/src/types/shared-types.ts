@@ -213,6 +213,11 @@ export interface Product {
   type_label:             string
   unit_of_measure:        UnitOfMeasure | null
   unit_of_measure_label:  string | null
+  ncm:                    string | null
+  cest:                   string | null
+  cfop_default:           string | null
+  origin_code:            number | null
+  origin_code_label:      string | null
   status:                 ProductStatus
   status_label:      string
   visibility:        ProductVisibility
@@ -247,6 +252,108 @@ export interface ProductVariant {
   is_default:       boolean
   sort_order:       number
   grid_combination: Array<{ group_id: string; group_name: string; attr_id: string; attr_value: string }> | null
+  ncm:              string | null
+  cest:             string | null
+  cfop_default:     string | null
+  origin_code:      number | null
+  tax_profile_id:   string | null
+}
+
+// ── Orders & Quotes ────────────────────────────────────────────────────────
+
+export type QuoteStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired' | 'converted' | 'cancelled'
+export type OrderStatus = 'pending' | 'confirmed' | 'in_progress' | 'ready' | 'delivered' | 'completed' | 'cancelled'
+export type DiscountType = 'fixed' | 'percent'
+
+export interface DocumentItem {
+  uuid:               string
+  product_variant_id: string | null
+  name_snapshot:      string
+  sku_snapshot:       string | null
+  unit_of_measure:    string
+  quantity:           number
+  unit_price_cents:   number
+  unit_price:         number
+  discount_cents:     number
+  subtotal_cents:     number
+  subtotal:           number
+  sort_order:         number
+  notes:              string | null
+}
+
+export interface DocumentCustomer {
+  uuid:  string
+  name:  string
+  phone: string | null
+  email: string | null
+}
+
+export interface Quote {
+  uuid:                  string
+  number:                string
+  status:                QuoteStatus
+  status_label:          string
+  status_color:          string
+  store_id:              string | null
+  customer_id:           string | null
+  customer?:             DocumentCustomer
+  validity_days:         number
+  valid_until:           string | null
+  is_expired:            boolean
+  discount_type:         DiscountType
+  discount_value:        number
+  discount_cents:        number
+  discount:              number
+  subtotal_cents:        number
+  subtotal:              number
+  total_cents:           number
+  total:                 number
+  notes:                 string | null
+  internal_notes:        string | null
+  payment_terms:         string | null
+  converted_to_order_id: string | null
+  converted_at:          string | null
+  sent_at:               string | null
+  viewed_at:             string | null
+  items?:                DocumentItem[]
+  items_count?:          number
+  created_at:            string
+  updated_at:            string
+}
+
+export interface Order {
+  uuid:                 string
+  number:               string
+  status:               OrderStatus
+  status_label:         string
+  status_color:         string
+  store_id:             string | null
+  customer_id:          string | null
+  customer?:            DocumentCustomer
+  quote_id:             string | null
+  sale_id:              string | null
+  discount_type:        DiscountType
+  discount_value:       number
+  discount_cents:       number
+  discount:             number
+  subtotal_cents:       number
+  subtotal:             number
+  total_cents:          number
+  total:                number
+  notes:                string | null
+  internal_notes:       string | null
+  payment_terms:        string | null
+  expected_at:          string | null
+  confirmed_at:         string | null
+  delivered_at:         string | null
+  completed_at:         string | null
+  cancelled_at:         string | null
+  cancellation_reason:  string | null
+  allowed_transitions:  Array<{ value: OrderStatus; label: string }>
+  items?:               DocumentItem[]
+  items_count?:         number
+  created_at:           string
+  updated_at:           string
 }
 
 export interface InventoryLevel {

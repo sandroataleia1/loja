@@ -28,6 +28,11 @@ final class UpdateProductRequest extends FormRequest
             'category_uuids.*'  => ['uuid', 'exists:catalog_categories,uuid'],
             'collection_id'     => ['nullable', 'uuid', 'exists:catalog_collections,uuid'],
             'grid_id'           => ['nullable', 'uuid', 'exists:catalog_grids,uuid'],
+            // Fiscal
+            'ncm'              => ['sometimes', 'nullable', 'string', 'max:10'],
+            'cest'             => ['sometimes', 'nullable', 'string', 'max:9'],
+            'cfop_default'     => ['sometimes', 'nullable', 'string', 'max:5'],
+            'origin_code'      => ['sometimes', 'nullable', 'integer', 'between:0,8'],
             'description'       => ['nullable', 'string'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'is_featured'       => ['sometimes', 'boolean'],

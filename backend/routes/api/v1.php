@@ -159,4 +159,11 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     |----------------------------------------------------------------------
     */
     Route::prefix('conditionals')->name('conditionals.')->group(base_path('routes/api/v1/conditionals.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Orders Module — Pedidos e Orçamentos
+    |----------------------------------------------------------------------
+    */
+    Route::group([], base_path('routes/api/v1/orders.php'));
 });
