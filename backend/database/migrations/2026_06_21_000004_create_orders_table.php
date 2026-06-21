@@ -12,9 +12,9 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table): void {
             $table->uuid('uuid')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
-            $table->foreignUuid('store_id')->nullable()->constrained('stores')->nullOnDelete();
-            $table->foreignUuid('customer_id')->nullable()->constrained('customers')->nullOnDelete();
+            $table->foreignUuid('tenant_id')->constrained('tenants', 'uuid')->cascadeOnDelete();
+            $table->foreignUuid('store_id')->nullable()->constrained('stores', 'uuid')->nullOnDelete();
+            $table->foreignUuid('customer_id')->nullable()->constrained('customers', 'uuid')->nullOnDelete();
             // Origem: pode vir de um orçamento ou ser criado diretamente
             $table->foreignUuid('quote_id')->nullable()->constrained('quotes', 'uuid')->nullOnDelete();
             // Venda vinculada (preenchida ao baixar no PDV)
@@ -40,8 +40,8 @@ return new class extends Migration
             $table->timestamp('completed_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
             $table->string('cancellation_reason', 500)->nullable();
-            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('created_by')->nullable()->constrained('users', 'uuid')->nullOnDelete();
+            $table->foreignUuid('updated_by')->nullable()->constrained('users', 'uuid')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
 
@@ -50,10 +50,21 @@ return new class extends Migration
             $table->index(['tenant_id', 'customer_id']);
             $table->index(['tenant_id', 'sale_id']);
         });
+
+        // Agora que orders existe, adicionamos o FK em quotes
+        Schema::table('quotes', function (Blueprint $table): void {
+            $table->foreign('converted_to_order_id')
+                  ->references('uuid')
+                  ->on('orders')
+                  ->nullOnDelete();
+        });
     }
 
     public function down(): void
     {
+        Schema::table('quotes', function (Blueprint $table): void {
+            $table->dropForeign(['converted_to_order_id']);
+        });
         Schema::dropIfExists('orders');
     }
 };

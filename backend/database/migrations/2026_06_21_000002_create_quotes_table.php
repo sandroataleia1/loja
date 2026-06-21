@@ -12,9 +12,9 @@ return new class extends Migration
     {
         Schema::create('quotes', function (Blueprint $table): void {
             $table->uuid('uuid')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
-            $table->foreignUuid('store_id')->nullable()->constrained('stores')->nullOnDelete();
-            $table->foreignUuid('customer_id')->nullable()->constrained('customers')->nullOnDelete();
+            $table->foreignUuid('tenant_id')->constrained('tenants', 'uuid')->cascadeOnDelete();
+            $table->foreignUuid('store_id')->nullable()->constrained('stores', 'uuid')->nullOnDelete();
+            $table->foreignUuid('customer_id')->nullable()->constrained('customers', 'uuid')->nullOnDelete();
 
             $table->string('number', 20)->comment('ORC000001 — gerado por SequenceEntity::Quote');
             $table->string('status', 20)->default('draft');
@@ -32,13 +32,13 @@ return new class extends Migration
             $table->text('notes')->nullable()->comment('Visível ao cliente');
             $table->text('internal_notes')->nullable()->comment('Uso interno');
             $table->string('payment_terms', 200)->nullable();
-            // Rastreio de ciclo de vida
-            $table->foreignUuid('converted_to_order_id')->nullable()->constrained('orders')->nullOnDelete();
+            // Rastreio de ciclo de vida (orders ainda não existe, adicionamos FK depois)
+            $table->uuid('converted_to_order_id')->nullable();
             $table->timestamp('converted_at')->nullable();
             $table->timestamp('sent_at')->nullable();
             $table->timestamp('viewed_at')->nullable();
-            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignUuid('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('created_by')->nullable()->constrained('users', 'uuid')->nullOnDelete();
+            $table->foreignUuid('updated_by')->nullable()->constrained('users', 'uuid')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
 
