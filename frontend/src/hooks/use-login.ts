@@ -15,8 +15,8 @@ export function useLoginMutation() {
   return useMutation({
     mutationFn: (data: LoginRequest) => authService.login(data),
 
-    onSuccess: ({ token, user, tenant, store, channel }) => {
-      login(token, user, tenant, store, channel)
+    onSuccess: async ({ token, user, tenant, store, channel }) => {
+      await login(token, user, tenant, store, channel)
       router.push(ROUTES.HOME)
     },
 

@@ -64,8 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // ── login: called by useLoginMutation after API success ────────────────
+  // Sets the token then immediately fetches /me to populate permissions
+  // before resolving, so the app never renders with an empty permissions list.
   const login = useCallback(
-    (token: string, user: User, tenant: Tenant, store: Store | null, channel: Channel | null) => {
+    async (token: string, user: User, tenant: Tenant, store: Store | null, channel: Channel | null) => {
       setToken(token)
       setState({
         user,
@@ -75,8 +77,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         memberships:     [],
         permissions:     [],
         isAuthenticated: true,
-        isLoading:       false,
+        isLoading:       true,
       })
+      try {
+        const me = await authService.me()
+        const resolved = me.memberships ?? []
+        setState((s) => ({
+          ...s,
+          memberships: resolved,
+          permissions: extractPermissions(resolved),
+          isLoading:   false,
+        }))
+      } catch {
+        setState((s) => ({ ...s, isLoading: false }))
+      }
     },
     []
   )

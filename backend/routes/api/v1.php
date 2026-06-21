@@ -57,113 +57,145 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
 
     /*
     |----------------------------------------------------------------------
-    | Catalog Module
+    | Catalog Module — products.view required for management
+    | GET routes (product search) left open so PDV/sellers can search.
+    | Write-level protection is enforced inside catalog.php per-route.
     |----------------------------------------------------------------------
     */
     Route::prefix('catalog')->name('catalog.')->group(base_path('routes/api/v1/catalog.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Inventory Module
+    | Inventory Module — inventory.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('inventory')->name('inventory.')->group(base_path('routes/api/v1/inventory.php'));
+    Route::prefix('inventory')->name('inventory.')
+        ->middleware('permission:inventory.view')
+        ->group(base_path('routes/api/v1/inventory.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Customers Module
+    | Customers Module — customers.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('customers')->name('customers.')->group(base_path('routes/api/v1/customers.php'));
+    Route::prefix('customers')->name('customers.')
+        ->middleware('permission:customers.view')
+        ->group(base_path('routes/api/v1/customers.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Customer Tags Management
+    | Customer Tags Management — customers.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('customer-tags')->name('customer-tags.')->group(base_path('routes/api/v1/customer-tags.php'));
+    Route::prefix('customer-tags')->name('customer-tags.')
+        ->middleware('permission:customers.view')
+        ->group(base_path('routes/api/v1/customer-tags.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Sales Module
+    | Sales Module — sales.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('sales')->name('sales.')->group(base_path('routes/api/v1/sales.php'));
+    Route::prefix('sales')->name('sales.')
+        ->middleware('permission:sales.view')
+        ->group(base_path('routes/api/v1/sales.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Finance Module
+    | Finance Module — financial.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('finance')->name('finance.')->group(base_path('routes/api/v1/finance.php'));
+    Route::prefix('finance')->name('finance.')
+        ->middleware('permission:financial.view')
+        ->group(base_path('routes/api/v1/finance.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Fiscal Module
+    | Fiscal Module — fiscal.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('fiscal')->name('fiscal.')->group(base_path('routes/api/v1/fiscal.php'));
+    Route::prefix('fiscal')->name('fiscal.')
+        ->middleware('permission:fiscal.view')
+        ->group(base_path('routes/api/v1/fiscal.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Reports Module
+    | Reports Module — financial.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('reports')->name('reports.')->group(base_path('routes/api/v1/reports.php'));
+    Route::prefix('reports')->name('reports.')
+        ->middleware('permission:financial.view')
+        ->group(base_path('routes/api/v1/reports.php'));
 
     /*
     |----------------------------------------------------------------------
-    | POS Module (includes PIX gateway routes)
+    | POS Module — sales.view required (cashier ops use cashier.open etc
+    | but POS access in general is gated by sales.view)
     |----------------------------------------------------------------------
     */
-    Route::prefix('pos')->name('pos.')->group(base_path('routes/api/v1/pos.php'));
+    Route::prefix('pos')->name('pos.')
+        ->middleware('permission:sales.view')
+        ->group(base_path('routes/api/v1/pos.php'));
 
     /*
     |----------------------------------------------------------------------
-    | CRM Module
+    | CRM Module — customers.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('crm')->name('crm.')->group(base_path('routes/api/v1/crm.php'));
+    Route::prefix('crm')->name('crm.')
+        ->middleware('permission:customers.view')
+        ->group(base_path('routes/api/v1/crm.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Purchasing Module — Suppliers & Purchase Orders
+    | Purchasing Module — purchase_orders.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('purchasing')->name('purchasing.')->group(base_path('routes/api/v1/purchasing.php'));
+    Route::prefix('purchasing')->name('purchasing.')
+        ->middleware('permission:purchase_orders.view')
+        ->group(base_path('routes/api/v1/purchasing.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Sync Module — Offline-First PDV Protocol
+    | Sync Module — sales.view required (offline PDV sync)
     |----------------------------------------------------------------------
     */
-    Route::prefix('sync')->name('sync.')->group(base_path('routes/api/v1/sync.php'));
+    Route::prefix('sync')->name('sync.')
+        ->middleware('permission:sales.view')
+        ->group(base_path('routes/api/v1/sync.php'));
 
     /*
     |----------------------------------------------------------------------
-    | RBAC — Roles, Permissions, TenantUsers, Store Access
+    | RBAC — users.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('rbac')->name('rbac.')->group(base_path('routes/api/v1/rbac.php'));
+    Route::prefix('rbac')->name('rbac.')
+        ->middleware('permission:users.view')
+        ->group(base_path('routes/api/v1/rbac.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Omnichannel — Channels, Publication, Pricing, Orders
+    | Omnichannel — products.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('omnichannel')->name('omnichannel.')->group(base_path('routes/api/v1/omnichannel.php'));
+    Route::prefix('omnichannel')->name('omnichannel.')
+        ->middleware('permission:products.view')
+        ->group(base_path('routes/api/v1/omnichannel.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Conditionals Module
+    | Conditionals Module — sales.view required
     |----------------------------------------------------------------------
     */
-    Route::prefix('conditionals')->name('conditionals.')->group(base_path('routes/api/v1/conditionals.php'));
+    Route::prefix('conditionals')->name('conditionals.')
+        ->middleware('permission:sales.view')
+        ->group(base_path('routes/api/v1/conditionals.php'));
 
     /*
     |----------------------------------------------------------------------
-    | Orders Module — Pedidos e Orçamentos
+    | Orders Module — sales.view required
     |----------------------------------------------------------------------
     */
-    Route::group([], base_path('routes/api/v1/orders.php'));
+    Route::middleware('permission:sales.view')
+        ->group(base_path('routes/api/v1/orders.php'));
 });

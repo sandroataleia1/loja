@@ -15,103 +15,102 @@ use App\Modules\Catalog\Http\Controllers\VariantController;
 use App\Modules\Media\Http\Controllers\MediaAssetController;
 use Illuminate\Support\Facades\Route;
 
-// ── Brands ────────────────────────────────────────────────────────────────────
-Route::apiResource('brands', BrandController::class);
+/*
+|--------------------------------------------------------------------------
+| Catalog — Read routes (open to any authenticated user)
+| Product/variant search is needed by salespeople and PDV cashiers.
+|--------------------------------------------------------------------------
+*/
 
-// ── Categories ────────────────────────────────────────────────────────────────
-Route::apiResource('categories', CategoryController::class);
+// Products — read (any authenticated user can search products)
+Route::get('products',          [ProductController::class, 'index'])->name('products.index');
+Route::get('products/{product}', [ProductController::class, 'show'])->name('products.show');
+Route::get('products/{product}/variants',          [VariantController::class, 'index'])->name('products.variants.index');
+Route::get('products/{product}/variants/{variant}', [VariantController::class, 'show'])->name('products.variants.show');
+Route::get('products/{product}/price-history', [ProductPriceHistoryController::class, 'index'])->name('products.price-history.index');
+Route::get('products/{product}/media',         [MediaAssetController::class, 'productMedia'])->name('products.media.index');
+Route::get('products/{product}/commercial-collections', [ProductCollectionItemController::class, 'index'])->name('products.commercial-collections.index');
 
-// ── Collections ───────────────────────────────────────────────────────────────
-Route::apiResource('collections', CollectionController::class);
+// Brands / Categories — read
+Route::get('brands',         [BrandController::class, 'index'])->name('brands.index');
+Route::get('brands/{brand}', [BrandController::class, 'show'])->name('brands.show');
+Route::get('categories',             [CategoryController::class, 'index'])->name('categories.index');
+Route::get('categories/{category}',  [CategoryController::class, 'show'])->name('categories.show');
 
-// ── Attribute Groups + Attributes (nested) ────────────────────────────────────
-Route::apiResource('attribute-groups', AttributeGroupController::class)
-    ->except(['update']);
+// Attribute groups — read
+Route::get('attribute-groups',                    [AttributeGroupController::class, 'index'])->name('attribute-groups.index');
+Route::get('attribute-groups/{attributeGroup}',   [AttributeGroupController::class, 'show'])->name('attribute-groups.show');
 
-Route::post(
-    'attribute-groups/{attributeGroup}/attributes',
-    [AttributeGroupController::class, 'storeAttribute'],
-)->name('attribute-groups.attributes.store');
+// Grids — read
+Route::get('grids',       [GridController::class, 'index'])->name('grids.index');
+Route::get('grids/{grid}', [GridController::class, 'show'])->name('grids.show');
 
-Route::delete(
-    'attribute-groups/{attributeGroup}/attributes/{attribute}',
-    [AttributeGroupController::class, 'destroyAttribute'],
-)->name('attribute-groups.attributes.destroy');
+// Media assets — read
+Route::get('media-assets',             [MediaAssetController::class, 'index'])->name('media-assets.index');
+Route::get('media-assets/{mediaAsset}', [MediaAssetController::class, 'show'])->name('media-assets.show');
 
-// ── Grids ─────────────────────────────────────────────────────────────────────
-Route::apiResource('grids', GridController::class)->except(['update']);
+// Variants — read-only public lookup by uuid
+Route::get('variants/generate', [VariantController::class, 'generate'])->name('variants.generate');
 
-// ── Products ──────────────────────────────────────────────────────────────────
-Route::apiResource('products', ProductController::class);
+/*
+|--------------------------------------------------------------------------
+| Catalog — Write routes (products.view + specific create/update/delete)
+| Wrapped in products.view so at minimum the user can see products before
+| managing them.
+|--------------------------------------------------------------------------
+*/
+Route::middleware('permission:products.view')->group(function (): void {
 
-Route::post('products/{product}/publish',   [ProductController::class, 'publish'])->name('products.publish');
-Route::post('products/{product}/archive',   [ProductController::class, 'archive'])->name('products.archive');
-Route::post('products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
+    // Products — write
+    Route::post('products',           [ProductController::class, 'store'])->name('products.store');
+    Route::put('products/{product}',  [ProductController::class, 'update'])->name('products.update');
+    Route::delete('products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+    Route::post('products/{product}/publish',   [ProductController::class, 'publish'])->name('products.publish');
+    Route::post('products/{product}/archive',   [ProductController::class, 'archive'])->name('products.archive');
+    Route::post('products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
 
-// ── Product — Commercial Collections (many-to-many) ──────────────────────────
-Route::get(
-    'products/{product}/commercial-collections',
-    [ProductCollectionItemController::class, 'index'],
-)->name('products.commercial-collections.index');
+    // Products — commercial collections (write)
+    Route::post('products/{product}/commercial-collections',             [ProductCollectionItemController::class, 'attach'])->name('products.commercial-collections.attach');
+    Route::delete('products/{product}/commercial-collections/{collection}', [ProductCollectionItemController::class, 'detach'])->name('products.commercial-collections.detach');
 
-Route::post(
-    'products/{product}/commercial-collections',
-    [ProductCollectionItemController::class, 'attach'],
-)->name('products.commercial-collections.attach');
+    // Products — media (write)
+    Route::post('products/{product}/media',              [MediaAssetController::class, 'attachToProduct'])->name('products.media.attach');
+    Route::delete('products/{product}/media/{mediaAsset}', [MediaAssetController::class, 'detachFromProduct'])->name('products.media.detach');
 
-Route::delete(
-    'products/{product}/commercial-collections/{collection}',
-    [ProductCollectionItemController::class, 'detach'],
-)->name('products.commercial-collections.detach');
+    // Variants — write
+    Route::post('variants',          [VariantController::class, 'store'])->name('variants.store');
+    Route::put('variants/{variant}', [VariantController::class, 'update'])->name('variants.update');
+    Route::delete('products/{product}/variants/{variant}', [VariantController::class, 'destroy'])->name('products.variants.destroy');
 
-// ── Product — Price History ───────────────────────────────────────────────────
-Route::get(
-    'products/{product}/price-history',
-    [ProductPriceHistoryController::class, 'index'],
-)->name('products.price-history.index');
+    // Brands — write
+    Route::post('brands',          [BrandController::class, 'store'])->name('brands.store');
+    Route::put('brands/{brand}',   [BrandController::class, 'update'])->name('brands.update');
+    Route::delete('brands/{brand}', [BrandController::class, 'destroy'])->name('brands.destroy');
 
-// ── Product — Media (desacoplado) ────────────────────────────────────────────
-Route::get(
-    'products/{product}/media',
-    [MediaAssetController::class, 'productMedia'],
-)->name('products.media.index');
+    // Categories — write
+    Route::post('categories',            [CategoryController::class, 'store'])->name('categories.store');
+    Route::put('categories/{category}',  [CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
-Route::post(
-    'products/{product}/media',
-    [MediaAssetController::class, 'attachToProduct'],
-)->name('products.media.attach');
+    // Collections
+    Route::apiResource('collections', CollectionController::class);
 
-Route::delete(
-    'products/{product}/media/{mediaAsset}',
-    [MediaAssetController::class, 'detachFromProduct'],
-)->name('products.media.detach');
+    // Attribute Groups — write
+    Route::post('attribute-groups',                    [AttributeGroupController::class, 'store'])->name('attribute-groups.store');
+    Route::delete('attribute-groups/{attributeGroup}', [AttributeGroupController::class, 'destroy'])->name('attribute-groups.destroy');
+    Route::post('attribute-groups/{attributeGroup}/attributes',             [AttributeGroupController::class, 'storeAttribute'])->name('attribute-groups.attributes.store');
+    Route::delete('attribute-groups/{attributeGroup}/attributes/{attribute}', [AttributeGroupController::class, 'destroyAttribute'])->name('attribute-groups.attributes.destroy');
 
-// ── Variants ──────────────────────────────────────────────────────────────────
-Route::get(
-    'products/{product}/variants',
-    [VariantController::class, 'index'],
-)->name('products.variants.index');
+    // Grids — write
+    Route::post('grids',        [GridController::class, 'store'])->name('grids.store');
+    Route::delete('grids/{grid}', [GridController::class, 'destroy'])->name('grids.destroy');
 
-Route::get(
-    'products/{product}/variants/{variant}',
-    [VariantController::class, 'show'],
-)->name('products.variants.show');
+    // Images (legacy)
+    Route::post('images',                  [ProductImageController::class, 'store'])->name('images.store');
+    Route::delete('images/{productImage}', [ProductImageController::class, 'destroy'])->name('images.destroy');
+    Route::post('images/reorder',          [ProductImageController::class, 'reorder'])->name('images.reorder');
 
-Route::delete(
-    'products/{product}/variants/{variant}',
-    [VariantController::class, 'destroy'],
-)->name('products.variants.destroy');
-
-Route::post('variants',          [VariantController::class, 'store'])->name('variants.store');
-Route::put('variants/{variant}', [VariantController::class, 'update'])->name('variants.update');
-Route::post('variants/generate', [VariantController::class, 'generate'])->name('variants.generate');
-
-// ── Images (legacy URL-based) ─────────────────────────────────────────────────
-Route::post('images',                  [ProductImageController::class, 'store'])->name('images.store');
-Route::delete('images/{productImage}', [ProductImageController::class, 'destroy'])->name('images.destroy');
-Route::post('images/reorder',          [ProductImageController::class, 'reorder'])->name('images.reorder');
-
-// ── Media Assets (decoupled media domain) ─────────────────────────────────────
-Route::apiResource('media-assets', MediaAssetController::class)
-    ->only(['index', 'store', 'show', 'destroy'])
-    ->parameters(['media-assets' => 'mediaAsset']);
+    // Media Assets — write
+    Route::post('media-assets',               [MediaAssetController::class, 'store'])->name('media-assets.store');
+    Route::delete('media-assets/{mediaAsset}', [MediaAssetController::class, 'destroy'])->name('media-assets.destroy');
+});

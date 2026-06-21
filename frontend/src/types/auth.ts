@@ -14,7 +14,7 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  login:         (token: string, user: User, tenant: Tenant, store: Store | null, channel: Channel | null) => void
+  login:         (token: string, user: User, tenant: Tenant, store: Store | null, channel: Channel | null) => Promise<void>
   logout:        () => Promise<void>
   refresh:       () => Promise<void>
   hasPermission: (slug: string) => boolean
