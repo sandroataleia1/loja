@@ -23,8 +23,6 @@ import {
   Shield,
   UserCog,
   Tag,
-  Grid3x3,
-  Layers,
   Bookmark,
   ArrowRightLeft,
   SlidersHorizontal,
@@ -43,6 +41,7 @@ import {
   Warehouse,
   Handshake,
   CreditCard,
+  Database,
 } from 'lucide-react'
 import { useHasUpdate } from '@/hooks/use-latest-release'
 import { cn } from '@/lib/utils'
@@ -77,21 +76,14 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Clientes',
-    icon:  Users,
+    label: 'Cadastros',
+    icon:  Database,
     items: [
-      { label: 'Clientes', href: ROUTES.CUSTOMERS, icon: Users, permission: 'customers.view' },
-    ],
-  },
-  {
-    label: 'Catálogo',
-    icon:  Package,
-    items: [
-      { label: 'Produtos',   href: ROUTES.PRODUCTS,   icon: Package,  permission: 'products.view' },
-      { label: 'Marcas',     href: ROUTES.BRANDS,     icon: Bookmark, permission: 'products.view' },
-      { label: 'Categorias', href: ROUTES.CATEGORIES, icon: Tag,      permission: 'products.view' },
-      { label: 'Atributos',  href: ROUTES.ATTRIBUTES, icon: Layers,   permission: 'products.view' },
-      { label: 'Grades',     href: ROUTES.GRIDS,      icon: Grid3x3,  permission: 'products.view' },
+      { label: 'Clientes',    href: ROUTES.CUSTOMERS,  icon: Users,     permission: 'customers.view' },
+      { label: 'Produtos',    href: ROUTES.PRODUCTS,   icon: Package,   permission: 'products.view'  },
+      { label: 'Marcas',      href: ROUTES.BRANDS,     icon: Bookmark,  permission: 'products.view'  },
+      { label: 'Categorias',  href: ROUTES.CATEGORIES, icon: Tag,       permission: 'products.view'  },
+      { label: 'Fornecedores', href: ROUTES.SUPPLIERS, icon: Building2, permission: 'suppliers.view' },
     ],
   },
   {
@@ -127,12 +119,12 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Financeiro',
     icon:  Banknote,
     items: [
-      { label: 'Visão Geral',      href: ROUTES.FINANCIAL,            icon: Banknote,      permission: 'financial.view'   },
-      { label: 'A Pagar',          href: ROUTES.FINANCIAL_PAYABLE,    icon: TrendingDown,  permission: 'financial.view'   },
-      { label: 'A Receber',        href: ROUTES.FINANCIAL_RECEIVABLE, icon: TrendingUp,    permission: 'financial.view'   },
-      { label: 'Transferências',   href: ROUTES.FINANCIAL_TRANSFERS,  icon: ArrowLeftRight,permission: 'financial.view'   },
-      { label: 'Contas Bancárias', href: ROUTES.FINANCIAL_ACCOUNTS,   icon: Wallet,        permission: 'financial.view'   },
-      { label: 'Categorias',       href: ROUTES.FINANCIAL_CATEGORIES, icon: Tags,          permission: 'financial.create' },
+      { label: 'Visão Geral',      href: ROUTES.FINANCIAL,            icon: Banknote,       permission: 'financial.view'   },
+      { label: 'A Pagar',          href: ROUTES.FINANCIAL_PAYABLE,    icon: TrendingDown,   permission: 'financial.view'   },
+      { label: 'A Receber',        href: ROUTES.FINANCIAL_RECEIVABLE, icon: TrendingUp,     permission: 'financial.view'   },
+      { label: 'Transferências',   href: ROUTES.FINANCIAL_TRANSFERS,  icon: ArrowLeftRight, permission: 'financial.view'   },
+      { label: 'Contas Bancárias', href: ROUTES.FINANCIAL_ACCOUNTS,   icon: Wallet,         permission: 'financial.view'   },
+      { label: 'Categorias',       href: ROUTES.FINANCIAL_CATEGORIES, icon: Tags,           permission: 'financial.create' },
     ],
   },
   {
@@ -140,7 +132,6 @@ const NAV_GROUPS: NavGroup[] = [
     icon:  PackagePlus,
     items: [
       { label: 'Pedidos de Compra', href: ROUTES.PURCHASING, icon: PackagePlus, permission: 'purchase_orders.view' },
-      { label: 'Fornecedores',      href: ROUTES.SUPPLIERS,  icon: Building2,   permission: 'suppliers.view'       },
     ],
   },
   {
@@ -162,8 +153,8 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Administração',
     icon:  Shield,
     items: [
-      { label: 'Usuários',          href: ROUTES.USERS, icon: UserCog, permission: 'users.view' },
-      { label: 'Perfis de Acesso',  href: ROUTES.ROLES, icon: Shield,  permission: 'users.view' },
+      { label: 'Usuários',         href: ROUTES.USERS, icon: UserCog, permission: 'users.view' },
+      { label: 'Perfis de Acesso', href: ROUTES.ROLES, icon: Shield,  permission: 'users.view' },
     ],
   },
   {
