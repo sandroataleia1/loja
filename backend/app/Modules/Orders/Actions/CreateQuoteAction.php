@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Orders\Actions;
 
+use App\Core\Auth\Models\User;
 use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Orders\DTOs\CreateQuoteDTO;
 use App\Modules\Orders\DTOs\DocumentItemDTO;
@@ -31,12 +32,22 @@ final readonly class CreateQuoteAction
 
             $discountCents = $dto->discountType === 'fixed'
                 ? (int) round($dto->discountValue * 100)
-                : 0; // percent calculado após totais
+                : 0;
+
+            $sellerId = null;
+            if ($dto->sellerPin) {
+                $seller   = User::where('tenant_id', $tenantId)
+                    ->where('pin', $dto->sellerPin)
+                    ->where('is_active', true)
+                    ->first();
+                $sellerId = $seller?->uuid;
+            }
 
             $quote = Quote::create([
                 'tenant_id'     => $tenantId,
                 'store_id'      => $dto->storeId,
                 'customer_id'   => $dto->customerId,
+                'seller_id'     => $sellerId,
                 'number'        => $number,
                 'status'        => 'draft',
                 'validity_days' => $dto->validityDays,
@@ -55,7 +66,7 @@ final readonly class CreateQuoteAction
 
             $quote->recalculateTotals();
 
-            return $quote->load('items');
+            return $quote->load('items', 'seller');
         });
     }
 

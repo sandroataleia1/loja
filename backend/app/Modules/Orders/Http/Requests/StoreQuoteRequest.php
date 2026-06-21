@@ -13,6 +13,7 @@ final class StoreQuoteRequest extends FormRequest
         return [
             'store_id'               => ['nullable', 'uuid', 'exists:stores,uuid'],
             'customer_id'            => ['nullable', 'uuid', 'exists:customers,uuid'],
+            'seller_pin'             => ['nullable', 'string', 'max:10'],
             'validity_days'          => ['integer', 'min:1', 'max:365'],
             'discount_type'          => ['in:fixed,percent'],
             'discount_value'         => ['numeric', 'min:0'],

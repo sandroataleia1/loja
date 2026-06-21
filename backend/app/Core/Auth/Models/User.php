@@ -43,6 +43,7 @@ final class User extends Authenticatable
         'email',
         'password',
         'is_active',
+        'pin',
         'last_login_at',
         'email_verified_at',
     ];

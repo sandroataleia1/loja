@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, Trash2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { DocumentItemInput } from '@/services/orders.service'
@@ -46,12 +46,13 @@ function itemSubtotal(item: EditorItem): number {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
-  items:    EditorItem[]
-  onChange: (items: EditorItem[]) => void
-  disabled?: boolean
+  items:                 EditorItem[]
+  onChange:              (items: EditorItem[]) => void
+  disabled?:             boolean
+  onOpenProductSearch?:  () => void
 }
 
-export function DocumentItemEditor({ items, onChange, disabled }: Props) {
+export function DocumentItemEditor({ items, onChange, disabled, onOpenProductSearch }: Props) {
   function addItem() {
     onChange([...items, newItem()])
   }
@@ -166,10 +167,18 @@ export function DocumentItemEditor({ items, onChange, disabled }: Props) {
         </table>
       </div>
 
-      <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={disabled}>
-        <Plus className="mr-2 h-4 w-4" />
-        Adicionar item
-      </Button>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={disabled}>
+          <Plus className="mr-2 h-4 w-4" />
+          Adicionar item
+        </Button>
+        {onOpenProductSearch && (
+          <Button type="button" variant="outline" size="sm" onClick={onOpenProductSearch} disabled={disabled}>
+            <Search className="mr-2 h-4 w-4" />
+            Buscar produto
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

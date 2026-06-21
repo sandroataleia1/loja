@@ -16,30 +16,48 @@ import {
   type EditorItem,
   formatBRL,
 } from '@/features/orders/components/document-item-editor'
+import { CustomerAutocomplete } from '@/features/orders/components/customer-autocomplete'
+import { SellerPinInput } from '@/features/orders/components/seller-pin-input'
+import {
+  ProductSearchModal,
+  type SelectedProduct,
+} from '@/features/orders/components/product-search-modal'
+import { CommercialSettingsButton, loadCommercialSettings } from '@/features/orders/components/commercial-settings-modal'
 import { useCreateQuote } from '@/features/orders/hooks'
-import { useCustomers } from '@/features/customers/hooks'
 import { ROUTES } from '@/constants'
 import type { CreateQuoteRequest } from '@/services/orders.service'
 
 export default function NewQuotePage() {
   const router = useRouter()
 
-  const [customerId,    setCustomerId]    = useState('')
-  const [validityDays,  setValidityDays]  = useState(30)
+  const [customerId,    setCustomerId]    = useState<string | null>(null)
+  const [sellerPin,     setSellerPin]     = useState('')
   const [discountType,  setDiscountType]  = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState(0)
   const [paymentTerms,  setPaymentTerms]  = useState('')
   const [notes,         setNotes]         = useState('')
   const [items,         setItems]         = useState<EditorItem[]>([])
-
-  const { data: customersData } = useCustomers({ per_page: 200 })
-  const customers = customersData?.data ?? []
+  const [productOpen,   setProductOpen]   = useState(false)
 
   const { mutate: createQuote, isPending } = useCreateQuote()
 
   const subtotalCents = items.reduce((sum, item) => {
     return sum + Math.max(0, Math.round(item.quantity * item.unit_price_cents) - (item.discount_cents ?? 0))
   }, 0)
+
+  function handleProductSelected(product: SelectedProduct) {
+    const item: EditorItem = {
+      _key:               crypto.randomUUID(),
+      product_variant_id: product.product_variant_id,
+      name_snapshot:      product.name_snapshot,
+      sku_snapshot:       product.sku_snapshot,
+      quantity:           1,
+      unit_price_cents:   product.unit_price_cents,
+      discount_cents:     0,
+      notes:              null,
+    }
+    setItems((prev) => [...prev, item])
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -54,10 +72,13 @@ export default function NewQuotePage() {
       return
     }
 
+    const settings = loadCommercialSettings()
+
     const payload: CreateQuoteRequest = {
-      customer_id:   customerId || null,
-      validity_days: validityDays,
-      discount_type: discountType,
+      customer_id:    customerId || null,
+      seller_pin:     sellerPin || null,
+      validity_days:  settings.default_validity_days,
+      discount_type:  discountType,
       discount_value: discountValue,
       payment_terms:  paymentTerms || null,
       notes:          notes || null,
@@ -89,44 +110,39 @@ export default function NewQuotePage() {
         title="Novo Orçamento"
         description="Crie um orçamento para enviar ao cliente."
         actions={
-          <Button variant="outline" asChild>
-            <Link href={ROUTES.QUOTES}>
-              <ChevronLeft className="mr-1.5 h-4 w-4" />
-              Voltar
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <CommercialSettingsButton />
+            <Button variant="outline" asChild>
+              <Link href={ROUTES.QUOTES}>
+                <ChevronLeft className="mr-1.5 h-4 w-4" />
+                Voltar
+              </Link>
+            </Button>
+          </div>
         }
       />
 
+      <ProductSearchModal
+        open={productOpen}
+        onClose={() => setProductOpen(false)}
+        onSelect={handleProductSelected}
+      />
+
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Header */}
         <AppCard title="Informações Gerais">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="customer_id">Cliente</Label>
-              <select
-                id="customer_id"
-                value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="">Consumidor Final</option>
-                {customers.map((c) => (
-                  <option key={c.uuid} value={c.uuid}>{c.name}</option>
-                ))}
-              </select>
-            </div>
+            <CustomerAutocomplete
+              value={customerId}
+              onChange={(uuid) => setCustomerId(uuid)}
+              disabled={isPending}
+            />
 
-            <div className="space-y-1.5">
-              <Label htmlFor="validity_days">Validade (dias)</Label>
-              <Input
-                id="validity_days"
-                type="number"
-                min={1}
-                value={validityDays}
-                onChange={(e) => setValidityDays(parseInt(e.target.value) || 30)}
-              />
-            </div>
+            <SellerPinInput
+              value={sellerPin}
+              onChange={setSellerPin}
+              onSellerResolved={() => {}}
+              disabled={isPending}
+            />
 
             <div className="space-y-1.5">
               <Label htmlFor="payment_terms">Condições de Pagamento</Label>
@@ -135,17 +151,21 @@ export default function NewQuotePage() {
                 placeholder="Ex: 30/60/90 dias"
                 value={paymentTerms}
                 onChange={(e) => setPaymentTerms(e.target.value)}
+                disabled={isPending}
               />
             </div>
           </div>
         </AppCard>
 
-        {/* Items */}
         <AppCard title="Itens do Orçamento">
-          <DocumentItemEditor items={items} onChange={setItems} disabled={isPending} />
+          <DocumentItemEditor
+            items={items}
+            onChange={setItems}
+            disabled={isPending}
+            onOpenProductSearch={() => setProductOpen(true)}
+          />
         </AppCard>
 
-        {/* Discount + Notes */}
         <AppCard title="Desconto e Observações">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -155,6 +175,7 @@ export default function NewQuotePage() {
                   value={discountType}
                   onChange={(e) => setDiscountType(e.target.value as 'fixed' | 'percent')}
                   className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  disabled={isPending}
                 >
                   <option value="fixed">R$ (fixo)</option>
                   <option value="percent">% (percentual)</option>
@@ -165,7 +186,7 @@ export default function NewQuotePage() {
                   step={0.01}
                   value={discountValue}
                   onChange={(e) => setDiscountValue(parseFloat(e.target.value) || 0)}
-                  placeholder={discountType === 'percent' ? '0.00' : '0.00'}
+                  disabled={isPending}
                   className="flex-1"
                 />
               </div>
@@ -179,15 +200,16 @@ export default function NewQuotePage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Observações visíveis ao cliente"
+                disabled={isPending}
               />
             </div>
           </div>
         </AppCard>
 
-        {/* Summary + Submit */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Subtotal dos itens: <span className="font-medium text-foreground">{formatBRL(subtotalCents)}</span>
+            Subtotal dos itens:{' '}
+            <span className="font-medium text-foreground">{formatBRL(subtotalCents)}</span>
           </p>
           <div className="flex gap-3">
             <Button variant="outline" type="button" asChild>

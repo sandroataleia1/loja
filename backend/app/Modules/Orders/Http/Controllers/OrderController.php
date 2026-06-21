@@ -43,14 +43,14 @@ final class OrderController extends Controller
     public function store(StoreOrderRequest $request, CreateOrderAction $action): JsonResponse
     {
         $order = $action->execute(CreateOrderDTO::fromRequest($request));
-        return $this->created(new OrderResource($order->load('items', 'customer')));
+        return $this->created(new OrderResource($order->load('items', 'customer', 'seller')));
     }
 
     public function show(string $uuid): JsonResponse
     {
         $order = Order::where('tenant_id', TenantContext::getIdOrFail())
             ->where('uuid', $uuid)
-            ->with(['items', 'customer', 'quote'])
+            ->with(['items', 'customer', 'seller', 'quote'])
             ->firstOrFail();
 
         return $this->success(new OrderResource($order));
@@ -82,7 +82,7 @@ final class OrderController extends Controller
             $request->string('cancellation_reason')->value() ?: null,
         );
 
-        return $this->success(new OrderResource($updated->load('items', 'customer')));
+        return $this->success(new OrderResource($updated->load('items', 'customer', 'seller')));
     }
 
     public function destroy(string $uuid): JsonResponse

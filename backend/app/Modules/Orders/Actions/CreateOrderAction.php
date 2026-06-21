@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Orders\Actions;
 
+use App\Core\Auth\Models\User;
 use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Orders\DTOs\CreateOrderDTO;
 use App\Modules\Orders\DTOs\DocumentItemDTO;
@@ -32,10 +33,20 @@ final readonly class CreateOrderAction
                 ? (int) round($dto->discountValue * 100)
                 : 0;
 
+            $sellerId = null;
+            if ($dto->sellerPin) {
+                $seller   = User::where('tenant_id', $tenantId)
+                    ->where('pin', $dto->sellerPin)
+                    ->where('is_active', true)
+                    ->first();
+                $sellerId = $seller?->uuid;
+            }
+
             $order = Order::create([
                 'tenant_id'     => $tenantId,
                 'store_id'      => $dto->storeId,
                 'customer_id'   => $dto->customerId,
+                'seller_id'     => $sellerId,
                 'quote_id'      => $dto->quoteId,
                 'number'        => $number,
                 'status'        => 'pending',
@@ -54,7 +65,7 @@ final readonly class CreateOrderAction
 
             $order->recalculateTotals();
 
-            return $order->load('items');
+            return $order->load('items', 'seller');
         });
     }
 

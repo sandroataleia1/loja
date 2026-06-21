@@ -75,13 +75,14 @@ export interface Channel {
 // ── User ───────────────────────────────────────────────────────────────────
 
 export interface User {
-  uuid:            string
-  name:            string
-  email:           string
-  role?:           string
-  is_active:       boolean
+  uuid:              string
+  name:              string
+  email:             string
+  role?:             string
+  pin?:              string | null
+  is_active:         boolean
   email_verified_at: string | null
-  last_login_at:   string | null
+  last_login_at:     string | null
 }
 
 export interface Membership {
@@ -297,6 +298,8 @@ export interface Quote {
   store_id:              string | null
   customer_id:           string | null
   customer?:             DocumentCustomer
+  seller_id:             string | null
+  seller?:               { uuid: string; name: string } | null
   validity_days:         number
   valid_until:           string | null
   is_expired:            boolean
@@ -330,6 +333,8 @@ export interface Order {
   store_id:             string | null
   customer_id:          string | null
   customer?:            DocumentCustomer
+  seller_id:            string | null
+  seller?:              { uuid: string; name: string } | null
   quote_id:             string | null
   sale_id:              string | null
   discount_type:        DiscountType

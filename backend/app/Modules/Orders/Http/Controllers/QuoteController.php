@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Orders\Http\Controllers;
 
+use App\Core\Auth\Models\User;
 use App\Core\Tenancy\Services\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Modules\Orders\Actions\ConvertQuoteToOrderAction;
@@ -44,14 +45,30 @@ final class QuoteController extends Controller
     public function store(StoreQuoteRequest $request, CreateQuoteAction $action): JsonResponse
     {
         $quote = $action->execute(CreateQuoteDTO::fromRequest($request));
-        return $this->created(new QuoteResource($quote->load('items', 'customer')));
+        return $this->created(new QuoteResource($quote->load('items', 'customer', 'seller')));
+    }
+
+    public function resolveSellerPin(Request $request): JsonResponse
+    {
+        $request->validate(['pin' => ['required', 'string', 'max:10']]);
+
+        $user = User::where('tenant_id', TenantContext::getIdOrFail())
+            ->where('pin', $request->input('pin'))
+            ->where('is_active', true)
+            ->first();
+
+        if (! $user) {
+            return $this->error('PIN inválido ou vendedor inativo.', 404);
+        }
+
+        return $this->success(['uuid' => $user->uuid, 'name' => $user->name]);
     }
 
     public function show(string $uuid): JsonResponse
     {
         $quote = Quote::where('tenant_id', TenantContext::getIdOrFail())
             ->where('uuid', $uuid)
-            ->with(['items', 'customer'])
+            ->with(['items', 'customer', 'seller'])
             ->firstOrFail();
 
         return $this->success(new QuoteResource($quote));
@@ -61,7 +78,7 @@ final class QuoteController extends Controller
     {
         $quote = Quote::where('tenant_id', TenantContext::getIdOrFail())
             ->where('number', strtoupper($number))
-            ->with(['items', 'customer'])
+            ->with(['items', 'customer', 'seller'])
             ->firstOrFail();
 
         return $this->success(new QuoteResource($quote));
@@ -77,7 +94,7 @@ final class QuoteController extends Controller
         }
 
         $quote->update(['status' => QuoteStatusEnum::Sent, 'sent_at' => now()]);
-        return $this->success(new QuoteResource($quote->load('items', 'customer')));
+        return $this->success(new QuoteResource($quote->load('items', 'customer', 'seller')));
     }
 
     public function convert(string $uuid, Request $request, ConvertQuoteToOrderAction $action): JsonResponse

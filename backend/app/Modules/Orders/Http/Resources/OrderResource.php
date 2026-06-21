@@ -25,6 +25,11 @@ final class OrderResource extends JsonResource
                 'phone' => $this->customer->phone ?? null,
                 'email' => $this->customer->email ?? null,
             ]),
+            'seller_id'             => $this->seller_id,
+            'seller'                => $this->whenLoaded('seller', fn () => $this->seller
+                ? ['uuid' => $this->seller->uuid, 'name' => $this->seller->name]
+                : null
+            ),
             'quote_id'              => $this->quote_id,
             'sale_id'               => $this->sale_id,
             'discount_type'         => $this->discount_type,

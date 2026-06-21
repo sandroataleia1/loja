@@ -25,6 +25,11 @@ final class QuoteResource extends JsonResource
                 'phone' => $this->customer->phone ?? null,
                 'email' => $this->customer->email ?? null,
             ]),
+            'seller_id'              => $this->seller_id,
+            'seller'                 => $this->whenLoaded('seller', fn () => $this->seller
+                ? ['uuid' => $this->seller->uuid, 'name' => $this->seller->name]
+                : null
+            ),
             'validity_days'          => $this->validity_days,
             'valid_until'            => $this->valid_until?->toDateString(),
             'is_expired'             => $this->isExpired(),

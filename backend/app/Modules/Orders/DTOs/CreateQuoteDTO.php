@@ -12,6 +12,7 @@ final readonly class CreateQuoteDTO
     public function __construct(
         public ?string $storeId,
         public ?string $customerId,
+        public ?string $sellerPin,
         public int     $validityDays,
         public string  $discountType,
         public float   $discountValue,
@@ -31,7 +32,8 @@ final readonly class CreateQuoteDTO
         return new static(
             storeId:       $request->string('store_id')->value() ?: null,
             customerId:    $request->string('customer_id')->value() ?: null,
-            validityDays:  $request->integer('validity_days', 7),
+            sellerPin:     $request->string('seller_pin')->value() ?: null,
+            validityDays:  $request->integer('validity_days', 30),
             discountType:  $request->string('discount_type', 'fixed')->toString(),
             discountValue: (float) $request->input('discount_value', 0),
             notes:         $request->string('notes')->value() ?: null,

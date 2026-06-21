@@ -16,30 +16,49 @@ import {
   type EditorItem,
   formatBRL,
 } from '@/features/orders/components/document-item-editor'
+import { CustomerAutocomplete } from '@/features/orders/components/customer-autocomplete'
+import { SellerPinInput } from '@/features/orders/components/seller-pin-input'
+import {
+  ProductSearchModal,
+  type SelectedProduct,
+} from '@/features/orders/components/product-search-modal'
+import { CommercialSettingsButton } from '@/features/orders/components/commercial-settings-modal'
 import { useCreateOrder } from '@/features/orders/hooks'
-import { useCustomers } from '@/features/customers/hooks'
 import { ROUTES } from '@/constants'
 import type { CreateOrderRequest } from '@/services/orders.service'
 
 export default function NewOrderPage() {
   const router = useRouter()
 
-  const [customerId,    setCustomerId]    = useState('')
+  const [customerId,    setCustomerId]    = useState<string | null>(null)
+  const [sellerPin,     setSellerPin]     = useState('')
   const [expectedAt,    setExpectedAt]    = useState('')
   const [discountType,  setDiscountType]  = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState(0)
   const [paymentTerms,  setPaymentTerms]  = useState('')
   const [notes,         setNotes]         = useState('')
   const [items,         setItems]         = useState<EditorItem[]>([])
-
-  const { data: customersData } = useCustomers({ per_page: 200 })
-  const customers = customersData?.data ?? []
+  const [productOpen,   setProductOpen]   = useState(false)
 
   const { mutate: createOrder, isPending } = useCreateOrder()
 
   const subtotalCents = items.reduce((sum, item) => {
     return sum + Math.max(0, Math.round(item.quantity * item.unit_price_cents) - (item.discount_cents ?? 0))
   }, 0)
+
+  function handleProductSelected(product: SelectedProduct) {
+    const item: EditorItem = {
+      _key:               crypto.randomUUID(),
+      product_variant_id: product.product_variant_id,
+      name_snapshot:      product.name_snapshot,
+      sku_snapshot:       product.sku_snapshot,
+      quantity:           1,
+      unit_price_cents:   product.unit_price_cents,
+      discount_cents:     0,
+      notes:              null,
+    }
+    setItems((prev) => [...prev, item])
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -55,9 +74,10 @@ export default function NewOrderPage() {
     }
 
     const payload: CreateOrderRequest = {
-      customer_id:   customerId || null,
-      expected_at:   expectedAt || null,
-      discount_type: discountType,
+      customer_id:    customerId || null,
+      seller_pin:     sellerPin || null,
+      expected_at:    expectedAt || null,
+      discount_type:  discountType,
       discount_value: discountValue,
       payment_terms:  paymentTerms || null,
       notes:          notes || null,
@@ -89,32 +109,39 @@ export default function NewOrderPage() {
         title="Novo Pedido"
         description="Crie um pedido de venda."
         actions={
-          <Button variant="outline" asChild>
-            <Link href={ROUTES.ORDERS}>
-              <ChevronLeft className="mr-1.5 h-4 w-4" />
-              Voltar
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <CommercialSettingsButton />
+            <Button variant="outline" asChild>
+              <Link href={ROUTES.ORDERS}>
+                <ChevronLeft className="mr-1.5 h-4 w-4" />
+                Voltar
+              </Link>
+            </Button>
+          </div>
         }
+      />
+
+      <ProductSearchModal
+        open={productOpen}
+        onClose={() => setProductOpen(false)}
+        onSelect={handleProductSelected}
       />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <AppCard title="Informações Gerais">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="customer_id">Cliente</Label>
-              <select
-                id="customer_id"
-                value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="">Consumidor Final</option>
-                {customers.map((c) => (
-                  <option key={c.uuid} value={c.uuid}>{c.name}</option>
-                ))}
-              </select>
-            </div>
+            <CustomerAutocomplete
+              value={customerId}
+              onChange={(uuid) => setCustomerId(uuid)}
+              disabled={isPending}
+            />
+
+            <SellerPinInput
+              value={sellerPin}
+              onChange={setSellerPin}
+              onSellerResolved={() => {}}
+              disabled={isPending}
+            />
 
             <div className="space-y-1.5">
               <Label htmlFor="expected_at">Previsão de entrega</Label>
@@ -123,6 +150,7 @@ export default function NewOrderPage() {
                 type="date"
                 value={expectedAt}
                 onChange={(e) => setExpectedAt(e.target.value)}
+                disabled={isPending}
               />
             </div>
 
@@ -133,13 +161,19 @@ export default function NewOrderPage() {
                 placeholder="Ex: À vista"
                 value={paymentTerms}
                 onChange={(e) => setPaymentTerms(e.target.value)}
+                disabled={isPending}
               />
             </div>
           </div>
         </AppCard>
 
         <AppCard title="Itens do Pedido">
-          <DocumentItemEditor items={items} onChange={setItems} disabled={isPending} />
+          <DocumentItemEditor
+            items={items}
+            onChange={setItems}
+            disabled={isPending}
+            onOpenProductSearch={() => setProductOpen(true)}
+          />
         </AppCard>
 
         <AppCard title="Desconto e Observações">
@@ -151,6 +185,7 @@ export default function NewOrderPage() {
                   value={discountType}
                   onChange={(e) => setDiscountType(e.target.value as 'fixed' | 'percent')}
                   className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  disabled={isPending}
                 >
                   <option value="fixed">R$ (fixo)</option>
                   <option value="percent">% (percentual)</option>
@@ -161,6 +196,7 @@ export default function NewOrderPage() {
                   step={0.01}
                   value={discountValue}
                   onChange={(e) => setDiscountValue(parseFloat(e.target.value) || 0)}
+                  disabled={isPending}
                   className="flex-1"
                 />
               </div>
@@ -174,6 +210,7 @@ export default function NewOrderPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Observações do pedido"
+                disabled={isPending}
               />
             </div>
           </div>
@@ -181,7 +218,8 @@ export default function NewOrderPage() {
 
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Subtotal dos itens: <span className="font-medium text-foreground">{formatBRL(subtotalCents)}</span>
+            Subtotal dos itens:{' '}
+            <span className="font-medium text-foreground">{formatBRL(subtotalCents)}</span>
           </p>
           <div className="flex gap-3">
             <Button variant="outline" type="button" asChild>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Orders\Models;
 
+use App\Core\Auth\Models\User;
 use App\Modules\Orders\Enums\QuoteStatusEnum;
 use App\Shared\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ final class Quote extends BaseModel
         'tenant_id',
         'store_id',
         'customer_id',
+        'seller_id',
         'number',
         'status',
         'validity_days',
@@ -66,6 +68,11 @@ final class Quote extends BaseModel
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class, 'converted_to_order_id', 'uuid');
+    }
+
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'seller_id', 'uuid');
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

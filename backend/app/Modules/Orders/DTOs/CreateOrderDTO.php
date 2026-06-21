@@ -12,6 +12,7 @@ final readonly class CreateOrderDTO
     public function __construct(
         public ?string $storeId,
         public ?string $customerId,
+        public ?string $sellerPin,
         public ?string $quoteId,
         public string  $discountType,
         public float   $discountValue,
@@ -32,6 +33,7 @@ final readonly class CreateOrderDTO
         return new static(
             storeId:       $request->string('store_id')->value() ?: null,
             customerId:    $request->string('customer_id')->value() ?: null,
+            sellerPin:     $request->string('seller_pin')->value() ?: null,
             quoteId:       $request->string('quote_id')->value() ?: null,
             discountType:  $request->string('discount_type', 'fixed')->toString(),
             discountValue: (float) $request->input('discount_value', 0),

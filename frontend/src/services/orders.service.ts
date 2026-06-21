@@ -18,6 +18,7 @@ export interface DocumentItemInput {
 export interface CreateQuoteRequest {
   store_id?:       string | null
   customer_id?:    string | null
+  seller_pin?:     string | null
   validity_days?:  number
   discount_type?:  'fixed' | 'percent'
   discount_value?: number
@@ -30,6 +31,7 @@ export interface CreateQuoteRequest {
 export interface CreateOrderRequest {
   store_id?:       string | null
   customer_id?:    string | null
+  seller_pin?:     string | null
   quote_id?:       string | null
   discount_type?:  'fixed' | 'percent'
   discount_value?: number
@@ -95,8 +97,9 @@ export const quotesService = {
 
   get:          (uuid: string)   => getSingle<Quote>(`/quotes/${uuid}`),
   getByNumber:  (number: string) => getSingle<Quote>(`/quotes/by-number/${encodeURIComponent(number)}`),
-  create:       (payload: CreateQuoteRequest) => postSingle<Quote, CreateQuoteRequest>('/quotes', payload),
-  markSent:     (uuid: string) => patchSingle<Quote>(`/quotes/${uuid}/mark-sent`),
+  create:            (payload: CreateQuoteRequest) => postSingle<Quote, CreateQuoteRequest>('/quotes', payload),
+  resolveSellerPin:  (pin: string) => postSingle<{ uuid: string; name: string }>('/quotes/resolve-seller-pin', { pin }),
+  markSent:          (uuid: string) => patchSingle<Quote>(`/quotes/${uuid}/mark-sent`),
 
   convert: (uuid: string, expectedAt?: string) =>
     postSingle<Order>(`/quotes/${uuid}/convert`, { expected_at: expectedAt }),
