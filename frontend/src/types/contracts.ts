@@ -58,10 +58,6 @@ export type {
   InventoryAdjustment,
   StockTransferItem,
   StockTransfer,
-  ConditionalStatus,
-  ConditionalItem,
-  ConditionalStatusHistory,
-  Conditional,
   FiscalStatus,
   FiscalDocumentStatus,
   CashSessionStatus,
@@ -289,30 +285,6 @@ export interface DispatchTransferRequest {
 export interface ReceiveTransferRequest {
   items: Array<{ variant_id: string; quantity_received: number }>
   notes?: string
-}
-
-// ── Conditional contracts ────────────────────────────────────────────────────
-
-export interface ConditionalItemInput {
-  variant_id: string
-  quantity: number
-  unit_price_cents: number
-}
-
-export interface CreateConditionalRequest {
-  store_id: string
-  customer_id: string
-  due_date: string        // ISO date 'YYYY-MM-DD'
-  notes?: string
-  items: ConditionalItemInput[]
-}
-
-export interface ReturnConditionalRequest {
-  returns: Array<{ item_uuid: string; quantity: number }>
-}
-
-export interface ConvertConditionalRequest {
-  conversions: Array<{ item_uuid: string; quantity: number }>
 }
 
 // ── PDV / Sales contracts ────────────────────────────────────────────────────

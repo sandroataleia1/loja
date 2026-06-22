@@ -184,15 +184,6 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
 
     /*
     |----------------------------------------------------------------------
-    | Conditionals Module — sales.view required
-    |----------------------------------------------------------------------
-    */
-    Route::prefix('conditionals')->name('conditionals.')
-        ->middleware('permission:sales.view')
-        ->group(base_path('routes/api/v1/conditionals.php'));
-
-    /*
-    |----------------------------------------------------------------------
     | Orders Module — sales.view required
     |----------------------------------------------------------------------
     */

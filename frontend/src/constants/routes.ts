@@ -16,7 +16,6 @@ export const ROUTES = {
   INVENTORY_MOVEMENTS:    '/inventory/movements',
   INVENTORY_ADJUSTMENTS:  '/inventory/adjustments',
   INVENTORY_TRANSFERS:    '/inventory/transfers',
-  CONDITIONALS: '/conditionals',
   SALES:           '/sales',
   CASH_REGISTERS:  '/sales/registers',
   CASH_SESSIONS:   '/sales/sessions',

@@ -28,7 +28,6 @@ import {
   SlidersHorizontal,
   Truck,
   Boxes,
-  ShoppingBag,
   Monitor,
   Clock,
   Receipt,
@@ -114,7 +113,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Caixas',       href: ROUTES.CASH_REGISTERS, icon: CreditCard,   permission: 'sales.view' },
       { label: 'Sessões',      href: ROUTES.CASH_SESSIONS,  icon: Clock,        permission: 'sales.view' },
       { label: 'Vendas',       href: ROUTES.SALES,          icon: ShoppingCart, permission: 'sales.view' },
-      { label: 'Condicionais', href: ROUTES.CONDITIONALS,   icon: ShoppingBag,  permission: 'sales.view' },
     ],
   },
   {

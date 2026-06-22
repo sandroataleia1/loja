@@ -49,12 +49,3 @@ Schedule::call(\App\Modules\Analytics\Jobs\TakeDailySnapshotJob::class . '::disp
     ->name('analytics-daily-snapshot')
     ->withoutOverlapping();
 
-/*
-|--------------------------------------------------------------------------
-| Conditionals: marcar condicionais vencidos como OVERDUE (diário, 01:00)
-|--------------------------------------------------------------------------
-*/
-Schedule::job(new \App\Modules\Conditional\Jobs\MarkOverdueConditionalsJob())
-    ->daily()
-    ->name('mark-overdue-conditionals')
-    ->withoutOverlapping();

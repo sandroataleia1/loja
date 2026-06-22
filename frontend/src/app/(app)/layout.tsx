@@ -24,7 +24,6 @@ const ROUTE_PERMISSIONS: Array<[prefix: string, permission: string]> = [
   ['/orders',         'sales.view'],
   // PDV / Vendas
   ['/sales',          'sales.view'],
-  ['/conditionals',   'sales.view'],
   // Compras
   ['/purchasing',     'purchase_orders.view'],
   // Administração

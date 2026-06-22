@@ -38,7 +38,6 @@ const MODULE_LABELS: Record<string, string> = {
   suppliers:         'Fornecedores',
   purchase_orders:   'Pedidos de Compra',
   purchase_receipts: 'Recebimentos',
-  conditionals:      'Condicionais',
   reports:           'Relatorios',
 }
 

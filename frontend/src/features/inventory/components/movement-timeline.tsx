@@ -7,10 +7,10 @@ import type { StockMovement, MovementType } from '@store/shared-types'
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getDotColor(type: MovementType): string {
-  if (['in', 'return', 'conditional_return', 'release'].includes(type)) {
+  if (['in', 'return', 'release'].includes(type)) {
     return 'bg-green-500'
   }
-  if (['out', 'sale', 'loss', 'conditional_out'].includes(type)) {
+  if (['out', 'sale', 'loss'].includes(type)) {
     return 'bg-red-500'
   }
   if (['adjustment', 'inventory'].includes(type)) {
@@ -20,8 +20,8 @@ function getDotColor(type: MovementType): string {
 }
 
 function formatQuantityDelta(type: MovementType, quantity: number): string {
-  const isIn = ['in', 'return', 'purchase', 'conditional_return', 'release'].includes(type)
-  const isOut = ['out', 'sale', 'loss', 'conditional_out'].includes(type)
+  const isIn = ['in', 'return', 'purchase', 'release'].includes(type)
+  const isOut = ['out', 'sale', 'loss'].includes(type)
   if (isIn)  return `+${quantity}`
   if (isOut) return `-${quantity}`
   return quantity > 0 ? `+${quantity}` : String(quantity)

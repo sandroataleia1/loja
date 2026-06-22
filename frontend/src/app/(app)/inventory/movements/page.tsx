@@ -23,8 +23,6 @@ const MOVEMENT_TYPE_LABELS: Array<{ value: MovementType | ''; label: string }> =
   { value: 'release',           label: 'Liberação'        },
   { value: 'in',                label: 'Entrada'          },
   { value: 'out',               label: 'Saída'            },
-  { value: 'conditional_out',   label: 'Saída condicional'},
-  { value: 'conditional_return', label: 'Retorno condicional' },
 ]
 
 export default function MovementsPage() {

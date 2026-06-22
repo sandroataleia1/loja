@@ -469,7 +469,7 @@ export interface Customer {
 export type MovementType =
   | 'sale' | 'purchase' | 'transfer' | 'return' | 'loss'
   | 'adjustment' | 'inventory' | 'reserve' | 'release'
-  | 'in' | 'out' | 'conditional_out' | 'conditional_return'
+  | 'in' | 'out'
 
 export type TransferStatus = 'pending' | 'in_transit' | 'received' | 'cancelled'
 
@@ -685,38 +685,6 @@ export interface TaxProfile {
   regime: string
 }
 
-// ── Conditionals ─────────────────────────────────────────────────────────────
-
-export type ConditionalStatus =
-  | 'open' | 'partially_returned' | 'returned'
-  | 'partially_converted' | 'converted' | 'overdue' | 'cancelled'
-
-export interface ConditionalItem {
-  uuid: string
-  conditional_id: string
-  variant_id: string
-  quantity: number
-  unit_price_cents: number
-  returned_quantity: number
-  sold_quantity: number
-  pending_quantity?: number  // computed: quantity - returned - sold
-  variant?: {
-    uuid: string
-    sku: string
-    name: string | null
-    product?: { uuid: string; name: string }
-  }
-}
-
-export interface ConditionalStatusHistory {
-  uuid: string
-  conditional_id: string
-  previous_status: ConditionalStatus | null
-  current_status: ConditionalStatus
-  changed_by: string | null
-  changed_at: string
-}
-
 // ── Purchasing ────────────────────────────────────────────────────────────────
 
 export interface Supplier {
@@ -765,23 +733,3 @@ export interface PurchaseOrder {
   updated_at:             string
 }
 
-export interface Conditional {
-  uuid: string
-  code: string
-  status: ConditionalStatus
-  status_label: string
-  expires_at: string | null
-  due_date: string | null  // alias for expires_at (date only)
-  is_overdue: boolean
-  subtotal_cents: number
-  total_cents: number
-  total_amount: number     // total_cents / 100
-  total_items: number
-  notes: string | null
-  customer?: { uuid: string; name: string; code: string }
-  store?: { uuid: string; name: string }
-  items?: ConditionalItem[]
-  status_history?: ConditionalStatusHistory[]
-  created_at: string
-  updated_at: string
-}
