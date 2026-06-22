@@ -94,6 +94,8 @@ final readonly class CreateSaleAction
                 'store_id'             => $dto->storeId,
                 'session_id'           => $dto->sessionId,
                 'customer_id'          => $dto->customerId,
+                'payment_method_id'    => $dto->paymentMethodId,
+                'payment_condition_id' => $dto->paymentConditionId,
                 'seller_id'            => $dto->sellerId ?? Auth::id(),
                 'status'               => SaleStatusEnum::Draft,
                 'subtotal_cents'       => $subtotalCents,
@@ -112,11 +114,18 @@ final readonly class CreateSaleAction
 
             foreach ($dto->payments as $paymentData) {
                 $this->addPayment->execute($sale, new AddPaymentDTO(
-                    method:            PaymentMethodEnum::from($paymentData['method']),
-                    amountCents:       (int) $paymentData['amount_cents'],
-                    externalReference: $paymentData['external_reference'] ?? null,
-                    notes:             $paymentData['notes'] ?? null,
-                    metadata:          $paymentData['metadata'] ?? null,
+                    method:             PaymentMethodEnum::from($paymentData['method']),
+                    amountCents:        (int) $paymentData['amount_cents'],
+                    externalReference:  $paymentData['external_reference'] ?? null,
+                    notes:              $paymentData['notes'] ?? null,
+                    metadata:           $paymentData['metadata'] ?? null,
+                    paymentMethodId:    $paymentData['payment_method_id'] ?? $dto->paymentMethodId,
+                    paymentConditionId: $paymentData['payment_condition_id'] ?? $dto->paymentConditionId,
+                    discountCents:      (int) ($paymentData['discount_cents'] ?? 0),
+                    interestCents:      (int) ($paymentData['interest_cents'] ?? 0),
+                    installmentNumber:  (int) ($paymentData['installment_number'] ?? 1),
+                    totalInstallments:  (int) ($paymentData['total_installments'] ?? 1),
+                    dueDate:            $paymentData['due_date'] ?? null,
                 ));
             }
 

@@ -231,10 +231,10 @@ export interface CreateAttributeRequest {
 }
 
 export interface CreateGridRequest {
-  name:               string
-  attribute_group_id: string
-  description?:       string
-  attribute_ids:      string[]
+  name:                string
+  attribute_group_id?: string
+  description?:        string
+  attribute_ids:       string[]
 }
 
 export interface UpdateProductRequest extends Partial<CreateProductRequest> {}

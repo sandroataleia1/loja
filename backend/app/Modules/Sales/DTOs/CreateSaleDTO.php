@@ -24,9 +24,11 @@ final readonly class CreateSaleDTO extends BaseDTO
         public ?string        $syncUuid,
         public ?string        $notes,
         public ?array         $metadata,
-        public ?FiscalModeEnum   $fiscalMode    = null,
-        public SalesChannelEnum  $salesChannel  = SalesChannelEnum::Pdv,
-        public array             $payments      = [],
+        public ?FiscalModeEnum   $fiscalMode         = null,
+        public SalesChannelEnum  $salesChannel       = SalesChannelEnum::Pdv,
+        public array             $payments           = [],
+        public ?string           $paymentMethodId    = null,
+        public ?string           $paymentConditionId = null,
     ) {}
 
     public static function fromRequest(Request $request): static
@@ -45,9 +47,11 @@ final readonly class CreateSaleDTO extends BaseDTO
             syncUuid:   $request->string('sync_uuid')->value() ?: null,
             notes:      $request->string('notes')->value() ?: null,
             metadata:     $request->array('metadata') ?: null,
-            fiscalMode:   $fiscalModeRaw !== null ? FiscalModeEnum::from($fiscalModeRaw) : null,
-            salesChannel: SalesChannelEnum::tryFrom($request->string('sales_channel')->value() ?: '') ?? SalesChannelEnum::Pdv,
-            payments:     $request->array('payments') ?: [],
+            fiscalMode:         $fiscalModeRaw !== null ? FiscalModeEnum::from($fiscalModeRaw) : null,
+            salesChannel:       SalesChannelEnum::tryFrom($request->string('sales_channel')->value() ?: '') ?? SalesChannelEnum::Pdv,
+            payments:           $request->array('payments') ?: [],
+            paymentMethodId:    $request->string('payment_method_id')->value() ?: null,
+            paymentConditionId: $request->string('payment_condition_id')->value() ?: null,
         );
     }
 }

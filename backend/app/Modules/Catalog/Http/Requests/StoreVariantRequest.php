@@ -29,8 +29,8 @@ final class StoreVariantRequest extends FormRequest
             'sort_order'       => ['integer', 'min:0'],
             'attribute_ids'    => ['nullable', 'array'],
             'attribute_ids.*'  => ['uuid', 'exists:catalog_attributes,uuid'],
-            // Fiscal
-            'ncm'              => ['nullable', 'string', 'max:10'],
+            // Fiscal — NCM: 8 dígitos numéricos conforme tabela TIPI
+            'ncm'              => ['nullable', 'string', 'regex:/^\d{8}$/'],
             'cest'             => ['nullable', 'string', 'max:9'],
             'cfop_default'     => ['nullable', 'string', 'max:5'],
             'origin_code'      => ['nullable', 'integer', 'between:0,8'],

@@ -43,6 +43,12 @@ import {
   Database,
   CalendarClock,
   Landmark,
+  Sliders,
+  LayoutGrid,
+  BarChart2,
+  Lock,
+  KeyRound,
+  Globe,
 } from 'lucide-react'
 import { useHasUpdate } from '@/hooks/use-latest-release'
 import { cn } from '@/lib/utils'
@@ -82,9 +88,11 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Clientes',    href: ROUTES.CUSTOMERS,  icon: Users,     permission: 'customers.view' },
       { label: 'Produtos',    href: ROUTES.PRODUCTS,   icon: Package,   permission: 'products.view'  },
-      { label: 'Marcas',      href: ROUTES.BRANDS,     icon: Bookmark,  permission: 'products.view'  },
-      { label: 'Categorias',  href: ROUTES.CATEGORIES, icon: Tag,       permission: 'products.view'  },
-      { label: 'Fornecedores', href: ROUTES.SUPPLIERS, icon: Building2, permission: 'suppliers.view' },
+      { label: 'Marcas',       href: ROUTES.BRANDS,      icon: Bookmark,    permission: 'products.view'  },
+      { label: 'Categorias',   href: ROUTES.CATEGORIES,  icon: Tag,         permission: 'products.view'  },
+      { label: 'Atributos',    href: ROUTES.ATTRIBUTES,  icon: Sliders,     permission: 'products.view'  },
+      { label: 'Variações',     href: ROUTES.GRIDS,       icon: LayoutGrid,  permission: 'products.view'  },
+      { label: 'Fornecedores', href: ROUTES.SUPPLIERS,   icon: Building2,   permission: 'suppliers.view' },
     ],
   },
   {
@@ -135,6 +143,13 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Relatórios',
+    icon:  BarChart2,
+    items: [
+      { label: 'Pagamentos', href: ROUTES.REPORTS_PAYMENTS, icon: BarChart2, permission: 'financial.view' },
+    ],
+  },
+  {
     label: 'Fiscal',
     icon:  FileText,
     items: [
@@ -153,18 +168,21 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Administração',
     icon:  Shield,
     items: [
-      { label: 'Usuários',         href: ROUTES.USERS, icon: UserCog, permission: 'users.view' },
-      { label: 'Perfis de Acesso', href: ROUTES.ROLES, icon: Shield,  permission: 'users.view' },
+      { label: 'Usuários',         href: ROUTES.USERS,         icon: UserCog, permission: 'users.view' },
+      { label: 'Perfis de Acesso', href: ROUTES.ROLES,         icon: Shield,  permission: 'users.view' },
+      { label: 'Permissões',       href: ROUTES.PERMISSIONS,   icon: Lock,    permission: 'users.view' },
+      { label: 'Acesso a Lojas',   href: ROUTES.STORE_ACCESS,  icon: KeyRound, permission: 'users.view' },
     ],
   },
   {
     label: 'Configurações',
     icon:  Settings,
     items: [
-      { label: 'Configurações',       href: ROUTES.SETTINGS,            icon: Settings,     permission: 'settings.view' },
-      { label: 'Cond. Pagamento',     href: ROUTES.PAYMENT_CONDITIONS,  icon: CalendarClock, permission: 'settings.view' },
-      { label: 'Formas Pagamento',    href: ROUTES.PAYMENT_METHODS,     icon: Landmark,     permission: 'settings.view' },
-      { label: 'Downloads',           href: ROUTES.DOWNLOADS,           icon: Download,     permission: 'settings.view' },
+      { label: 'Configurações',    href: ROUTES.SETTINGS,           icon: Settings,      permission: 'settings.view' },
+      { label: 'Cond. Pagamento',  href: ROUTES.PAYMENT_CONDITIONS, icon: CalendarClock, permission: 'settings.view' },
+      { label: 'Formas Pagamento', href: ROUTES.PAYMENT_METHODS,    icon: Landmark,      permission: 'settings.view' },
+      { label: 'Gateways',         href: ROUTES.SETTINGS_GATEWAYS,  icon: Globe,         permission: 'settings.view' },
+      { label: 'Downloads',        href: ROUTES.DOWNLOADS,          icon: Download,      permission: 'settings.view' },
     ],
   },
 ]

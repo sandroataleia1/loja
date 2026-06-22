@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Sales\Models;
 
+use App\Modules\Finance\Models\PaymentCondition;
+use App\Modules\Finance\Models\PaymentMethod;
 use App\Modules\Sales\Enums\PaymentMethodEnum;
 use App\Modules\Sales\Enums\PaymentStatusEnum;
 use App\Shared\Models\BaseModel;
@@ -26,8 +28,16 @@ final class PaymentTransaction extends BaseModel
     protected $fillable = [
         'tenant_id',
         'sale_id',
+        'payment_method_id',
+        'payment_condition_id',
         'method',
         'amount_cents',
+        'discount_cents',
+        'interest_cents',
+        'fine_cents',
+        'installment_number',
+        'total_installments',
+        'due_date',
         'status',
         'external_reference',
         'notes',
@@ -38,16 +48,32 @@ final class PaymentTransaction extends BaseModel
     protected function casts(): array
     {
         return array_merge(parent::casts(), [
-            'method'       => PaymentMethodEnum::class,
-            'status'       => PaymentStatusEnum::class,
-            'amount_cents' => 'integer',
-            'metadata'     => 'array',
-            'paid_at'      => 'datetime',
+            'method'             => PaymentMethodEnum::class,
+            'status'             => PaymentStatusEnum::class,
+            'amount_cents'       => 'integer',
+            'discount_cents'     => 'integer',
+            'interest_cents'     => 'integer',
+            'fine_cents'         => 'integer',
+            'installment_number' => 'integer',
+            'total_installments' => 'integer',
+            'due_date'           => 'date',
+            'metadata'           => 'array',
+            'paid_at'            => 'datetime',
         ]);
     }
 
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class, 'sale_id', 'uuid');
+    }
+
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id', 'uuid');
+    }
+
+    public function paymentCondition(): BelongsTo
+    {
+        return $this->belongsTo(PaymentCondition::class, 'payment_condition_id', 'uuid');
     }
 }

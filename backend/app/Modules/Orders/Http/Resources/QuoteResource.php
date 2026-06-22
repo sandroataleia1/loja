@@ -44,6 +44,8 @@ final class QuoteResource extends JsonResource
             'notes'                  => $this->notes,
             'internal_notes'         => $this->internal_notes,
             'payment_terms'          => $this->payment_terms,
+            'payment_method_id'      => $this->payment_method_id,
+            'payment_condition_id'   => $this->payment_condition_id,
             'converted_to_order_id'  => $this->converted_to_order_id,
             'converted_at'           => $this->converted_at?->toISOString(),
             'sent_at'                => $this->sent_at?->toISOString(),

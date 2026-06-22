@@ -25,7 +25,7 @@ final readonly class AddPaymentAction
      * Adiciona um pagamento à venda.
      *
      * Métodos instantâneos (cash, pix, store_credit, voucher) são marcados como
-     * PAID imediatamente. Cartões ficam PENDING até confirmação da adquirente.
+     * PAID imediatamente. Demais métodos ficam PENDING até confirmação.
      */
     public function execute(Sale $sale, AddPaymentDTO $dto): PaymentTransaction
     {
@@ -44,15 +44,23 @@ final readonly class AddPaymentAction
             );
 
             $payment = PaymentTransaction::create([
-                'code'               => $code,
-                'sale_id'            => $sale->uuid,
-                'method'             => $dto->method,
-                'amount_cents'       => $dto->amountCents,
-                'status'             => $isInstant ? PaymentStatusEnum::Paid : PaymentStatusEnum::Pending,
-                'external_reference' => $dto->externalReference,
-                'notes'              => $dto->notes,
-                'metadata'           => $dto->metadata,
-                'paid_at'            => $isInstant ? now() : null,
+                'code'                => $code,
+                'sale_id'             => $sale->uuid,
+                'payment_method_id'   => $dto->paymentMethodId,
+                'payment_condition_id'=> $dto->paymentConditionId,
+                'method'              => $dto->method,
+                'amount_cents'        => $dto->amountCents,
+                'discount_cents'      => $dto->discountCents,
+                'interest_cents'      => $dto->interestCents,
+                'fine_cents'          => 0,
+                'installment_number'  => $dto->installmentNumber,
+                'total_installments'  => $dto->totalInstallments,
+                'due_date'            => $dto->dueDate,
+                'status'              => $isInstant ? PaymentStatusEnum::Paid : PaymentStatusEnum::Pending,
+                'external_reference'  => $dto->externalReference,
+                'notes'               => $dto->notes,
+                'metadata'            => $dto->metadata,
+                'paid_at'             => $isInstant ? now() : null,
             ]);
 
             PaymentReceived::dispatch($sale, $payment);

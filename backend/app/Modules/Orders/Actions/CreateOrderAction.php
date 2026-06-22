@@ -43,20 +43,22 @@ final readonly class CreateOrderAction
             }
 
             $order = Order::create([
-                'tenant_id'     => $tenantId,
-                'store_id'      => $dto->storeId,
-                'customer_id'   => $dto->customerId,
-                'seller_id'     => $sellerId,
-                'quote_id'      => $dto->quoteId,
-                'number'        => $number,
-                'status'        => 'pending',
-                'discount_type' => $dto->discountType,
-                'discount_value'=> $dto->discountValue,
-                'discount_cents'=> $discountCents,
-                'notes'         => $dto->notes,
-                'internal_notes'=> $dto->internalNotes,
-                'payment_terms' => $dto->paymentTerms,
-                'expected_at'   => $dto->expectedAt,
+                'tenant_id'            => $tenantId,
+                'store_id'             => $dto->storeId,
+                'customer_id'          => $dto->customerId,
+                'payment_method_id'    => $dto->paymentMethodId,
+                'payment_condition_id' => $dto->paymentConditionId,
+                'seller_id'            => $sellerId,
+                'quote_id'             => $dto->quoteId,
+                'number'               => $number,
+                'status'               => 'pending',
+                'discount_type'        => $dto->discountType,
+                'discount_value'       => $dto->discountValue,
+                'discount_cents'       => $discountCents,
+                'notes'                => $dto->notes,
+                'internal_notes'       => $dto->internalNotes,
+                'payment_terms'        => $dto->paymentTerms,
+                'expected_at'          => $dto->expectedAt,
             ]);
 
             foreach ($dto->items as $i => $item) {

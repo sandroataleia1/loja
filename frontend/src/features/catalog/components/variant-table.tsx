@@ -66,7 +66,7 @@ function GenerateVariantsForm({ productUuid, onSuccess, onClose }: GenerateVaria
         <h3 className="font-semibold text-base">Gerar Variantes</h3>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Grade *</label>
+            <label className="text-sm font-medium">Variação *</label>
             <select
               disabled={gridsLoading || isPending}
               value={gridId}
@@ -74,7 +74,7 @@ function GenerateVariantsForm({ productUuid, onSuccess, onClose }: GenerateVaria
               className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               required
             >
-              <option value="">Selecione a grade…</option>
+              <option value="">Selecione a variação…</option>
               {grids.map((g) => (
                 <option key={g.uuid} value={g.uuid}>{g.name}</option>
               ))}

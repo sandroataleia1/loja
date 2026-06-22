@@ -13,12 +13,20 @@ use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\Variant;
 use App\Shared\Exceptions\BusinessException;
 use App\Shared\Exceptions\NotFoundException;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final readonly class GenerateVariantsAction
 {
-    /** @return Variant[] */
+    /**
+     * Gera variantes para um produto do tipo "variable" a partir de uma Grade.
+     *
+     * Suporta grades multi-dimensionais: quando a grade contém atributos de
+     * múltiplos grupos (ex: Cor × Tamanho), o produto cartesiano é computado
+     * e uma variante é criada para cada combinação (ex: Azul/P, Azul/M, Vermelho/P …).
+     *
+     * @return Variant[]
+     */
     public function execute(GenerateVariantsDTO $dto): array
     {
         $product = Product::where('uuid', $dto->productId)->first();
@@ -31,7 +39,10 @@ final readonly class GenerateVariantsAction
             throw new BusinessException('Somente produtos do tipo "variable" suportam geração automática de variantes.');
         }
 
-        $grid = Grid::where('uuid', $dto->gridId)->with('attributes')->first();
+        // Carrega atributos com seus grupos para agrupar por dimensão
+        $grid = Grid::where('uuid', $dto->gridId)
+            ->with(['attributes' => fn ($q) => $q->with('group')])
+            ->first();
 
         if ($grid === null) {
             throw new NotFoundException("Grade '{$dto->gridId}' não encontrada.");
@@ -44,49 +55,103 @@ final readonly class GenerateVariantsAction
             throw new BusinessException('A grade não possui atributos configurados.');
         }
 
-        return DB::transaction(function () use ($dto, $product, $gridAttributes): array {
+        // Agrupa os atributos por grupo (cada grupo = uma dimensão)
+        $dimensions = $gridAttributes
+            ->groupBy('attribute_group_id')
+            ->values()
+            ->map(fn (Collection $attrs) => $attrs->values()->all())
+            ->all();
+
+        // Produto cartesiano de todas as dimensões
+        $combinations = $this->cartesian($dimensions);
+
+        return DB::transaction(function () use ($dto, $product, $combinations): array {
             $product->update(['grid_id' => $dto->gridId]);
 
-            $created  = [];
-            $existing = Variant::where('product_id', $product->uuid)
-                ->get()
+            $existingSkus = Variant::where('product_id', $product->uuid)
                 ->pluck('sku')
                 ->all();
 
-            foreach ($gridAttributes as $i => $attribute) {
-                $sku = "{$dto->skuPrefix}-{$attribute->value}";
+            $created = [];
 
-                if (in_array($sku, $existing, true)) {
+            foreach ($combinations as $index => $combo) {
+                /** @var Attribute[] $combo */
+
+                // SKU: PREFIX-VAL1-VAL2 (ex: CAM-AZUL-M)
+                $skuSuffix = implode('-', array_map(
+                    fn (Attribute $a) => strtoupper($a->value),
+                    $combo,
+                ));
+                $sku = "{$dto->skuPrefix}-{$skuSuffix}";
+
+                if (in_array($sku, $existingSkus, true)) {
                     continue;
                 }
+
+                // Nome: Label1 / Label2 (ex: Azul / M)
+                $name = implode(' / ', array_map(
+                    fn (Attribute $a) => $a->label ?: $a->value,
+                    $combo,
+                ));
 
                 $variant = Variant::create([
                     'product_id'  => $product->uuid,
                     'sku'         => $sku,
-                    'name'        => $attribute->label,
+                    'name'        => $name,
                     'price_cents' => $dto->basePriceCents,
                     'is_active'   => true,
-                    'is_default'  => $i === 0,
-                    'sort_order'  => $i,
+                    'is_default'  => $index === 0,
+                    'sort_order'  => $index,
                 ]);
 
-                $variant->attributes()->sync([$attribute->uuid => ['sort_order' => 0]]);
+                // Vincula todos os atributos da combinação
+                $pivot = collect($combo)->mapWithKeys(
+                    fn (Attribute $a, int $i) => [$a->uuid => ['sort_order' => $i]],
+                );
+                $variant->attributes()->sync($pivot->all());
 
-                // Build grid_combination JSONB snapshot for this single attribute
-                $combination = [[
-                    'group_id'   => $attribute->attribute_group_id,
-                    'group_name' => $attribute->relationLoaded('group') ? $attribute->group?->name : null,
-                    'attr_id'    => $attribute->uuid,
-                    'attr_value' => $attribute->label ?: $attribute->value,
-                ]];
-                $variant->update(['grid_combination' => $combination]);
+                // Snapshot JSONB da combinação (para exibição histórica)
+                $gridCombination = collect($combo)->map(fn (Attribute $a) => [
+                    'group_id'   => $a->attribute_group_id,
+                    'group_name' => $a->group?->name,
+                    'attr_id'    => $a->uuid,
+                    'attr_value' => $a->label ?: $a->value,
+                ])->values()->all();
 
-                VariantCreated::dispatch($variant);
+                $variant->update(['grid_combination' => $gridCombination]);
+
+                VariantCreated::dispatch($variant->refresh());
 
                 $created[] = $variant->load('attributes');
             }
 
             return $created;
         });
+    }
+
+    /**
+     * Produto cartesiano de N arrays.
+     *
+     * Exemplo: cartesian([[Red, Blue], [S, M, L]])
+     * → [[Red, S], [Red, M], [Red, L], [Blue, S], [Blue, M], [Blue, L]]
+     *
+     * @param  array<int, Attribute[]> $groups
+     * @return array<int, Attribute[]>
+     */
+    private function cartesian(array $groups): array
+    {
+        $result = [[]];
+
+        foreach ($groups as $group) {
+            $tmp = [];
+            foreach ($result as $existing) {
+                foreach ($group as $item) {
+                    $tmp[] = array_merge($existing, [$item]);
+                }
+            }
+            $result = $tmp;
+        }
+
+        return $result;
     }
 }

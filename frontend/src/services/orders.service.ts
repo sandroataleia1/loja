@@ -16,30 +16,34 @@ export interface DocumentItemInput {
 }
 
 export interface CreateQuoteRequest {
-  store_id?:       string | null
-  customer_id?:    string | null
-  seller_pin?:     string | null
-  validity_days?:  number
-  discount_type?:  'fixed' | 'percent'
-  discount_value?: number
-  notes?:          string | null
-  internal_notes?: string | null
-  payment_terms?:  string | null
-  items:           DocumentItemInput[]
+  store_id?:              string | null
+  customer_id?:           string | null
+  seller_pin?:            string | null
+  validity_days?:         number
+  discount_type?:         'fixed' | 'percent'
+  discount_value?:        number
+  notes?:                 string | null
+  internal_notes?:        string | null
+  payment_terms?:         string | null
+  payment_method_id?:     string | null
+  payment_condition_id?:  string | null
+  items:                  DocumentItemInput[]
 }
 
 export interface CreateOrderRequest {
-  store_id?:       string | null
-  customer_id?:    string | null
-  seller_pin?:     string | null
-  quote_id?:       string | null
-  discount_type?:  'fixed' | 'percent'
-  discount_value?: number
-  notes?:          string | null
-  internal_notes?: string | null
-  payment_terms?:  string | null
-  expected_at?:    string | null
-  items:           DocumentItemInput[]
+  store_id?:              string | null
+  customer_id?:           string | null
+  seller_pin?:            string | null
+  quote_id?:              string | null
+  discount_type?:         'fixed' | 'percent'
+  discount_value?:        number
+  notes?:                 string | null
+  internal_notes?:        string | null
+  payment_terms?:         string | null
+  payment_method_id?:     string | null
+  payment_condition_id?:  string | null
+  expected_at?:           string | null
+  items:                  DocumentItemInput[]
 }
 
 interface PaginatedList<T> {

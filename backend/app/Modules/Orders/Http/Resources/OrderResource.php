@@ -43,6 +43,8 @@ final class OrderResource extends JsonResource
             'notes'                 => $this->notes,
             'internal_notes'        => $this->internal_notes,
             'payment_terms'         => $this->payment_terms,
+            'payment_method_id'     => $this->payment_method_id,
+            'payment_condition_id'  => $this->payment_condition_id,
             'expected_at'           => $this->expected_at?->toDateString(),
             'confirmed_at'          => $this->confirmed_at?->toISOString(),
             'delivered_at'          => $this->delivered_at?->toISOString(),

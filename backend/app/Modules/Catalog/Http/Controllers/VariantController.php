@@ -6,10 +6,13 @@ namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Modules\Catalog\Actions\CreateVariantAction;
 use App\Modules\Catalog\Actions\GenerateVariantsAction;
+use App\Modules\Catalog\Actions\UpdateVariantAction;
 use App\Modules\Catalog\DTOs\CreateVariantDTO;
 use App\Modules\Catalog\DTOs\GenerateVariantsDTO;
+use App\Modules\Catalog\DTOs\UpdateVariantDTO;
 use App\Modules\Catalog\Http\Requests\GenerateVariantsRequest;
 use App\Modules\Catalog\Http\Requests\StoreVariantRequest;
+use App\Modules\Catalog\Http\Requests\UpdateVariantRequest;
 use App\Modules\Catalog\Http\Resources\VariantResource;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\Variant;
@@ -42,11 +45,15 @@ final class VariantController extends Controller
         return $this->success(new VariantResource($variant));
     }
 
-    public function update(StoreVariantRequest $request, Product $product, Variant $variant): JsonResponse
-    {
-        $variant->update($request->validated());
+    public function update(
+        UpdateVariantRequest $request,
+        Product $product,
+        Variant $variant,
+        UpdateVariantAction $action,
+    ): JsonResponse {
+        $variant = $action->execute($variant, UpdateVariantDTO::fromRequest($request));
 
-        return $this->success(new VariantResource($variant->refresh()->load(['attributes'])));
+        return $this->success(new VariantResource($variant));
     }
 
     public function destroy(Product $product, Variant $variant): JsonResponse

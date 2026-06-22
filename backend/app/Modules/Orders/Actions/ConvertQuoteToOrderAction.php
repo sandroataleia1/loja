@@ -43,16 +43,19 @@ final readonly class ConvertQuoteToOrderAction
             ))->all();
 
             $dto = new CreateOrderDTO(
-                storeId:       $quote->store_id,
-                customerId:    $quote->customer_id,
-                quoteId:       $quote->uuid,
-                discountType:  $quote->discount_type,
-                discountValue: (float) $quote->discount_value,
-                notes:         $quote->notes,
-                internalNotes: $quote->internal_notes,
-                paymentTerms:  $quote->payment_terms,
-                expectedAt:    $expectedAt,
-                items:         $items,
+                storeId:            $quote->store_id,
+                customerId:         $quote->customer_id,
+                sellerPin:          null,
+                quoteId:            $quote->uuid,
+                discountType:       $quote->discount_type,
+                discountValue:      (float) $quote->discount_value,
+                notes:              $quote->notes,
+                internalNotes:      $quote->internal_notes,
+                paymentTerms:       $quote->payment_terms,
+                expectedAt:         $expectedAt,
+                items:              $items,
+                paymentMethodId:    $quote->payment_method_id,
+                paymentConditionId: $quote->payment_condition_id,
             );
 
             $order = $this->createOrder->execute($dto);

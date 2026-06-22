@@ -37,8 +37,8 @@ final class StoreProductRequest extends FormRequest
             'is_publishable'        => ['boolean'],
             'season'                => ['nullable', 'string', 'max:50'],
             'launch_date'           => ['nullable', 'date'],
-            // Fiscal
-            'ncm'              => ['nullable', 'string', 'max:10'],
+            // Fiscal — NCM: 8 dígitos numéricos conforme tabela TIPI (ex: 69072100)
+            'ncm'              => ['nullable', 'string', 'regex:/^\d{8}$/'],
             'cest'             => ['nullable', 'string', 'max:9'],
             'cfop_default'     => ['nullable', 'string', 'max:5'],
             'origin_code'      => ['nullable', 'integer', 'between:0,8'],

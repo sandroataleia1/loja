@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Sales\Models;
 
 use App\Core\Auth\Models\User;
+use App\Modules\Finance\Models\PaymentCondition;
+use App\Modules\Finance\Models\PaymentMethod;
 use App\Modules\Inventory\Models\Store;
 use App\Modules\Fiscal\Enums\FiscalModeEnum;
 use App\Modules\Sales\Enums\FiscalStatusEnum;
@@ -33,6 +35,8 @@ final class Sale extends BaseModel
         'store_id',
         'session_id',
         'customer_id',
+        'payment_method_id',
+        'payment_condition_id',
         'seller_id',
         'status',
         'subtotal_cents',
@@ -95,6 +99,16 @@ final class Sale extends BaseModel
     }
 
     // ── Relationships ─────────────────────────────────────────────────────────
+
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id', 'uuid');
+    }
+
+    public function paymentCondition(): BelongsTo
+    {
+        return $this->belongsTo(PaymentCondition::class, 'payment_condition_id', 'uuid');
+    }
 
     public function store(): BelongsTo
     {

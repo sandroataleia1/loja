@@ -20,6 +20,8 @@ final class StoreQuoteRequest extends FormRequest
             'notes'                  => ['nullable', 'string', 'max:2000'],
             'internal_notes'         => ['nullable', 'string', 'max:2000'],
             'payment_terms'          => ['nullable', 'string', 'max:200'],
+            'payment_method_id'      => ['nullable', 'uuid', 'exists:payment_methods,uuid'],
+            'payment_condition_id'   => ['nullable', 'uuid', 'exists:payment_conditions,uuid'],
             'items'                  => ['required', 'array', 'min:1'],
             'items.*.product_variant_id' => ['nullable', 'uuid', 'exists:catalog_variants,uuid'],
             'items.*.name_snapshot'      => ['required', 'string', 'max:255'],

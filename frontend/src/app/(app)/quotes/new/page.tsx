@@ -37,12 +37,18 @@ export default function NewQuotePage() {
     queryFn:  () => paymentService.listConditions(),
   })
 
-  const [customerId,    setCustomerId]    = useState<string | null>(null)
-  const [sellerPin,     setSellerPin]     = useState('')
-  const [discountType,  setDiscountType]  = useState<'fixed' | 'percent'>('fixed')
-  const [discountValue, setDiscountValue] = useState(0)
-  const [paymentTerms,  setPaymentTerms]  = useState('')
-  const [notes,         setNotes]         = useState('')
+  const { data: paymentMethods = [] } = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn:  () => paymentService.listMethods(),
+  })
+
+  const [customerId,          setCustomerId]          = useState<string | null>(null)
+  const [sellerPin,           setSellerPin]           = useState('')
+  const [discountType,        setDiscountType]        = useState<'fixed' | 'percent'>('fixed')
+  const [discountValue,       setDiscountValue]       = useState(0)
+  const [paymentMethodId,     setPaymentMethodId]     = useState<string | null>(null)
+  const [paymentConditionId,  setPaymentConditionId]  = useState<string | null>(null)
+  const [notes,               setNotes]               = useState('')
   const [items,         setItems]         = useState<EditorItem[]>([])
   const [productOpen,   setProductOpen]   = useState(false)
 
@@ -87,8 +93,9 @@ export default function NewQuotePage() {
       validity_days:  settings.default_validity_days,
       discount_type:  discountType,
       discount_value: discountValue,
-      payment_terms:  paymentTerms || null,
-      notes:          notes || null,
+      payment_method_id:    paymentMethodId || null,
+      payment_condition_id: paymentConditionId || null,
+      notes:                notes || null,
       items: items.map((item, idx) => ({
         product_variant_id: item.product_variant_id ?? null,
         name_snapshot:      item.name_snapshot,
@@ -152,17 +159,33 @@ export default function NewQuotePage() {
             />
 
             <div className="space-y-1.5">
-              <Label htmlFor="payment_terms">Condições de Pagamento</Label>
+              <Label htmlFor="payment_method_id">Forma de Pagamento</Label>
               <select
-                id="payment_terms"
-                value={paymentTerms}
-                onChange={(e) => setPaymentTerms(e.target.value)}
+                id="payment_method_id"
+                value={paymentMethodId ?? ''}
+                onChange={(e) => setPaymentMethodId(e.target.value || null)}
+                disabled={isPending}
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="">Selecionar forma</option>
+                {paymentMethods.filter((m) => m.is_active).map((m) => (
+                  <option key={m.uuid} value={m.uuid}>{m.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="payment_condition_id">Condição de Pagamento</Label>
+              <select
+                id="payment_condition_id"
+                value={paymentConditionId ?? ''}
+                onChange={(e) => setPaymentConditionId(e.target.value || null)}
                 disabled={isPending}
                 className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 <option value="">Selecionar condição</option>
-                {paymentConditions.map((c) => (
-                  <option key={c.uuid} value={c.name}>{c.name}</option>
+                {paymentConditions.filter((c) => c.is_active).map((c) => (
+                  <option key={c.uuid} value={c.uuid}>{c.name}</option>
                 ))}
               </select>
             </div>

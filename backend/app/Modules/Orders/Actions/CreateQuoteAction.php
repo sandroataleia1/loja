@@ -44,20 +44,22 @@ final readonly class CreateQuoteAction
             }
 
             $quote = Quote::create([
-                'tenant_id'     => $tenantId,
-                'store_id'      => $dto->storeId,
-                'customer_id'   => $dto->customerId,
-                'seller_id'     => $sellerId,
-                'number'        => $number,
-                'status'        => 'draft',
-                'validity_days' => $dto->validityDays,
-                'valid_until'   => Carbon::today()->addDays($dto->validityDays),
-                'discount_type' => $dto->discountType,
-                'discount_value'=> $dto->discountValue,
-                'discount_cents'=> $discountCents,
-                'notes'         => $dto->notes,
-                'internal_notes'=> $dto->internalNotes,
-                'payment_terms' => $dto->paymentTerms,
+                'tenant_id'            => $tenantId,
+                'store_id'             => $dto->storeId,
+                'customer_id'          => $dto->customerId,
+                'payment_method_id'    => $dto->paymentMethodId,
+                'payment_condition_id' => $dto->paymentConditionId,
+                'seller_id'            => $sellerId,
+                'number'               => $number,
+                'status'               => 'draft',
+                'validity_days'        => $dto->validityDays,
+                'valid_until'          => Carbon::today()->addDays($dto->validityDays),
+                'discount_type'        => $dto->discountType,
+                'discount_value'       => $dto->discountValue,
+                'discount_cents'       => $discountCents,
+                'notes'                => $dto->notes,
+                'internal_notes'       => $dto->internalNotes,
+                'payment_terms'        => $dto->paymentTerms,
             ]);
 
             foreach ($dto->items as $i => $item) {

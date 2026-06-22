@@ -16,18 +16,33 @@ final readonly class CreateGridAction
 {
     public function execute(CreateGridDTO $dto): Grid
     {
-        $group = AttributeGroup::where('uuid', $dto->attributeGroupId)->first();
+        // Quando um grupo primário é informado (grade simples de 1 dimensão):
+        // valida que o grupo existe e que todos os atributos pertencem a ele.
+        if ($dto->attributeGroupId !== null) {
+            $group = AttributeGroup::where('uuid', $dto->attributeGroupId)->first();
 
-        if ($group === null) {
-            throw new NotFoundException("Grupo de atributo '{$dto->attributeGroupId}' não encontrado.");
-        }
+            if ($group === null) {
+                throw new NotFoundException("Grupo de atributo '{$dto->attributeGroupId}' não encontrado.");
+            }
 
-        $attributes = Attribute::whereIn('uuid', $dto->attributeIds)
-            ->where('attribute_group_id', $dto->attributeGroupId)
-            ->get();
+            $attributes = Attribute::whereIn('uuid', $dto->attributeIds)
+                ->where('attribute_group_id', $dto->attributeGroupId)
+                ->get();
 
-        if ($attributes->count() !== count($dto->attributeIds)) {
-            throw new BusinessException('Um ou mais atributos não pertencem ao grupo informado.');
+            if ($attributes->count() !== count($dto->attributeIds)) {
+                throw new BusinessException('Um ou mais atributos não pertencem ao grupo informado.');
+            }
+        } else {
+            // Grade multi-dimensional: apenas verifica se os atributos existem.
+            $attributes = Attribute::whereIn('uuid', $dto->attributeIds)->get();
+
+            if ($attributes->count() !== count($dto->attributeIds)) {
+                throw new BusinessException('Um ou mais atributos informados não foram encontrados.');
+            }
+
+            if ($attributes->isEmpty()) {
+                throw new BusinessException('A grade deve ter ao menos um atributo.');
+            }
         }
 
         return DB::transaction(function () use ($dto, $attributes): Grid {
@@ -37,7 +52,7 @@ final readonly class CreateGridAction
                 'description'        => $dto->description,
             ]);
 
-            $pivot = $attributes->map(fn (Attribute $a, int $i) => [
+            $pivot = $attributes->values()->map(fn (Attribute $a, int $i) => [
                 'grid_id'      => $grid->uuid,
                 'attribute_id' => $a->uuid,
                 'sort_order'   => $i,
