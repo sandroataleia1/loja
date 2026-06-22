@@ -18,32 +18,34 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tax_profiles', function (Blueprint $table): void {
-            $table->uuid()->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants', 'uuid')->cascadeOnDelete();
+        if (! Schema::hasTable('tax_profiles')) {
+            Schema::create('tax_profiles', function (Blueprint $table): void {
+                $table->uuid()->primary();
+                $table->foreignUuid('tenant_id')->constrained('tenants', 'uuid')->cascadeOnDelete();
+                $table->string('name', 150);
+                $table->string('regime', 30)->default('simples_nacional');
+                $table->jsonb('metadata')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+                $table->index(['tenant_id', 'regime']);
+            });
+        }
 
-            // Nome de exibição (ex: "Perfil Padrão — Simples Nacional")
-            $table->string('name', 150);
+        // Adiciona a FK em catalog_variants apenas se ainda não existir
+        $fkExists = \DB::table('information_schema.table_constraints')
+            ->where('constraint_type', 'FOREIGN KEY')
+            ->where('table_name', 'catalog_variants')
+            ->where('constraint_name', 'catalog_variants_tax_profile_id_foreign')
+            ->exists();
 
-            // Regime tributário (TaxRegimeEnum)
-            $table->string('regime', 30)->default('simples_nacional');
-
-            // Dados extras livres (alíquotas, CSOSN, etc.)
-            $table->jsonb('metadata')->nullable();
-
-            $table->timestamps();
-            $table->softDeletes();
-
-            $table->index(['tenant_id', 'regime']);
-        });
-
-        // Agora que a tabela existe, adiciona a FK real em catalog_variants
-        Schema::table('catalog_variants', function (Blueprint $table): void {
-            $table->foreign('tax_profile_id')
-                ->references('uuid')
-                ->on('tax_profiles')
-                ->nullOnDelete();
-        });
+        if (! $fkExists) {
+            Schema::table('catalog_variants', function (Blueprint $table): void {
+                $table->foreign('tax_profile_id')
+                    ->references('uuid')
+                    ->on('tax_profiles')
+                    ->nullOnDelete();
+            });
+        }
     }
 
     public function down(): void
