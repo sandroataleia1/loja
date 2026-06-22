@@ -19,18 +19,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tenants', function (Blueprint $table): void {
-            // Código interno único (ex: "LOJA-001") — gerado pelo sistema
-            $table->string('code', 50)->nullable()->unique()->after('uuid');
-            // Razão social oficial (CNPJ)
-            $table->string('legal_name', 200)->nullable()->after('name');
-            // Nome fantasia
-            $table->string('trade_name', 200)->nullable()->after('legal_name');
-            // CNPJ ou CPF (sem formatação: apenas dígitos)
-            $table->string('document', 18)->nullable()->after('trade_name');
-            // E-mail de contato principal
-            $table->string('email', 200)->nullable()->after('document');
-            // Telefone de contato principal
-            $table->string('phone', 20)->nullable()->after('email');
+            if (! Schema::hasColumn('tenants', 'code')) {
+                $table->string('code', 50)->nullable()->unique()->after('uuid');
+            }
+            if (! Schema::hasColumn('tenants', 'legal_name')) {
+                $table->string('legal_name', 200)->nullable()->after('name');
+            }
+            if (! Schema::hasColumn('tenants', 'trade_name')) {
+                $table->string('trade_name', 200)->nullable()->after('legal_name');
+            }
+            if (! Schema::hasColumn('tenants', 'document')) {
+                $table->string('document', 18)->nullable()->after('trade_name');
+            }
+            if (! Schema::hasColumn('tenants', 'email')) {
+                $table->string('email', 200)->nullable()->after('document');
+            }
+            if (! Schema::hasColumn('tenants', 'phone')) {
+                $table->string('phone', 20)->nullable()->after('email');
+            }
         });
     }
 
