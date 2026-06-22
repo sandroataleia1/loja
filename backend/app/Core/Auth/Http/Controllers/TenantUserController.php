@@ -9,6 +9,7 @@ use App\Core\Auth\Actions\GrantStoreAccessAction;
 use App\Core\Auth\Actions\RevokeRoleAction;
 use App\Core\Auth\Actions\RevokeStoreAccessAction;
 use App\Core\Auth\DTOs\AssignRoleDTO;
+use App\Core\Auth\Events\UserRegistered;
 use Illuminate\Support\Facades\Hash;
 use App\Core\Auth\DTOs\GrantStoreAccessDTO;
 use App\Core\Auth\Http\Requests\AssignRoleRequest;
@@ -17,6 +18,7 @@ use App\Core\Auth\Http\Resources\TenantUserResource;
 use App\Core\Auth\Models\Role;
 use App\Core\Auth\Models\TenantUser;
 use App\Core\Auth\Models\User;
+use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\Services\TenantContext;
 use App\Shared\Traits\HasApiResponse;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -76,15 +78,19 @@ final class TenantUserController extends Controller
             ],
         ]);
 
-        // Cria o usuário
+        // Cria o usuário (admin cria e já confia no e-mail)
         $user = User::create([
-            'name'                => $data['name'],
-            'email'               => $data['email'],
-            'password'            => Hash::make($data['password']),
-            'tenant_id'           => $tenantId,
-            'is_active'           => true,
-            'email_verified_at'   => now(), // admin criou, e-mail já confiável
+            'name'              => $data['name'],
+            'email'             => $data['email'],
+            'password'          => Hash::make($data['password']),
+            'tenant_id'         => $tenantId,
+            'is_active'         => true,
+            'email_verified_at' => now(),
         ]);
+
+        // Notifica o usuário (envio de boas-vindas, se listener configurado)
+        $tenant = Tenant::findOrFail($tenantId);
+        UserRegistered::dispatch($user, $tenant);
 
         // Adiciona ao tenant com o role escolhido
         $tenantUser = $action->execute(new AssignRoleDTO(

@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Cache;
  */
 final class PermissionCache
 {
-    private const TTL_MINUTES = 15;
+    private const TTL_MINUTES = 5;
 
     /** @return string[] slugs das permissões do usuário no tenant */
     public function getPermissions(string $userId, string $tenantId): array

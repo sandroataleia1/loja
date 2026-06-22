@@ -9,6 +9,7 @@ use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Orders\DTOs\CreateQuoteDTO;
 use App\Modules\Orders\DTOs\DocumentItemDTO;
 use App\Modules\Orders\Models\Quote;
+use App\Modules\Orders\Services\DiscountApprovalService;
 use App\Shared\Actions\GenerateInternalCodeAction;
 use App\Shared\Enums\SequenceEntityEnum;
 use Carbon\Carbon;
@@ -18,6 +19,7 @@ final readonly class CreateQuoteAction
 {
     public function __construct(
         private GenerateInternalCodeAction $generateCode,
+        private DiscountApprovalService    $discountApproval,
     ) {}
 
     public function execute(CreateQuoteDTO $dto): Quote
@@ -36,12 +38,21 @@ final readonly class CreateQuoteAction
 
             $sellerId = null;
             if ($dto->sellerPin) {
-                $seller   = User::where('tenant_id', $tenantId)
-                    ->where('pin', $dto->sellerPin)
+                $hashedPin = hash('sha256', config('app.key', '') . $dto->sellerPin);
+                $seller    = User::where('tenant_id', $tenantId)
+                    ->where('pin', $hashedPin)
                     ->where('is_active', true)
                     ->first();
-                $sellerId = $seller?->uuid;
+                $sellerId  = $seller?->uuid;
             }
+
+            $subtotalCents = array_sum(array_map(fn (DocumentItemDTO $i): int => $i->subtotalCents, $dto->items));
+            $this->discountApproval->enforce(
+                sellerUuid:    $sellerId,
+                discountType:  $dto->discountType,
+                discountValue: $dto->discountValue,
+                subtotalCents: $subtotalCents,
+            );
 
             $quote = Quote::create([
                 'tenant_id'            => $tenantId,
