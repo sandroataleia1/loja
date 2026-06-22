@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('quotes')->name('quotes.')->group(function (): void {
     Route::get('/',                        [QuoteController::class, 'index'])->name('index');
     Route::post('/',                       [QuoteController::class, 'store'])->name('store');
-    Route::post('/resolve-seller-pin',     [QuoteController::class, 'resolveSellerPin'])->name('resolve-seller-pin');
+    Route::post('/resolve-seller-pin',     [QuoteController::class, 'resolveSellerPin'])->name('resolve-seller-pin')->middleware('throttle:10,1');
     Route::get('/by-number/{number}',      [QuoteController::class, 'showByNumber'])->name('by-number');
     Route::get('/{uuid}',                  [QuoteController::class, 'show'])->name('show');
     Route::delete('/{uuid}',               [QuoteController::class, 'destroy'])->name('destroy');

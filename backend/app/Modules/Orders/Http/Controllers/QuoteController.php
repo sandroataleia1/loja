@@ -52,8 +52,10 @@ final class QuoteController extends Controller
     {
         $request->validate(['pin' => ['required', 'string', 'max:10']]);
 
+        $hashedPin = hash('sha256', config('app.key', '') . $request->input('pin'));
+
         $user = User::where('tenant_id', TenantContext::getIdOrFail())
-            ->where('pin', $request->input('pin'))
+            ->where('pin', $hashedPin)
             ->where('is_active', true)
             ->first();
 

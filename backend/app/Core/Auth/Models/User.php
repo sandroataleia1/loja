@@ -8,6 +8,7 @@ use App\Core\Auth\Traits\HasTenantPermissions;
 use App\Shared\Traits\Auditable;
 use App\Shared\Traits\HasUuid;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -26,7 +27,7 @@ final class User extends Authenticatable
     use SoftDeletes;
 
     /** @var array<string> */
-    public array $auditExclude = ['password', 'remember_token'];
+    public array $auditExclude = ['password', 'remember_token', 'pin'];
 
     protected static function newFactory(): UserFactory
     {
@@ -66,5 +67,18 @@ final class User extends Authenticatable
     public function memberships(): HasMany
     {
         return $this->hasMany(TenantUser::class, 'user_id', 'uuid');
+    }
+
+    /**
+     * PIN armazenado como SHA-256(APP_KEY + pin) — nunca em plaintext.
+     * A leitura retorna o hash; a escrita converte automaticamente.
+     */
+    protected function pin(): Attribute
+    {
+        return Attribute::make(
+            set: static fn (?string $value): ?string => $value !== null
+                ? hash('sha256', config('app.key', '') . $value)
+                : null,
+        );
     }
 }

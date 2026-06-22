@@ -23,6 +23,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Validation\Rule;
 
 final class TenantUserController extends Controller
 {
@@ -66,7 +67,13 @@ final class TenantUserController extends Controller
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'role_id'  => ['required', 'uuid', 'exists:roles,uuid'],
+            'role_id'  => [
+                'required',
+                'uuid',
+                Rule::exists('roles', 'uuid')
+                    ->where('tenant_id', $tenantId)
+                    ->where('is_active', true),
+            ],
         ]);
 
         // Cria o usuário

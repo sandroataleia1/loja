@@ -24,6 +24,7 @@ final class AssignRoleAction
     public function execute(AssignRoleDTO $dto): TenantUser
     {
         $role = Role::where('uuid', $dto->roleId)
+            ->where('tenant_id', $dto->tenantId)
             ->where('is_active', true)
             ->firstOrFail();
 
