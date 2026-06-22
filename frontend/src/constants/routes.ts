@@ -61,6 +61,10 @@ export const ROUTES = {
   ORDERS:       '/orders',
   ORDERS_NEW:   '/orders/new',
 
+  // Pagamentos
+  PAYMENT_CONDITIONS: '/settings/payment-conditions',
+  PAYMENT_METHODS:    '/settings/payment-methods',
+
   // Sistema
   DOWNLOADS: '/downloads',
 } as const

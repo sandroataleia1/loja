@@ -198,4 +198,21 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     */
     Route::middleware('permission:sales.view')
         ->group(base_path('routes/api/v1/orders.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Payment Conditions — read open (needed by quote/order forms),
+    | writes require settings.view (enforced inside route file)
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('payment-conditions')->name('payment-conditions.')
+        ->group(base_path('routes/api/v1/payment-conditions.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Payment Methods — same permission pattern as conditions
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('payment-methods')->name('payment-methods.')
+        ->group(base_path('routes/api/v1/payment-methods.php'));
 });

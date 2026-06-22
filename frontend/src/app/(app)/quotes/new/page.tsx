@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -24,11 +25,17 @@ import {
 } from '@/features/orders/components/product-search-modal'
 import { CommercialSettingsButton, loadCommercialSettings } from '@/features/orders/components/commercial-settings-modal'
 import { useCreateQuote } from '@/features/orders/hooks'
+import { paymentService } from '@/services/payment.service'
 import { ROUTES } from '@/constants'
 import type { CreateQuoteRequest } from '@/services/orders.service'
 
 export default function NewQuotePage() {
   const router = useRouter()
+
+  const { data: paymentConditions = [] } = useQuery({
+    queryKey: ['payment-conditions'],
+    queryFn:  () => paymentService.listConditions(),
+  })
 
   const [customerId,    setCustomerId]    = useState<string | null>(null)
   const [sellerPin,     setSellerPin]     = useState('')
@@ -146,13 +153,18 @@ export default function NewQuotePage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="payment_terms">Condições de Pagamento</Label>
-              <Input
+              <select
                 id="payment_terms"
-                placeholder="Ex: 30/60/90 dias"
                 value={paymentTerms}
                 onChange={(e) => setPaymentTerms(e.target.value)}
                 disabled={isPending}
-              />
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="">Selecionar condição</option>
+                {paymentConditions.map((c) => (
+                  <option key={c.uuid} value={c.name}>{c.name}</option>
+                ))}
+              </select>
             </div>
           </div>
         </AppCard>

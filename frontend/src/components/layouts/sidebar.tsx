@@ -42,6 +42,8 @@ import {
   Handshake,
   CreditCard,
   Database,
+  CalendarClock,
+  Landmark,
 } from 'lucide-react'
 import { useHasUpdate } from '@/hooks/use-latest-release'
 import { cn } from '@/lib/utils'
@@ -161,8 +163,10 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Configurações',
     icon:  Settings,
     items: [
-      { label: 'Configurações', href: ROUTES.SETTINGS,  icon: Settings, permission: 'settings.view' },
-      { label: 'Downloads',     href: ROUTES.DOWNLOADS, icon: Download, permission: 'settings.view' },
+      { label: 'Configurações',       href: ROUTES.SETTINGS,            icon: Settings,     permission: 'settings.view' },
+      { label: 'Cond. Pagamento',     href: ROUTES.PAYMENT_CONDITIONS,  icon: CalendarClock, permission: 'settings.view' },
+      { label: 'Formas Pagamento',    href: ROUTES.PAYMENT_METHODS,     icon: Landmark,     permission: 'settings.view' },
+      { label: 'Downloads',           href: ROUTES.DOWNLOADS,           icon: Download,     permission: 'settings.view' },
     ],
   },
 ]
