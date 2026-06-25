@@ -19,9 +19,11 @@ enum SequenceEntityEnum: string
     case CashRegister   = 'CASH_REGISTER';
     case Brand          = 'brand';    // prefix 'MRC', padding 4 → MRC0001
     case Category       = 'category'; // prefix 'CAT', padding 4 → CAT0001
-    case Supplier       = 'supplier';      // prefix 'FOR', padding 4 → FOR0001
+    case Supplier       = 'supplier';       // prefix 'FOR', padding 6 → FOR000001
     case PurchaseOrder  = 'purchase_order'; // prefix 'CPR', padding 6 → CPR000001
     case Quote          = 'quote';          // prefix 'ORC', padding 6 → ORC000001
+    case Carrier        = 'carrier';        // prefix 'TRP', padding 6 → TRP000001
+    case Partner        = 'partner';        // prefix 'PAR', padding 6 → PAR000001
 
     public function prefix(): string
     {
@@ -42,6 +44,8 @@ enum SequenceEntityEnum: string
             self::Category       => 'CAT',
             self::Supplier       => 'FOR',
             self::PurchaseOrder  => 'CPR',
+            self::Carrier        => 'TRP',
+            self::Partner        => 'PAR',
         };
     }
 

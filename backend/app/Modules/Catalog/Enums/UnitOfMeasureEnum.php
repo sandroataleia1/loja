@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Catalog\Enums;
 
+/**
+ * @deprecated Substituído pela tabela `units` (Model Unit) com precisão decimal configurável.
+ *             Remover após migração completa dos dados existentes de unit_of_measure → unit_id.
+ */
 enum UnitOfMeasureEnum: string
 {
     case UN = 'UN'; // Unidade

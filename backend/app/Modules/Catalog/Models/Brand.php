@@ -29,6 +29,10 @@ final class Brand extends BaseModel
         'description',
         'logo_url',
         'website_url',
+        'manufacturer_cnpj',
+        'manufacturer_contact_name',
+        'manufacturer_contact_email',
+        'manufacturer_contact_phone',
         'is_active',
         'metadata',
     ];

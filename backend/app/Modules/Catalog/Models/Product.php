@@ -34,6 +34,9 @@ final class Product extends BaseModel
         'brand_id',
         'collection_id',
         'grid_id',
+        'parent_id',
+        'ncm_code_id',
+        'unit_id',
         'name',
         'slug',
         'description',
@@ -48,8 +51,8 @@ final class Product extends BaseModel
         'origin_code',
         'status',
         'visibility',
-        'base_price',
-        'cost_price',
+        'base_price_cents',
+        'cost_price_cents',
         'season',
         'launch_date',
         'is_featured',
@@ -62,6 +65,10 @@ final class Product extends BaseModel
         'days_without_sale',
         'stock_age',
         'last_sale_at',
+        'weight_gross_g',
+        'weight_net_g',
+        'dimensions',
+        'qr_code_url',
     ];
 
     protected function casts(): array
@@ -72,8 +79,8 @@ final class Product extends BaseModel
             'origin_code'       => ProductOriginEnum::class,
             'status'            => ProductStatusEnum::class,
             'visibility'        => ProductVisibilityEnum::class,
-            'base_price'        => 'decimal:2',
-            'cost_price'        => 'decimal:2',
+            'base_price_cents'  => 'integer',
+            'cost_price_cents'  => 'integer',
             'is_featured'       => 'boolean',
             'is_digital'        => 'boolean',
             'is_publishable'    => 'boolean',
@@ -82,6 +89,9 @@ final class Product extends BaseModel
             'sales_velocity'    => 'decimal:4',
             'days_without_sale' => 'integer',
             'stock_age'         => 'integer',
+            'weight_gross_g'    => 'integer',
+            'weight_net_g'      => 'integer',
+            'dimensions'        => 'array',
             'seo'               => 'array',
             'metadata'          => 'array',
         ]);
@@ -92,6 +102,16 @@ final class Product extends BaseModel
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class, 'brand_id', 'uuid');
+    }
+
+    public function ncmCode(): BelongsTo
+    {
+        return $this->belongsTo(NcmCode::class, 'ncm_code_id', 'uuid');
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class, 'unit_id', 'uuid');
     }
 
     public function categories(): BelongsToMany
@@ -156,7 +176,11 @@ final class Product extends BaseModel
             ->orderBy('sort_order');
     }
 
-    /** Mídia desacoplada (MediaAsset domain). */
+    /**
+     * @deprecated Use images() (catalog_images, polimórfico) como path canônica.
+     *             MediaAsset permanece para uso futuro do módulo Media, mas não
+     *             deve ser usado por controllers do módulo Catalog.
+     */
     public function media(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -194,11 +218,75 @@ final class Product extends BaseModel
             ->orderByDesc('changed_at');
     }
 
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id', 'uuid');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id', 'uuid');
+    }
+
+    public function kitItems(): HasMany
+    {
+        return $this->hasMany(CatalogKitItem::class, 'kit_product_id', 'uuid')
+            ->orderBy('sort_order');
+    }
+
+    public function barcodes(): HasMany
+    {
+        return $this->hasMany(CatalogBarcode::class, 'product_id', 'uuid');
+    }
+
+    public function technicalAttributes(): HasMany
+    {
+        return $this->hasMany(CatalogProductAttribute::class, 'product_id', 'uuid');
+    }
+
+    public function primaryBarcode(): ?CatalogBarcode
+    {
+        return $this->barcodes()->where('is_primary', true)->first();
+    }
+
+    // ── Price accessors ───────────────────────────────────────────────────────
+
+    public function getBasePriceFormattedAttribute(): ?string
+    {
+        return $this->base_price_cents !== null
+            ? number_format($this->base_price_cents / 100, 2, ',', '.')
+            : null;
+    }
+
+    public function getCostPriceFormattedAttribute(): ?string
+    {
+        return $this->cost_price_cents !== null
+            ? number_format($this->cost_price_cents / 100, 2, ',', '.')
+            : null;
+    }
+
     // ── Domain helpers ────────────────────────────────────────────────────────
+
+    public function isKit(): bool
+    {
+        return $this->type === ProductTypeEnum::Kit;
+    }
 
     public function isVariable(): bool
     {
         return $this->type === ProductTypeEnum::Variable;
+    }
+
+    /** Soma price_cents × quantity de cada componente. Retorna centavos. */
+    public function calculateKitPrice(): int
+    {
+        return (int) $this->kitItems->sum(function (CatalogKitItem $item): float {
+            $priceCents = $item->componentVariant?->price_cents
+                ?? $item->component?->base_price_cents
+                ?? 0;
+
+            return $priceCents * (float) $item->quantity;
+        });
     }
 
     public function isPublished(): bool

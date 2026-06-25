@@ -138,3 +138,24 @@ export function useRevokeUser() {
     },
   })
 }
+
+export function useUpdatePin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ tenantUserUuid, pin }: { tenantUserUuid: string; pin: string }) =>
+      rbacService.updatePin(tenantUserUuid, pin),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: RBAC_QUERY_KEYS.USERS })
+    },
+  })
+}
+
+export function useRemovePin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (tenantUserUuid: string) => rbacService.removePin(tenantUserUuid),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: RBAC_QUERY_KEYS.USERS })
+    },
+  })
+}

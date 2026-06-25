@@ -40,8 +40,12 @@ final readonly class CreateProductAction
             'short_description'     => $dto->shortDescription,
             'marketing_description' => $dto->marketingDescription,
             'internal_notes'        => $dto->internalNotes,
+            'unit_id'               => $dto->unitId,
+            'base_price_cents'      => $dto->basePriceCents,
+            'cost_price_cents'      => $dto->costPriceCents,
             'type'                  => $dto->type,
-            'unit_of_measure'       => $dto->unitOfMeasure,
+            // unit_of_measure kept for legacy compatibility — only set when unit_id is absent
+            'unit_of_measure'       => $dto->unitId === null ? $dto->unitOfMeasure : null,
             'ncm'                   => $dto->ncm,
             'cest'                  => $dto->cest,
             'cfop_default'          => $dto->cfopDefault,

@@ -16,7 +16,7 @@ final readonly class DuplicateProductAction
     public function execute(Product $product): Product
     {
         return DB::transaction(function () use ($product): Product {
-            $copy = $product->replicate(['uuid', 'slug', 'status']);
+            $copy = $product->replicate(['uuid', 'slug', 'status', 'search_vector']);
             $copy->uuid   = (string) Str::uuid();
             $copy->slug   = $product->slug . '-copia-' . now()->format('YmdHis');
             $copy->status = ProductStatusEnum::Draft;

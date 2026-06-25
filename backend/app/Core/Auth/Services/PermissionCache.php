@@ -11,8 +11,12 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Cache de permissões e acesso a lojas por usuário×tenant.
  *
- * Estratégia: chaves simples no Redis com TTL de 15 minutos.
+ * Estratégia: chaves simples no Redis com TTL variável por tipo de operação.
  * Invalidação explícita ao mudar role, permissões do role, ou store access.
+ *
+ * TTL por categoria:
+ *   - Operações financeiras (financial.*, fiscal.*): 60 segundos
+ *   - Demais: 300 segundos (5 minutos)
  *
  * Chaves:
  *   rbac.{tenantId}.{userId}.permissions → string[] de slugs
@@ -20,14 +24,18 @@ use Illuminate\Support\Facades\Cache;
  */
 final class PermissionCache
 {
-    private const TTL_MINUTES = 5;
+    private const TTL_DEFAULT   = 300; // 5 minutos
+    private const TTL_FINANCIAL = 60;  // 1 minuto para operações financeiras/fiscais
+
+    /** Prefixos de módulos que exigem TTL reduzido (alta sensibilidade). */
+    private const HIGH_SENSITIVITY_PREFIXES = ['financial.', 'fiscal.'];
 
     /** @return string[] slugs das permissões do usuário no tenant */
     public function getPermissions(string $userId, string $tenantId): array
     {
         return Cache::remember(
             $this->permKey($userId, $tenantId),
-            now()->addMinutes(self::TTL_MINUTES),
+            now()->addSeconds(self::TTL_DEFAULT),
             fn () => $this->loadPermissions($userId, $tenantId),
         );
     }
@@ -39,7 +47,7 @@ final class PermissionCache
     {
         return Cache::remember(
             $this->storeKey($userId, $tenantId),
-            now()->addMinutes(self::TTL_MINUTES),
+            now()->addSeconds(self::TTL_DEFAULT),
             fn () => $this->loadAllowedStores($userId, $tenantId),
         );
     }
@@ -57,6 +65,21 @@ final class PermissionCache
             ->where('role_id', $roleId)
             ->where('is_active', true)
             ->each(fn (TenantUser $tu) => $this->invalidateUser($tu->user_id, $tenantId));
+    }
+
+    /**
+     * Retorna o TTL (em segundos) adequado para a permissão consultada.
+     * Operações financeiras e fiscais usam TTL reduzido por segurança.
+     */
+    public function getPermissionTtl(string $permissionSlug): int
+    {
+        foreach (self::HIGH_SENSITIVITY_PREFIXES as $prefix) {
+            if (str_starts_with($permissionSlug, $prefix)) {
+                return self::TTL_FINANCIAL;
+            }
+        }
+
+        return self::TTL_DEFAULT;
     }
 
     // ── Loaders ───────────────────────────────────────────────────────────────

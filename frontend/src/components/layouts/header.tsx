@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { PanelLeft, Download } from 'lucide-react'
+import { PanelLeft, Download, Settings } from 'lucide-react'
 import { Button }        from '@/components/ui/button'
 import { Separator }     from '@/components/ui/separator'
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -10,6 +10,7 @@ import { TenantSwitcher } from './header/tenant-switcher'
 import { StoreSwitcher }  from './header/store-switcher'
 import { UserMenu }       from './header/user-menu'
 import { useHasUpdate }   from '@/hooks/use-latest-release'
+import { useAuth }        from '@/hooks/use-auth'
 import { ROUTES }         from '@/constants'
 
 interface HeaderProps {
@@ -18,6 +19,7 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar }: HeaderProps) {
   const hasUpdate = useHasUpdate()
+  const { hasPermission } = useAuth()
 
   return (
     <TooltipProvider>
@@ -54,6 +56,21 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               <TooltipContent>Nova versão disponível</TooltipContent>
             </Tooltip>
           )}
+
+          {/* Settings gear — visible only for users with settings.view */}
+          {hasPermission('settings.view') && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href={ROUTES.SYSTEM_SETTINGS} aria-label="Configurações do Sistema">
+                    <Settings className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Configurações do Sistema</TooltipContent>
+            </Tooltip>
+          )}
+
           <Separator orientation="vertical" className="h-5 mx-1" />
           <ThemeToggle />
           <UserMenu />

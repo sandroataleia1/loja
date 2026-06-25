@@ -41,6 +41,7 @@ export const ROUTES = {
   ROLES:        '/roles',
   PERMISSIONS:  '/permissions',
   STORE_ACCESS: '/store-access',
+  AUDIT_LOGS:   '/audit-logs',
 
   // PDV Web
   PDV:              '/pdv',
@@ -52,7 +53,13 @@ export const ROUTES = {
   // Compras
   PURCHASING:           '/purchasing',
   PURCHASING_CREATE:    '/purchasing/create',
-  SUPPLIERS:            '/purchasing/suppliers',
+  SUPPLIERS:            '/suppliers',
+
+  // Cadastros Mestres
+  CARRIERS:     '/carriers',
+  SELLERS:      '/sellers',
+  PARTNERS:     '/partners',
+  COST_CENTERS: '/cost-centers',
 
   // Pedidos e Orçamentos
   QUOTES:       '/quotes',
@@ -66,7 +73,8 @@ export const ROUTES = {
   REPORTS_PAYMENTS:     '/reports/payments',
 
   // Sistema
-  DOWNLOADS: '/downloads',
+  DOWNLOADS:       '/downloads',
+  SYSTEM_SETTINGS: '/settings/system',
 } as const
 
 export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES]

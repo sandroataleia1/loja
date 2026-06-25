@@ -3,8 +3,14 @@
 declare(strict_types=1);
 
 use App\Modules\Customers\Http\Controllers\CustomerController;
+use App\Modules\Customers\Http\Controllers\CustomerImportController;
 use App\Modules\Customers\Http\Controllers\CustomerTagController;
 use Illuminate\Support\Facades\Route;
+
+// ── CSV Import (deve vir antes dos parâmetros para evitar conflito) ──────────
+Route::get('/import/template',             [CustomerImportController::class, 'template'])->name('import.template');
+Route::post('/import',                     [CustomerImportController::class, 'store'])->name('import.store');
+Route::get('/import/{importLogId}/status', [CustomerImportController::class, 'status'])->name('import.status');
 
 // ── Customer resource ────────────────────────────────────────────────────────
 Route::get('/',              [CustomerController::class, 'index'])->name('index');

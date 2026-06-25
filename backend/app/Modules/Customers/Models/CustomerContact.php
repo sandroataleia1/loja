@@ -8,10 +8,12 @@ use App\Modules\Customers\Enums\ContactTypeEnum;
 use App\Shared\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class CustomerContact extends Model
 {
     use HasUuid;
+    use SoftDeletes;
 
     protected $table = 'customer_contacts';
 

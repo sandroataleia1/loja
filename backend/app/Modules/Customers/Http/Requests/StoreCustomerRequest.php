@@ -4,22 +4,32 @@ declare(strict_types=1);
 
 namespace App\Modules\Customers\Http\Requests;
 
+use App\Core\Rules\ValidCpf;
+use App\Core\Tenancy\Rules\ValidCnpj;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class StoreCustomerRequest extends FormRequest
 {
     public function rules(): array
     {
+        $isCompany = $this->input('person_type') === 'COMPANY';
+
         return [
             'person_type'             => ['required', 'string', 'in:INDIVIDUAL,COMPANY'],
             'name'                    => ['required', 'string', 'max:200'],
             'trade_name'              => ['nullable', 'string', 'max:150'],
-            'document'                => ['nullable', 'string', 'max:20'],
+            'document'                => ['nullable', 'string', 'max:20', $isCompany ? new ValidCnpj() : new ValidCpf()],
+            'rg'                      => ['nullable', 'string', 'max:20'],
+            'ie'                      => ['nullable', 'string', 'max:30'],
+            'im'                      => ['nullable', 'string', 'max:20'],
+            'situation'               => ['nullable', 'string', 'in:active,inactive,suspended,blocked'],
+            'credit_limit'            => ['nullable', 'numeric', 'min:0'],
             'email'                   => ['nullable', 'email', 'max:254'],
             'birth_date'              => ['nullable', 'date', 'before:today'],
             'notes'                   => ['nullable', 'string', 'max:2000'],
 
             'addresses'               => ['nullable', 'array', 'max:10'],
+            'addresses.*.address_type' => ['nullable', 'string', 'in:delivery,billing,commercial,headquarters'],
             'addresses.*.zipcode'     => ['required_with:addresses.*', 'string', 'max:10'],
             'addresses.*.street'      => ['required_with:addresses.*', 'string', 'max:200'],
             'addresses.*.number'      => ['required_with:addresses.*', 'string', 'max:20'],

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Customers\Actions;
 
+use App\Core\Audit\DTOs\AuditLogDTO;
+use App\Core\Audit\Enums\AuditActionEnum;
+use App\Core\Audit\Enums\AuditEntityTypeEnum;
+use App\Core\Audit\Services\AuditLogger;
 use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Customers\DTOs\CreateCustomerDTO;
 use App\Modules\Customers\Models\Customer;
@@ -18,6 +22,7 @@ final readonly class CreateCustomerAction
 {
     public function __construct(
         private GenerateInternalCodeAction $generateCode,
+        private AuditLogger $audit,
     ) {}
 
     public function execute(CreateCustomerDTO $dto): Customer
@@ -42,14 +47,19 @@ final readonly class CreateCustomerAction
             $code = $this->generateCode->execute($tenantId, SequenceEntityEnum::Customer);
 
             $customer = Customer::create([
-                'code'        => $code,
-                'person_type' => $dto->personType->value,
-                'name'        => $dto->name,
-                'trade_name'  => $dto->tradeName,
-                'document'    => $dto->document,
-                'email'       => $dto->email,
-                'birth_date'  => $dto->birthDate,
-                'notes'       => $dto->notes,
+                'code'         => $code,
+                'person_type'  => $dto->personType->value,
+                'name'         => $dto->name,
+                'trade_name'   => $dto->tradeName,
+                'document'     => $dto->document,
+                'rg'           => $dto->rg,
+                'ie'           => $dto->ie,
+                'im'           => $dto->im,
+                'situation'    => $dto->situation ?? 'active',
+                'credit_limit' => $dto->creditLimit ?? 0,
+                'email'        => $dto->email,
+                'birth_date'   => $dto->birthDate,
+                'notes'        => $dto->notes,
             ]);
 
             // Create addresses
@@ -91,6 +101,17 @@ final readonly class CreateCustomerAction
             if (! empty($dto->tags)) {
                 $customer->tags()->sync($dto->tags);
             }
+
+            $this->audit->record(new AuditLogDTO(
+                entityType: AuditEntityTypeEnum::Customer,
+                entityUuid: $customer->uuid,
+                action:     AuditActionEnum::CustomerCreated,
+                tenantId:   $tenantId,
+                userId:     auth()->id(),
+                newValues:  ['name' => $customer->name, 'document' => $customer->document],
+                ip:         request()->ip(),
+                userAgent:  request()->userAgent(),
+            ));
 
             return $customer;
         });

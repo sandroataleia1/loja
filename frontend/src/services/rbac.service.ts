@@ -89,4 +89,12 @@ export const rbacService = {
   revokeStoreAccess(userUuid: string, storeId: string): Promise<void> {
     return apiDelete<void>(`${BASE}/users/${userUuid}/stores/${storeId}`)
   },
+
+  updatePin(tenantUserUuid: string, pin: string): Promise<void> {
+    return apiPut<void, { pin: string }>(`${BASE}/users/${tenantUserUuid}/pin`, { pin })
+  },
+
+  removePin(tenantUserUuid: string): Promise<void> {
+    return apiDelete<void>(`${BASE}/users/${tenantUserUuid}/pin`)
+  },
 }

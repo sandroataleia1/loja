@@ -29,13 +29,17 @@ final readonly class CreateBrandAction
         );
 
         return Brand::create([
-            'code'        => $code,
-            'name'        => $dto->name,
-            'slug'        => $dto->slug,
-            'description' => $dto->description,
-            'logo_url'    => $dto->logoUrl,
-            'website_url' => $dto->websiteUrl,
-            'is_active'   => $dto->isActive,
+            'code'                       => $code,
+            'name'                       => $dto->name,
+            'slug'                       => $dto->slug,
+            'description'                => $dto->description,
+            'logo_url'                   => $dto->logoUrl,
+            'website_url'                => $dto->websiteUrl,
+            'is_active'                  => $dto->isActive,
+            'manufacturer_cnpj'          => $dto->manufacturerCnpj,
+            'manufacturer_contact_name'  => $dto->manufacturerContactName,
+            'manufacturer_contact_email' => $dto->manufacturerContactEmail,
+            'manufacturer_contact_phone' => $dto->manufacturerContactPhone,
         ]);
     }
 }

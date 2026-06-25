@@ -19,9 +19,13 @@ final class BrandResource extends JsonResource
             'description' => $this->description,
             'logo_url'    => $this->logo_url,
             'website_url' => $this->website_url,
-            'is_active'   => $this->is_active,
-            'created_at'  => $this->created_at?->toISOString(),
-            'updated_at'  => $this->updated_at?->toISOString(),
+            'is_active'                 => $this->is_active,
+            'manufacturer_cnpj'         => $this->manufacturer_cnpj,
+            'manufacturer_contact_name' => $this->manufacturer_contact_name,
+            'manufacturer_contact_email'=> $this->manufacturer_contact_email,
+            'manufacturer_contact_phone'=> $this->manufacturer_contact_phone,
+            'created_at'                => $this->created_at?->toISOString(),
+            'updated_at'                => $this->updated_at?->toISOString(),
         ];
     }
 }

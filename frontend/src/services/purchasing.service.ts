@@ -17,11 +17,31 @@ export interface PurchaseOrderFilters {
   page?:        number
 }
 
+export interface SupplierAddressPayload {
+  zipcode:     string
+  street:      string
+  number:      string
+  complement?: string
+  district:    string
+  city:        string
+  state:       string
+  is_default?: boolean
+}
+
+export interface SupplierContactPayload {
+  type:        'PHONE' | 'WHATSAPP' | 'EMAIL' | 'OTHER'
+  value:       string
+  label?:      string
+  is_primary?: boolean
+}
+
 export interface CreateSupplierPayload {
   person_type:  'INDIVIDUAL' | 'COMPANY'
   name:         string
   trade_name?:  string
   document?:    string
+  ie?:          string
+  im?:          string
   email?:       string
   phone?:       string
   notes?:       string
@@ -62,6 +82,10 @@ export const purchasingService = {
     return apiGet<PaginatedResponse<Supplier>>(`/purchasing/suppliers${qs ? `?${qs}` : ''}`)
   },
 
+  getSupplier(uuid: string): Promise<Supplier> {
+    return apiGet<Supplier>(`/purchasing/suppliers/${uuid}`)
+  },
+
   createSupplier(data: CreateSupplierPayload): Promise<Supplier> {
     return apiPost<Supplier, CreateSupplierPayload>('/purchasing/suppliers', data)
   },
@@ -72,6 +96,32 @@ export const purchasingService = {
 
   deleteSupplier(uuid: string): Promise<void> {
     return apiDelete(`/purchasing/suppliers/${uuid}`)
+  },
+
+  getSupplierAddresses(uuid: string): Promise<SupplierAddressPayload[]> {
+    return apiGet(`/purchasing/suppliers/${uuid}/addresses`)
+  },
+  createSupplierAddress(uuid: string, data: SupplierAddressPayload): Promise<SupplierAddressPayload> {
+    return apiPost(`/purchasing/suppliers/${uuid}/addresses`, data)
+  },
+  updateSupplierAddress(supplierUuid: string, addressUuid: string, data: Partial<SupplierAddressPayload>): Promise<SupplierAddressPayload> {
+    return apiPut(`/purchasing/suppliers/${supplierUuid}/addresses/${addressUuid}`, data)
+  },
+  deleteSupplierAddress(supplierUuid: string, addressUuid: string): Promise<void> {
+    return apiDelete(`/purchasing/suppliers/${supplierUuid}/addresses/${addressUuid}`)
+  },
+
+  getSupplierContacts(uuid: string): Promise<SupplierContactPayload[]> {
+    return apiGet(`/purchasing/suppliers/${uuid}/contacts`)
+  },
+  createSupplierContact(uuid: string, data: SupplierContactPayload): Promise<SupplierContactPayload> {
+    return apiPost(`/purchasing/suppliers/${uuid}/contacts`, data)
+  },
+  updateSupplierContact(supplierUuid: string, contactUuid: string, data: Partial<SupplierContactPayload>): Promise<SupplierContactPayload> {
+    return apiPut(`/purchasing/suppliers/${supplierUuid}/contacts/${contactUuid}`, data)
+  },
+  deleteSupplierContact(supplierUuid: string, contactUuid: string): Promise<void> {
+    return apiDelete(`/purchasing/suppliers/${supplierUuid}/contacts/${contactUuid}`)
   },
 
   // ── Purchase Orders ───────────────────────────────────────────────────────

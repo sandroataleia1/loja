@@ -19,11 +19,18 @@ final class UserResource extends JsonResource
             : null;
 
         return [
-            'uuid'           => $this->uuid,
-            'name'           => $this->name,
-            'email'          => $this->email,
-            'is_active'      => $this->is_active,
-            'permission_set' => $permissionSet?->toArray(),
+            'uuid'              => $this->uuid,
+            'name'              => $this->name,
+            'username'          => $this->username,
+            'email'             => $this->email,
+            'phone'             => $this->phone,
+            'avatar_url'        => $this->avatar_url,
+            'preferences'       => $this->preferences ?? [],
+            'is_active'         => $this->is_active,
+            'has_pin'           => $this->pin !== null,
+            'last_login_at'     => $this->last_login_at?->toIso8601String(),
+            'email_verified_at' => $this->email_verified_at?->toIso8601String(),
+            'permission_set'    => $permissionSet?->toArray(),
         ];
     }
 }

@@ -46,6 +46,16 @@ trait HasApiResponse
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
+    protected function accepted(string $message = 'Accepted.'): JsonResponse
+    {
+        return $this->success(message: $message, status: Response::HTTP_ACCEPTED);
+    }
+
+    protected function notFound(string $message = 'Resource not found.'): JsonResponse
+    {
+        return $this->error($message, status: Response::HTTP_NOT_FOUND);
+    }
+
     protected function error(
         string $message,
         array $errors = [],

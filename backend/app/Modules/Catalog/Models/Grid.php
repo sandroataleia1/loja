@@ -5,13 +5,23 @@ declare(strict_types=1);
 namespace App\Modules\Catalog\Models;
 
 use App\Shared\Models\BaseModel;
+use Database\Factories\GridFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Grid extends BaseModel
 {
+    /** @use HasFactory<GridFactory> */
+    use HasFactory;
+
     protected $table = 'catalog_grids';
+
+    protected static function newFactory(): GridFactory
+    {
+        return GridFactory::new();
+    }
 
     protected $fillable = [
         'tenant_id',

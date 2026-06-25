@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Core\Auth\Actions;
 
+use App\Core\Auth\Enums\TenantUserStatusEnum;
 use App\Core\Auth\Events\RoleRevoked;
 use App\Core\Auth\Models\TenantUser;
 use App\Core\Auth\Services\PermissionCache;
@@ -29,7 +30,10 @@ final class RevokeRoleAction
         }
 
         DB::transaction(function () use ($tenantUser, $tenantId, $userId, $revokedBy): void {
-            $tenantUser->update(['is_active' => false]);
+            $tenantUser->update([
+                'is_active' => false,
+                'status'    => TenantUserStatusEnum::Inactive->value,
+            ]);
 
             $this->cache->invalidateUser($userId, $tenantId);
 

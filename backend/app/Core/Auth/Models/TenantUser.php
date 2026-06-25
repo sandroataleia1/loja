@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Core\Auth\Models;
 
+use App\Core\Auth\Enums\TenantUserStatusEnum;
 use App\Modules\Inventory\Models\Store;
 use App\Shared\Models\BaseModel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -18,8 +20,9 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * Se houver TenantUserStore entries, o usuário só acessa as lojas listadas (allowlist).
  *
  * Status transitions:
- * is_active=true  → usuário ativo no tenant
- * is_active=false → acesso revogado (RevokeRoleAction)
+ *   active    → usuário ativo, is_active = true
+ *   inactive  → acesso permanentemente revogado, is_active = false
+ *   suspended → acesso temporariamente bloqueado, is_active = false
  */
 final class TenantUser extends BaseModel
 {
@@ -30,6 +33,7 @@ final class TenantUser extends BaseModel
         'user_id',
         'role_id',
         'is_active',
+        'status',
         'joined_at',
     ];
 
@@ -38,6 +42,7 @@ final class TenantUser extends BaseModel
         return array_merge(parent::casts(), [
             'is_active' => 'boolean',
             'joined_at' => 'datetime',
+            'status'    => TenantUserStatusEnum::class,
         ]);
     }
 
@@ -63,11 +68,28 @@ final class TenantUser extends BaseModel
         return $this->hasManyThrough(
             Store::class,
             TenantUserStore::class,
-            'tenant_user_id', // FK em tenant_user_stores
-            'uuid',           // FK em stores
-            'uuid',           // PK em tenant_users
-            'store_id',       // FK para stores em tenant_user_stores
+            'tenant_user_id',
+            'uuid',
+            'uuid',
+            'store_id',
         );
+    }
+
+    // ── Scopes ────────────────────────────────────────────────────────────────
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', TenantUserStatusEnum::Active->value);
+    }
+
+    public function scopeInactive(Builder $query): Builder
+    {
+        return $query->where('status', TenantUserStatusEnum::Inactive->value);
+    }
+
+    public function scopeSuspended(Builder $query): Builder
+    {
+        return $query->where('status', TenantUserStatusEnum::Suspended->value);
     }
 
     // ── Domain helpers ────────────────────────────────────────────────────────
@@ -76,5 +98,26 @@ final class TenantUser extends BaseModel
     public function hasUnrestrictedStoreAccess(): bool
     {
         return $this->storeAccesses()->doesntExist();
+    }
+
+    /**
+     * Suspende o acesso temporariamente, mantendo o histórico de membership.
+     * Diferente de revoke (inactive), suspended pode ser revertido para active.
+     */
+    public function suspend(): void
+    {
+        $this->update([
+            'status'    => TenantUserStatusEnum::Suspended->value,
+            'is_active' => false,
+        ]);
+    }
+
+    /** Reativa um usuário suspenso. */
+    public function reactivate(): void
+    {
+        $this->update([
+            'status'    => TenantUserStatusEnum::Active->value,
+            'is_active' => true,
+        ]);
     }
 }

@@ -18,6 +18,7 @@ final class UpdateStoreRequest extends FormRequest
             'phone'        => ['nullable', 'string', 'max:30'],
             'email'        => ['nullable', 'email', 'max:150'],
             'address'      => ['nullable', 'array'],
+            'type'         => ['sometimes', 'nullable', 'string', 'in:store,warehouse,yard,ecommerce'],
             'is_active'    => ['boolean'],
             'is_ecommerce' => ['boolean'],
         ];

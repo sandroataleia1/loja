@@ -37,10 +37,30 @@ enum AuditActionEnum: string
     case ReverseFinancialEntry = 'financial.entry_reversed';
 
     // ── Fiscal ────────────────────────────────────────────────────────────────
-    case EmitNfce      = 'fiscal.nfce_emitted';
-    case CancelNfce    = 'fiscal.nfce_cancelled';
-    case FiscalError   = 'fiscal.error';
-    case FiscalRetried = 'fiscal.retried';
+    case EmitNfce                  = 'fiscal.nfce_emitted';
+    case CancelNfce                = 'fiscal.nfce_cancelled';
+    case FiscalError               = 'fiscal.error';
+    case FiscalRetried             = 'fiscal.retried';
+    case FiscalEnvironmentChanged  = 'fiscal.environment_changed';
+
+    // ── Cadastros Mestres ─────────────────────────────────────────────────────
+    case CustomerCreated   = 'customer.created';
+    case CustomerUpdated   = 'customer.updated';
+    case CustomerDeleted   = 'customer.deleted';
+    case CustomerBlocked   = 'customer.blocked';
+    case SupplierCreated   = 'supplier.created';
+    case SupplierUpdated   = 'supplier.updated';
+    case SupplierDeleted   = 'supplier.deleted';
+    case SupplierSuspended = 'supplier.suspended';
+    case CarrierCreated    = 'carrier.created';
+    case CarrierUpdated    = 'carrier.updated';
+    case CarrierDeleted    = 'carrier.deleted';
+    case SellerCreated     = 'seller.created';
+    case SellerUpdated     = 'seller.updated';
+    case SellerDeleted     = 'seller.deleted';
+
+    // ── Configurações ─────────────────────────────────────────────────────────
+    case SettingsUpdated = 'settings.updated';
 
     // ── RBAC / Permissões ─────────────────────────────────────────────────────
     case RoleAssigned       = 'rbac.role_assigned';
@@ -52,11 +72,21 @@ enum AuditActionEnum: string
     case StoreAccessRevoked = 'rbac.store_access_revoked';
     case PermissionsSynced  = 'rbac.permissions_synced';
 
+    // ── Aprovações ────────────────────────────────────────────────────────────
+    case ApprovalApproved = 'approval.approved';
+    case ApprovalRejected = 'approval.rejected';
+    case ApprovalPinFailed = 'approval.pin_failed';
+
     // ── Autenticação / Segurança ──────────────────────────────────────────────
-    case Login       = 'auth.login';
-    case Logout      = 'auth.logout';
-    case FailedLogin = 'auth.failed_login';
-    case TokenRevoked = 'auth.token_revoked';
+    case Login              = 'auth.login';
+    case Logout             = 'auth.logout';
+    case FailedLogin        = 'auth.failed_login';
+    case TokenRevoked       = 'auth.token_revoked';
+    case AuthPinLogin       = 'auth.pin_login';
+    case AuthPinFailed      = 'auth.pin_failed';
+    case AuthPinChanged     = 'auth.pin_changed';
+    case AuthPasswordReset  = 'auth.password_reset';
+    case AuthAccountLocked  = 'auth.account_locked';
 
     public function label(): string
     {
@@ -73,10 +103,26 @@ enum AuditActionEnum: string
             self::PriceChanged          => 'Preço alterado',
             self::PayExpense            => 'Despesa paga',
             self::ReverseFinancialEntry => 'Lançamento estornado',
-            self::EmitNfce              => 'NFC-e emitida',
-            self::CancelNfce            => 'NFC-e cancelada',
-            self::FiscalError           => 'Erro fiscal',
-            self::FiscalRetried         => 'Fiscal reprocessado',
+            self::EmitNfce                 => 'NFC-e emitida',
+            self::CancelNfce               => 'NFC-e cancelada',
+            self::FiscalError              => 'Erro fiscal',
+            self::FiscalRetried            => 'Fiscal reprocessado',
+            self::FiscalEnvironmentChanged => 'Ambiente SEFAZ alterado',
+            self::CustomerCreated   => 'Cliente criado',
+            self::CustomerUpdated   => 'Cliente atualizado',
+            self::CustomerDeleted   => 'Cliente excluído',
+            self::CustomerBlocked   => 'Cliente bloqueado',
+            self::SupplierCreated   => 'Fornecedor criado',
+            self::SupplierUpdated   => 'Fornecedor atualizado',
+            self::SupplierDeleted   => 'Fornecedor excluído',
+            self::SupplierSuspended => 'Fornecedor suspenso',
+            self::CarrierCreated    => 'Transportadora criada',
+            self::CarrierUpdated    => 'Transportadora atualizada',
+            self::CarrierDeleted    => 'Transportadora excluída',
+            self::SellerCreated     => 'Vendedor criado',
+            self::SellerUpdated     => 'Vendedor atualizado',
+            self::SellerDeleted     => 'Vendedor excluído',
+            self::SettingsUpdated          => 'Configurações atualizadas',
             self::RoleAssigned          => 'Role atribuída',
             self::RoleRevoked           => 'Role revogada',
             self::RoleCreated           => 'Role criada',
@@ -85,10 +131,18 @@ enum AuditActionEnum: string
             self::StoreAccessGranted    => 'Acesso à loja concedido',
             self::StoreAccessRevoked    => 'Acesso à loja revogado',
             self::PermissionsSynced     => 'Permissões sincronizadas',
+            self::ApprovalApproved      => 'Aprovação concedida',
+            self::ApprovalRejected      => 'Aprovação rejeitada',
+            self::ApprovalPinFailed     => 'Tentativa de PIN de aprovação inválida',
             self::Login                 => 'Login realizado',
             self::Logout                => 'Logout realizado',
             self::FailedLogin           => 'Tentativa de login inválida',
             self::TokenRevoked          => 'Token revogado',
+            self::AuthPinLogin          => 'Login por PIN realizado',
+            self::AuthPinFailed         => 'Tentativa de PIN de login inválida',
+            self::AuthPinChanged        => 'PIN alterado',
+            self::AuthPasswordReset     => 'Senha redefinida',
+            self::AuthAccountLocked     => 'Conta bloqueada por excesso de tentativas',
         };
     }
 
@@ -99,10 +153,14 @@ enum AuditActionEnum: string
             self::CancelSale,
             self::ReverseFinancialEntry,
             self::CancelNfce,
+            self::FiscalEnvironmentChanged,
             self::RoleAssigned,
             self::RoleRevoked,
             self::RoleDeleted,
             self::FailedLogin,
+            self::ApprovalApproved,
+            self::ApprovalRejected,
+            self::AuthAccountLocked,
         ], true);
     }
 }

@@ -2,28 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Settings } from 'lucide-react'
+import { Settings, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-
-const LS_KEY = 'commercial_settings'
+import { useSystemSettings, useUpdateSection } from '@/features/system-settings/hooks'
 
 export interface CommercialSettings {
   default_validity_days: number
 }
 
+/** @deprecated Usar useSystemSettings().data.commercial.quote_validity_days */
 export function loadCommercialSettings(): CommercialSettings {
-  try {
-    const raw = typeof window !== 'undefined' ? localStorage.getItem(LS_KEY) : null
-    if (raw) return { default_validity_days: 30, ...JSON.parse(raw) as Partial<CommercialSettings> }
-  } catch {}
   return { default_validity_days: 30 }
-}
-
-function saveCommercialSettings(settings: CommercialSettings) {
-  localStorage.setItem(LS_KEY, JSON.stringify(settings))
 }
 
 export function CommercialSettingsButton() {
@@ -45,17 +37,28 @@ export function CommercialSettingsButton() {
 }
 
 function CommercialSettingsModal({ onClose }: { onClose: () => void }) {
+  const { data: settings, isLoading } = useSystemSettings()
+  const { mutate: updateSection, isPending } = useUpdateSection('commercial')
+
   const [validityDays, setValidityDays] = useState(30)
 
   useEffect(() => {
-    const s = loadCommercialSettings()
-    setValidityDays(s.default_validity_days)
-  }, [])
+    if (settings?.commercial?.quote_validity_days !== undefined) {
+      setValidityDays(settings.commercial.quote_validity_days)
+    }
+  }, [settings])
 
   function handleSave() {
-    saveCommercialSettings({ default_validity_days: validityDays })
-    toast.success('Configurações salvas.')
-    onClose()
+    updateSection(
+      { quote_validity_days: validityDays },
+      {
+        onSuccess: () => {
+          toast.success('Configurações salvas.')
+          onClose()
+        },
+        onError: () => toast.error('Erro ao salvar configurações.'),
+      },
+    )
   }
 
   return createPortal(
@@ -77,23 +80,31 @@ function CommercialSettingsModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="p-5 space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="validity_days">Validade padrão do orçamento (dias)</Label>
-            <Input
-              id="validity_days"
-              type="number"
-              min={1}
-              max={365}
-              value={validityDays}
-              onChange={(e) => setValidityDays(parseInt(e.target.value) || 30)}
-            />
-            <p className="text-xs text-muted-foreground">Padrão: 30 dias.</p>
-          </div>
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="validity_days">Validade padrão do orçamento (dias)</Label>
+              <Input
+                id="validity_days"
+                type="number"
+                min={1}
+                max={3650}
+                value={validityDays}
+                onChange={(e) => setValidityDays(parseInt(e.target.value) || 30)}
+              />
+              <p className="text-xs text-muted-foreground">Padrão: 30 dias.</p>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 px-5 py-4 border-t">
-          <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button type="button" onClick={handleSave}>Salvar</Button>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>Cancelar</Button>
+          <Button type="button" onClick={handleSave} disabled={isPending || isLoading}>
+            {isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Salvando...</> : 'Salvar'}
+          </Button>
         </div>
       </div>
     </div>,

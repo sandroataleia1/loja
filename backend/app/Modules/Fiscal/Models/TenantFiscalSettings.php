@@ -45,6 +45,7 @@ final class TenantFiscalSettings extends BaseModel
         'fiscal_retry_max',
         'policy_mode',
         'min_sale_amount_cents',
+        'nfe_default_email',
     ];
 
     /** Nunca serializar a senha do certificado. */

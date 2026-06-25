@@ -35,3 +35,7 @@ Route::get('users/lookup/by-email',              [TenantUserController::class, '
 // ── Store access (allowlist por TenantUser) ───────────────────────────────
 Route::post('users/{tenantUser}/stores',         [TenantUserController::class, 'grantStoreAccess'])->name('users.stores.grant');
 Route::delete('users/{tenantUser}/stores/{storeId}', [TenantUserController::class, 'revokeStoreAccess'])->name('users.stores.revoke');
+
+// ── PIN operacional ───────────────────────────────────────────────────────
+Route::put('users/{tenantUser}/pin',             [TenantUserController::class, 'updatePin'])->name('users.update-pin');
+Route::delete('users/{tenantUser}/pin',          [TenantUserController::class, 'removePin'])->name('users.remove-pin');

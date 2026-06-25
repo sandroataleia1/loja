@@ -21,6 +21,18 @@ import type { ProductStatus } from '@store/shared-types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const ORIGIN_LABELS: Record<number, string> = {
+  0: '0 – Nacional',
+  1: '1 – Estrangeira (importação direta)',
+  2: '2 – Estrangeira (adquirida internamente)',
+  3: '3 – Nacional, conteúdo importado > 40%',
+  4: '4 – Nacional (processos produtivos básicos)',
+  5: '5 – Estrangeira (importação direta, sem similar)',
+  6: '6 – Estrangeira (interna, sem similar)',
+  7: '7 – Nacional, conteúdo importado ≤ 40%',
+  8: '8 – Nacional, conteúdo importado > 40% e ≤ 70%',
+}
+
 function formatBRL(value: number | null | undefined): string {
   if (value == null) return '—'
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
@@ -180,6 +192,36 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
             {product.description && (
               <AppCard title="Descrição">
                 <p className="text-sm whitespace-pre-wrap">{product.description}</p>
+              </AppCard>
+            )}
+            {(product.ncm || product.cest || product.cfop_default || product.origin_code != null) && (
+              <AppCard title="Dados Fiscais">
+                <dl className="grid gap-3 sm:grid-cols-2 text-sm">
+                  {product.ncm && (
+                    <div>
+                      <dt className="font-medium text-muted-foreground">NCM</dt>
+                      <dd className="font-mono">{product.ncm}</dd>
+                    </div>
+                  )}
+                  {product.cest && (
+                    <div>
+                      <dt className="font-medium text-muted-foreground">CEST</dt>
+                      <dd className="font-mono">{product.cest}</dd>
+                    </div>
+                  )}
+                  {product.cfop_default && (
+                    <div>
+                      <dt className="font-medium text-muted-foreground">CFOP Padrão</dt>
+                      <dd className="font-mono">{product.cfop_default}</dd>
+                    </div>
+                  )}
+                  {product.origin_code != null && (
+                    <div>
+                      <dt className="font-medium text-muted-foreground">Origem</dt>
+                      <dd>{ORIGIN_LABELS[product.origin_code] ?? `Código ${product.origin_code}`}</dd>
+                    </div>
+                  )}
+                </dl>
               </AppCard>
             )}
           </div>

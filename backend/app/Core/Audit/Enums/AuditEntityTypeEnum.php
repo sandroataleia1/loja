@@ -29,4 +29,13 @@ enum AuditEntityTypeEnum: string
     case Channel          = 'channel';
     case ChannelProduct   = 'channel_product';
     case Order            = 'order';
+    // Auth / Aprovações
+    case ApprovalRequest  = 'approval_request';
+    // Cadastros Mestres
+    case Supplier         = 'supplier';
+    case Carrier          = 'carrier';
+    case Seller           = 'seller';
+    // Configurações
+    case TenantSettings   = 'tenant_settings';
+    case FiscalSettings   = 'fiscal_settings';
 }

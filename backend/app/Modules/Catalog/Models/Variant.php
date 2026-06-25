@@ -11,6 +11,7 @@ use Database\Factories\VariantFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 final class Variant extends BaseModel
@@ -28,6 +29,8 @@ final class Variant extends BaseModel
     protected $fillable = [
         'tenant_id',
         'product_id',
+        'ncm_code_id',
+        'unit_id',
         'sku',
         'grid_combination',
         'name',
@@ -73,6 +76,16 @@ final class Variant extends BaseModel
         return $this->belongsTo(Product::class, 'product_id', 'uuid');
     }
 
+    public function ncmCode(): BelongsTo
+    {
+        return $this->belongsTo(NcmCode::class, 'ncm_code_id', 'uuid');
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class, 'unit_id', 'uuid');
+    }
+
     public function taxProfile(): BelongsTo
     {
         return $this->belongsTo(TaxProfile::class, 'tax_profile_id', 'uuid');
@@ -94,6 +107,16 @@ final class Variant extends BaseModel
     {
         return $this->morphMany(ProductImage::class, 'imageable', 'imageable_type', 'imageable_id', 'uuid')
             ->orderBy('sort_order');
+    }
+
+    public function barcodes(): HasMany
+    {
+        return $this->hasMany(CatalogBarcode::class, 'variant_id', 'uuid');
+    }
+
+    public function primaryBarcode(): ?CatalogBarcode
+    {
+        return $this->barcodes()->where('is_primary', true)->first();
     }
 
     // ── Domain helpers ────────────────────────────────────────────────────────

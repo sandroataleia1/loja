@@ -10,6 +10,9 @@ use App\Core\Auth\Models\Role;
 use App\Core\Auth\Models\TenantUser;
 use App\Core\Auth\Models\User;
 use App\Core\Auth\Services\PermissionCache;
+use App\Core\Tenancy\Models\TenantSettings;
+use App\Modules\Catalog\Models\PriceList;
+use App\Modules\Finance\Models\CostCenter;
 use Illuminate\Support\Collection;
 
 /**
@@ -113,6 +116,38 @@ final class BootstrapTenantAction
         );
 
         ($cache ?? app(PermissionCache::class))->invalidateUser($adminUser->uuid, $tenantId);
+
+        // Cria as configurações do sistema com defaults para o novo tenant.
+        TenantSettings::forTenant($tenantId);
+
+        // Cria centros de custo padrão para o novo tenant.
+        $defaultCostCenters = [
+            ['code' => '1',   'name' => 'Administrativo', 'type' => 'ADMINISTRATIVE'],
+            ['code' => '2',   'name' => 'Comercial',      'type' => 'COMMERCIAL'],
+            ['code' => '3',   'name' => 'Logística',      'type' => 'LOGISTICS'],
+            ['code' => '4',   'name' => 'Compras',        'type' => 'PURCHASING'],
+            ['code' => '5',   'name' => 'Financeiro',     'type' => 'FINANCIAL'],
+        ];
+        foreach ($defaultCostCenters as $cc) {
+            CostCenter::firstOrCreate(
+                ['tenant_id' => $tenantId, 'code' => $cc['code']],
+                ['name' => $cc['name'], 'type' => $cc['type'], 'is_active' => true],
+            );
+        }
+
+        // Cria tabelas de preço padrão para o novo tenant.
+        $defaultPriceLists = [
+            ['code' => 'VAREJO',   'name' => 'Varejo',        'type' => 'retail',         'is_default' => true],
+            ['code' => 'ATACADO',  'name' => 'Atacado',       'type' => 'wholesale',      'is_default' => false],
+            ['code' => 'REPRES',   'name' => 'Representante', 'type' => 'representative', 'is_default' => false],
+            ['code' => 'CUSTO',    'name' => 'Custo',         'type' => 'cost',           'is_default' => false],
+        ];
+        foreach ($defaultPriceLists as $pl) {
+            PriceList::firstOrCreate(
+                ['tenant_id' => $tenantId, 'code' => $pl['code']],
+                array_merge($pl, ['is_active' => true, 'currency' => 'BRL']),
+            );
+        }
 
         return $tenantUser;
     }

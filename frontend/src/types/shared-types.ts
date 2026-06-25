@@ -393,8 +393,11 @@ export interface TenantUserData {
   uuid:       string
   tenant_id:  string
   user_id?:   string
-  name?:      string   // incluído quando user está eager-loaded no backend
-  email?:     string   // incluído quando user está eager-loaded no backend
+  name?:      string
+  email?:     string
+  username?:  string
+  phone?:     string
+  has_pin?:   boolean
   role:       Role
   is_active:  boolean
   joined_at:  string
@@ -694,10 +697,14 @@ export interface Supplier {
   name:        string
   trade_name:  string | null
   document:    string | null
+  ie:          string | null
+  im:          string | null
   email:       string | null
   phone:       string | null
   is_active:   boolean
   notes:       string | null
+  addresses?:  unknown[]
+  contacts?:   unknown[]
   created_at:  string
   updated_at:  string
 }

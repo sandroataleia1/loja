@@ -27,6 +27,8 @@ use App\Core\Auth\Models\User;
 use App\Core\Tenancy\Events\TenantCreated;
 use App\Modules\Inventory\Events\StockAdjusted;
 use Illuminate\Queue\Events\JobFailed;
+use App\Modules\Catalog\Events\ProductCreated as CatalogProductCreated;
+use App\Modules\Catalog\Listeners\DispatchQrCodeGenerationOnProductCreated;
 use App\Modules\Catalog\Listeners\UpdateProductAnalyticsOnSaleCompleted;
 use App\Modules\Catalog\Listeners\UpdateProductAnalyticsOnSaleReturned;
 use App\Modules\Customers\Http\Policies\CustomerPolicy;
@@ -128,6 +130,9 @@ final class AppServiceProvider extends ServiceProvider
         // ── Tenant ────────────────────────────────────────────────────────────
         Event::listen(TenantCreated::class, CreateDefaultConsumerOnTenantCreated::class);
 
+        // ── Catalog: QR Code generation ───────────────────────────────────────
+        Event::listen(CatalogProductCreated::class, DispatchQrCodeGenerationOnProductCreated::class);
+
         // ── Sale lifecycle ────────────────────────────────────────────────────
         Event::listen(SaleCompleted::class, CreateFinancialEntryOnSaleCompleted::class);
         Event::listen(SaleCompleted::class, RequestFiscalDocumentOnSaleCompleted::class);
@@ -207,6 +212,23 @@ final class AppServiceProvider extends ServiceProvider
         RateLimiter::for('auth.forgot-password',  fn () => Limit::perMinute(3)->by(request()->ip()));
         RateLimiter::for('auth.reset-password',   fn () => Limit::perMinute(3)->by(request()->ip()));
         RateLimiter::for('auth.platform-login',   fn () => Limit::perMinute(5)->by(request()->ip()));
+
+        // PIN login: 10 tentativas / 5 minutos por [tenant_id + IP]
+        RateLimiter::for('pin-login', fn () =>
+            Limit::perMinutes(5, 10)->by(
+                request()->ip() . '|' . (string) request()->input('tenant_id', '')
+            )
+        );
+
+        // Aprovação por PIN: 10 tentativas / 5 minutos por [IP + approval UUID]
+        RateLimiter::for('resolve-seller-pin', fn () =>
+            Limit::perMinutes(5, 10)->by(request()->ip())
+        );
+
+        // CEP lookup: 20 requests / minuto por usuário (proxy ViaCEP)
+        RateLimiter::for('cep', fn () =>
+            Limit::perMinute(20)->by((string) (request()->user()?->uuid ?? request()->ip()))
+        );
     }
 
     private function configureEmailVerification(): void

@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Core\Auth\Http\Controllers\AuthController;
+use App\Core\Auth\Http\Controllers\PinLoginController;
 use App\Core\Platform\Http\Controllers\PlatformAuthController;
+use App\Http\Controllers\CepLookupController;
 use App\Modules\Pix\Http\Controllers\PixWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +26,7 @@ Route::post('webhooks/pix/{tenantUuid}', [PixWebhookController::class, 'handle']
 Route::prefix('auth')->name('auth.')->group(function (): void {
     Route::post('register',        [AuthController::class, 'register'])->name('register')->middleware('throttle:auth.register');
     Route::post('login',           [AuthController::class, 'login'])->name('login')->middleware('throttle:auth.login');
+    Route::post('pin-login',       PinLoginController::class)->name('pin-login')->middleware('throttle:pin-login');
     Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('forgot-password')->middleware('throttle:auth.forgot-password');
     Route::post('reset-password',  [AuthController::class, 'resetPassword'])->name('reset-password')->middleware('throttle:auth.reset-password');
 });
@@ -206,4 +209,88 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     */
     Route::prefix('payment-methods')->name('payment-methods.')
         ->group(base_path('routes/api/v1/payment-methods.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Approvals — workflow de aprovação por PIN (sales.view base, resolve
+    | via PIN não exige permissão extra — qualquer usuário com PIN válido)
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('approvals')->name('approvals.')
+        ->middleware('permission:sales.view')
+        ->group(base_path('routes/api/v1/approvals.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Approval Rules — regras de aprovação configuráveis por tenant
+    | Leitura: settings.view | Escrita: settings.update (por rota)
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('approval-rules')->name('approval-rules.')
+        ->middleware('permission:settings.view')
+        ->group(base_path('routes/api/v1/approval-rules.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Audit Logs — users.view required
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('audit-logs')->name('audit-logs.')
+        ->middleware('permission:users.view')
+        ->group(base_path('routes/api/v1/audit-logs.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | System Settings — settings.view required for read,
+    | settings.update required for write (enforced per-route inside)
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('system-settings')->name('system-settings.')
+        ->middleware('permission:settings.view')
+        ->group(base_path('routes/api/v1/system-settings.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Carriers Module — carriers.view required
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('carriers')->name('carriers.')
+        ->middleware('permission:carriers.view')
+        ->group(base_path('routes/api/v1/carriers.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Sellers Module — sellers.view required
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('sellers')->name('sellers.')
+        ->middleware('permission:sellers.view')
+        ->group(base_path('routes/api/v1/sellers.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Partners Module — partners.view required
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('partner-professionals')->name('partners.')
+        ->middleware('permission:partners.view')
+        ->group(base_path('routes/api/v1/partners.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Cost Centers — cost_centers.view required
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('cost-centers')->name('cost-centers.')
+        ->middleware('permission:cost_centers.view')
+        ->group(base_path('routes/api/v1/cost-centers.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | CEP Lookup — proxy ViaCEP (dado público), apenas auth:sanctum
+    |----------------------------------------------------------------------
+    */
+    Route::get('addresses/cep/{zipcode}', CepLookupController::class)
+        ->name('addresses.cep')
+        ->middleware('throttle:cep');
 });

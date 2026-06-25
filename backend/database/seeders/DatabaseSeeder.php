@@ -15,6 +15,8 @@ final class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RbacSeeder::class);
+        $this->call(NcmCodeSeeder::class);
+        $this->call(UnitSeeder::class);
         $this->call(PaymentSeeder::class);
 
         $tenant = Tenant::factory()->create([
@@ -40,6 +42,7 @@ final class DatabaseSeeder extends Seeder
         $this->call(ConstructionCategorySeeder::class);
         $this->call(ConstructionAttributeSeeder::class);
         $this->call(ConstructionGridSeeder::class);
+        $this->call(ConstructionProductSeeder::class);
 
         TenantContext::clear();
 

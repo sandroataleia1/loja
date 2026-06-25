@@ -56,19 +56,45 @@ enum PermissionEnum: string
     case UsersDelete = 'users.delete';
 
     // ── Settings ──────────────────────────────────────────────────────────────
-    case SettingsView   = 'settings.view';
-    case SettingsUpdate = 'settings.update';
+    case SettingsView    = 'settings.view';
+    case SettingsUpdate  = 'settings.update';
+    case SettingsHistory = 'settings.history';
 
     // ── Suppliers ─────────────────────────────────────────────────────────────
     case SuppliersView   = 'suppliers.view';
     case SuppliersCreate = 'suppliers.create';
     case SuppliersUpdate = 'suppliers.update';
+    case SuppliersDelete = 'suppliers.delete';
 
     // ── Purchasing ────────────────────────────────────────────────────────────
-    case PurchaseOrdersView     = 'purchase_orders.view';
-    case PurchaseOrdersCreate   = 'purchase_orders.create';
-    case PurchaseOrdersApprove  = 'purchase_orders.approve';
+    case PurchaseOrdersView      = 'purchase_orders.view';
+    case PurchaseOrdersCreate    = 'purchase_orders.create';
+    case PurchaseOrdersApprove   = 'purchase_orders.approve';
     case PurchaseReceiptsReceive = 'purchase_receipts.receive';
+
+    // ── Carriers ──────────────────────────────────────────────────────────────
+    case CarriersView   = 'carriers.view';
+    case CarriersCreate = 'carriers.create';
+    case CarriersUpdate = 'carriers.update';
+    case CarriersDelete = 'carriers.delete';
+
+    // ── Sellers ───────────────────────────────────────────────────────────────
+    case SellersView   = 'sellers.view';
+    case SellersCreate = 'sellers.create';
+    case SellersUpdate = 'sellers.update';
+    case SellersDelete = 'sellers.delete';
+
+    // ── Partners ──────────────────────────────────────────────────────────────
+    case PartnersView   = 'partners.view';
+    case PartnersCreate = 'partners.create';
+    case PartnersUpdate = 'partners.update';
+    case PartnersDelete = 'partners.delete';
+
+    // ── Cost Centers ──────────────────────────────────────────────────────────
+    case CostCentersView   = 'cost_centers.view';
+    case CostCentersCreate = 'cost_centers.create';
+    case CostCentersUpdate = 'cost_centers.update';
+    case CostCentersDelete = 'cost_centers.delete';
 
     public function module(): string
     {
@@ -86,10 +112,19 @@ enum PermissionEnum: string
             self::FiscalView, self::FiscalIssue, self::FiscalCancel,
             self::FiscalReprocess                                                           => 'fiscal',
             self::UsersView, self::UsersCreate, self::UsersUpdate, self::UsersDelete       => 'users',
-            self::SettingsView, self::SettingsUpdate                                        => 'settings',
-            self::SuppliersView, self::SuppliersCreate, self::SuppliersUpdate              => 'suppliers',
+            self::SettingsView, self::SettingsUpdate, self::SettingsHistory                  => 'settings',
+            self::SuppliersView, self::SuppliersCreate, self::SuppliersUpdate,
+            self::SuppliersDelete                                                           => 'suppliers',
             self::PurchaseOrdersView, self::PurchaseOrdersCreate,
             self::PurchaseOrdersApprove, self::PurchaseReceiptsReceive                     => 'purchasing',
+            self::CarriersView, self::CarriersCreate, self::CarriersUpdate,
+            self::CarriersDelete                                                            => 'carriers',
+            self::SellersView, self::SellersCreate, self::SellersUpdate,
+            self::SellersDelete                                                             => 'sellers',
+            self::PartnersView, self::PartnersCreate, self::PartnersUpdate,
+            self::PartnersDelete                                                            => 'partners',
+            self::CostCentersView, self::CostCentersCreate, self::CostCentersUpdate,
+            self::CostCentersDelete                                                         => 'cost_centers',
         };
     }
 
@@ -129,13 +164,31 @@ enum PermissionEnum: string
             self::UsersDelete            => 'Excluir usuários',
             self::SettingsView           => 'Visualizar configurações',
             self::SettingsUpdate         => 'Editar configurações',
+            self::SettingsHistory        => 'Visualizar histórico de configurações',
             self::SuppliersView          => 'Visualizar fornecedores',
             self::SuppliersCreate        => 'Criar fornecedores',
             self::SuppliersUpdate        => 'Editar fornecedores',
+            self::SuppliersDelete        => 'Excluir fornecedores',
             self::PurchaseOrdersView     => 'Visualizar pedidos de compra',
             self::PurchaseOrdersCreate   => 'Criar pedidos de compra',
             self::PurchaseOrdersApprove  => 'Aprovar pedidos de compra',
             self::PurchaseReceiptsReceive => 'Registrar recebimentos',
+            self::CarriersView           => 'Visualizar transportadoras',
+            self::CarriersCreate         => 'Criar transportadoras',
+            self::CarriersUpdate         => 'Editar transportadoras',
+            self::CarriersDelete         => 'Excluir transportadoras',
+            self::SellersView            => 'Visualizar vendedores',
+            self::SellersCreate          => 'Criar vendedores',
+            self::SellersUpdate          => 'Editar vendedores',
+            self::SellersDelete          => 'Excluir vendedores',
+            self::PartnersView           => 'Visualizar profissionais parceiros',
+            self::PartnersCreate         => 'Criar profissionais parceiros',
+            self::PartnersUpdate         => 'Editar profissionais parceiros',
+            self::PartnersDelete         => 'Excluir profissionais parceiros',
+            self::CostCentersView        => 'Visualizar centros de custo',
+            self::CostCentersCreate      => 'Criar centros de custo',
+            self::CostCentersUpdate      => 'Editar centros de custo',
+            self::CostCentersDelete      => 'Excluir centros de custo',
         };
     }
 }

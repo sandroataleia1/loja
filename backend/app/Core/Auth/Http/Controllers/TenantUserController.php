@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\Core\Auth\Http\Controllers;
 
+use App\Core\Audit\DTOs\AuditLogDTO;
+use App\Core\Audit\Enums\AuditActionEnum;
+use App\Core\Audit\Enums\AuditEntityTypeEnum;
+use App\Core\Audit\Services\AuditLogger;
 use App\Core\Auth\Actions\AssignRoleAction;
 use App\Core\Auth\Actions\GrantStoreAccessAction;
 use App\Core\Auth\Actions\RevokeRoleAction;
 use App\Core\Auth\Actions\RevokeStoreAccessAction;
+use App\Core\Auth\Services\PermissionCache;
 use App\Core\Auth\DTOs\AssignRoleDTO;
 use App\Core\Auth\Events\UserRegistered;
 use Illuminate\Support\Facades\Hash;
@@ -67,7 +72,12 @@ final class TenantUserController extends Controller
 
         $data = $request->validate([
             'name'     => ['required', 'string', 'max:255'],
+            'username' => [
+                'nullable', 'string', 'max:60',
+                Rule::unique('users')->where('tenant_id', $tenantId),
+            ],
             'email'    => ['required', 'email', 'unique:users,email'],
+            'phone'    => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'string', 'min:8'],
             'role_id'  => [
                 'required',
@@ -81,7 +91,9 @@ final class TenantUserController extends Controller
         // Cria o usuário (admin cria e já confia no e-mail)
         $user = User::create([
             'name'              => $data['name'],
+            'username'          => $data['username'] ?? null,
             'email'             => $data['email'],
+            'phone'             => $data['phone'] ?? null,
             'password'          => Hash::make($data['password']),
             'tenant_id'         => $tenantId,
             'is_active'         => true,
@@ -175,6 +187,9 @@ final class TenantUserController extends Controller
 
         $tenantUser->update(['role_id' => $role->uuid]);
 
+        // Invalida cache de permissões imediatamente após troca de role
+        app(PermissionCache::class)->invalidateUser($tenantUser->user_id, $tenantId);
+
         return $this->success(
             data: new TenantUserResource($tenantUser->fresh()->load(['user', 'role', 'storeAccesses'])),
             message: 'Role atualizado com sucesso.',
@@ -224,5 +239,50 @@ final class TenantUserController extends Controller
         $action->execute($tenantUser->uuid, $storeId, $tenantId);
 
         return $this->success(message: 'Acesso à loja revogado.');
+    }
+
+    /** Define ou atualiza o PIN operacional do usuário (4–8 dígitos). */
+    public function updatePin(Request $request, TenantUser $tenantUser): JsonResponse
+    {
+        $this->authorize('update', $tenantUser);
+
+        $request->validate([
+            'pin' => ['required', 'string', 'digits_between:4,8'],
+        ]);
+
+        $tenantUser->user->update(['pin' => $request->input('pin')]);
+
+        app(AuditLogger::class)->record(new AuditLogDTO(
+            entityType: AuditEntityTypeEnum::User,
+            entityUuid: $tenantUser->user_id,
+            action:     AuditActionEnum::AuthPinChanged,
+            tenantId:   TenantContext::getId(),
+            userId:     auth()->id(),
+            ip:         $request->ip(),
+            userAgent:  $request->userAgent(),
+        ));
+
+        return $this->success(message: 'PIN atualizado com sucesso.');
+    }
+
+    /** Remove o PIN operacional do usuário. */
+    public function removePin(Request $request, TenantUser $tenantUser): JsonResponse
+    {
+        $this->authorize('update', $tenantUser);
+
+        $tenantUser->user->update(['pin' => null]);
+
+        app(AuditLogger::class)->record(new AuditLogDTO(
+            entityType: AuditEntityTypeEnum::User,
+            entityUuid: $tenantUser->user_id,
+            action:     AuditActionEnum::AuthPinChanged,
+            tenantId:   TenantContext::getId(),
+            userId:     auth()->id(),
+            metadata:   ['action' => 'removed'],
+            ip:         $request->ip(),
+            userAgent:  $request->userAgent(),
+        ));
+
+        return $this->success(message: 'PIN removido com sucesso.');
     }
 }

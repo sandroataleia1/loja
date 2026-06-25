@@ -46,12 +46,11 @@ final class CustomerController extends Controller
                 $request->filled('q'),
                 function ($q) use ($request) {
                     $v = $request->string('q')->toString();
-                    return $q->where(fn ($sub) => $sub
-                        ->where('name', 'ilike', "%{$v}%")
-                        ->orWhere('document', 'ilike', "%{$v}%")
-                        ->orWhere('email', 'ilike', "%{$v}%")
-                        ->orWhere('code', 'ilike', "%{$v}%")
-                    );
+                    return $q->whereRaw(
+                        "search_vector @@ plainto_tsquery('portuguese', ?)",
+                        [$v]
+                    )->orWhere('code', 'ilike', "%{$v}%")
+                     ->orWhere('email', 'ilike', "%{$v}%");
                 }
             )
             ->when(

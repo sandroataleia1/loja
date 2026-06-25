@@ -26,12 +26,23 @@ const ROUTE_PERMISSIONS: Array<[prefix: string, permission: string]> = [
   ['/sales',          'sales.view'],
   // Compras
   ['/purchasing',     'purchase_orders.view'],
+  // Cadastros Mestres
+  ['/suppliers',      'suppliers.view'],
+  ['/carriers',       'carriers.view'],
+  ['/sellers',        'sellers.view'],
+  ['/partners',       'partners.view'],
+  ['/cost-centers',   'cost_centers.view'],
   // Administração
   ['/users',          'users.view'],
   ['/roles',          'users.view'],
+  ['/permissions',    'users.view'],
+  ['/store-access',   'users.view'],
+  ['/audit-logs',     'users.view'],
   // Configurações
   ['/settings',       'settings.view'],
   ['/downloads',      'settings.view'],
+  // Sistema
+  ['/settings/system', 'settings.view'],
 ]
 
 function requiredPermission(pathname: string): string | null {

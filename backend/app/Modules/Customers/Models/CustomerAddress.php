@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Customers\Models;
 
+use App\Shared\Enums\AddressTypeEnum;
 use App\Shared\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class CustomerAddress extends Model
 {
     use HasUuid;
+    use SoftDeletes;
 
     protected $table = 'customer_addresses';
 
@@ -22,6 +25,7 @@ final class CustomerAddress extends Model
 
     protected $fillable = [
         'customer_id',
+        'address_type',
         'zipcode',
         'street',
         'number',
@@ -36,7 +40,8 @@ final class CustomerAddress extends Model
     protected function casts(): array
     {
         return [
-            'is_default' => 'boolean',
+            'address_type' => AddressTypeEnum::class,
+            'is_default'   => 'boolean',
         ];
     }
 

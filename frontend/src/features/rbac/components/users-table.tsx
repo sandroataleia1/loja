@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { UserPlus, Users, Pencil, Trash2, X, Loader2, Eye, EyeOff, Info } from 'lucide-react'
+import { UserPlus, Users, Pencil, Trash2, X, Loader2, Eye, EyeOff, Info, KeyRound } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,8 @@ import {
   useAssignRole,
   useChangeRole,
   useRevokeUser,
+  useUpdatePin,
+  useRemovePin,
 } from '../hooks'
 import { rbacService } from '@/services/rbac.service'
 import { ROUTES } from '@/constants'
@@ -326,6 +328,116 @@ function ChangeRoleModal({ tenantUser, roles, onClose }: { tenantUser: TenantUse
   )
 }
 
+// ── Modal: Definir / Alterar PIN ──────────────────────────────────────────────
+
+function PinModal({ tenantUser, onClose }: { tenantUser: TenantUserData; onClose: () => void }) {
+  const [pin,        setPin]        = useState('')
+  const [pinConfirm, setPinConfirm] = useState('')
+  const [showPin,    setShowPin]    = useState(false)
+  const [errors,     setErrors]     = useState<Record<string, string>>({})
+
+  const { mutate: updatePin, isPending: isUpdating } = useUpdatePin()
+  const { mutate: removePin, isPending: isRemoving } = useRemovePin()
+  const isPending = isUpdating || isRemoving
+
+  function validate() {
+    const e: Record<string, string> = {}
+    if (!/^\d{4,8}$/.test(pin))  e.pin     = 'PIN deve ter 4 a 8 dígitos numéricos'
+    if (pin !== pinConfirm)       e.confirm = 'PINs não conferem'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
+  function handleSave() {
+    if (!validate()) return
+    updatePin(
+      { tenantUserUuid: tenantUser.uuid, pin },
+      {
+        onSuccess: onClose,
+        onError: (err) => setErrors({ general: (err as { message?: string })?.message ?? 'Erro ao salvar PIN' }),
+      },
+    )
+  }
+
+  function handleRemove() {
+    removePin(tenantUser.uuid, { onSuccess: onClose })
+  }
+
+  return (
+    <Modal
+      title={`PIN Operacional — ${tenantUser.name ?? tenantUser.email}`}
+      subtitle="O PIN permite identificação rápida sem fazer login completo."
+      onClose={onClose}
+    >
+      <div className="space-y-4">
+        {errors.general && (
+          <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm text-destructive">
+            {errors.general}
+          </div>
+        )}
+
+        <div className="rounded-md bg-muted/40 border px-4 py-3 text-xs text-muted-foreground space-y-1">
+          <p className="font-medium text-foreground">Como funciona o PIN?</p>
+          <p>Usado para identificação no PDV e aprovação de operações como desconto, cancelamento e devolução.</p>
+          <p>4 a 8 dígitos numéricos. Nunca armazenado em texto puro.</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Novo PIN *</Label>
+          <div className="relative">
+            <Input
+              type={showPin ? 'text' : 'password'}
+              placeholder="4 a 8 dígitos"
+              value={pin}
+              maxLength={8}
+              onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setErrors((p) => ({ ...p, pin: '' })) }}
+              className="pr-10"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => setShowPin((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {errors.pin && <p className="text-xs text-destructive">{errors.pin}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Confirmar PIN *</Label>
+          <Input
+            type={showPin ? 'text' : 'password'}
+            placeholder="Repita o PIN"
+            value={pinConfirm}
+            maxLength={8}
+            onChange={(e) => { setPinConfirm(e.target.value.replace(/\D/g, '')); setErrors((p) => ({ ...p, confirm: '' })) }}
+          />
+          {errors.confirm && <p className="text-xs text-destructive">{errors.confirm}</p>}
+        </div>
+
+        <div className="flex items-center justify-between pt-2">
+          {tenantUser.has_pin && (
+            <Button type="button" variant="ghost" size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
+              onClick={handleRemove} disabled={isPending}>
+              {isRemoving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+              Remover PIN
+            </Button>
+          )}
+          <div className={`flex gap-2 ${tenantUser.has_pin ? '' : 'ml-auto'}`}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>Cancelar</Button>
+            <Button type="button" onClick={handleSave} disabled={isPending}>
+              {isUpdating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Salvando...</> : 'Salvar PIN'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 // ── Modal: Confirmar revogacao ────────────────────────────────────────────────
 
 function RevokeModal({ tenantUser, onClose }: { tenantUser: TenantUserData; onClose: () => void }) {
@@ -358,6 +470,7 @@ function UserRow({ tenantUser, currentUserId, roles }: {
 }) {
   const [changeRoleOpen, setChangeRoleOpen] = useState(false)
   const [revokeOpen,     setRevokeOpen]     = useState(false)
+  const [pinOpen,        setPinOpen]        = useState(false)
   const isSelf     = tenantUser.user_id === currentUserId
   const joinedDate = new Date(tenantUser.joined_at).toLocaleDateString('pt-BR')
 
@@ -374,6 +487,11 @@ function UserRow({ tenantUser, currentUserId, roles }: {
           <RoleBadge slug={tenantUser.role.slug} name={tenantUser.role.name} />
         </td>
         <td className="px-4 py-3"><StatusBadge isActive={tenantUser.is_active} /></td>
+        <td className="px-4 py-3">
+          {tenantUser.has_pin
+            ? <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/20">Definido</Badge>
+            : <span className="text-xs text-muted-foreground italic">Sem PIN</span>}
+        </td>
         <td className="px-4 py-3 text-sm text-muted-foreground">
           {(tenantUser.store_ids?.length ?? 0) === 0
             ? <span className="text-xs italic">Todas as lojas</span>
@@ -385,6 +503,11 @@ function UserRow({ tenantUser, currentUserId, roles }: {
             <Button size="sm" variant="ghost" onClick={() => setChangeRoleOpen(true)} title="Trocar perfil">
               <Pencil className="h-3.5 w-3.5" />
             </Button>
+            <Button size="sm" variant="ghost" onClick={() => setPinOpen(true)}
+              title={tenantUser.has_pin ? 'Alterar PIN' : 'Definir PIN'}
+              className={tenantUser.has_pin ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30' : ''}>
+              <KeyRound className="h-3.5 w-3.5" />
+            </Button>
             <Button size="sm" variant="ghost" onClick={() => setRevokeOpen(true)} disabled={isSelf}
               title={isSelf ? 'Nao e possivel revogar a si mesmo' : 'Revogar acesso'}
               className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -394,6 +517,7 @@ function UserRow({ tenantUser, currentUserId, roles }: {
         </td>
       </tr>
       {changeRoleOpen && <ChangeRoleModal tenantUser={tenantUser} roles={roles} onClose={() => setChangeRoleOpen(false)} />}
+      {pinOpen        && <PinModal tenantUser={tenantUser} onClose={() => setPinOpen(false)} />}
       {revokeOpen     && <RevokeModal tenantUser={tenantUser} onClose={() => setRevokeOpen(false)} />}
     </>
   )
@@ -406,7 +530,7 @@ function LoadingRows() {
     <>
       {Array.from({ length: 4 }).map((_, i) => (
         <tr key={i} className="border-b">
-          {Array.from({ length: 6 }).map((_, j) => (
+          {Array.from({ length: 7 }).map((_, j) => (
             <td key={j} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td>
           ))}
         </tr>
@@ -461,24 +585,25 @@ export function UsersTable({ currentUserId }: { currentUserId?: string }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/40">
-              <th className="px-4 py-3 text-left font-semibold">Usuario</th>
+              <th className="px-4 py-3 text-left font-semibold">Usuário</th>
               <th className="px-4 py-3 text-left font-semibold">Perfil</th>
               <th className="px-4 py-3 text-left font-semibold">Status</th>
+              <th className="px-4 py-3 text-left font-semibold">PIN</th>
               <th className="px-4 py-3 text-left font-semibold">Acesso</th>
               <th className="px-4 py-3 text-left font-semibold">Entrou em</th>
-              <th className="px-4 py-3 text-left font-semibold">Acoes</th>
+              <th className="px-4 py-3 text-left font-semibold">Ações</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && <LoadingRows />}
             {isError && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">Erro ao carregar usuarios.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">Erro ao carregar usuários.</td></tr>
             )}
             {!isLoading && !isError && users?.map((u) => (
               <UserRow key={u.uuid} tenantUser={u} currentUserId={currentUserId} roles={roles} />
             ))}
             {!isLoading && !isError && (users?.length ?? 0) === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">Nenhum usuario encontrado.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">Nenhum usuário encontrado.</td></tr>
             )}
           </tbody>
         </table>
