@@ -53,6 +53,12 @@ done
 ok "Container app pronto"
 
 # Dependências PHP em produção
+log "Garantindo permissões de storage e bootstrap/cache..."
+docker compose exec -u root -T app sh -c \
+  "mkdir -p /var/www/vendor /var/www/storage/logs /var/www/bootstrap/cache \
+   && chown -R appuser:appuser /var/www/vendor /var/www/storage /var/www/bootstrap/cache \
+   && chmod -R 775 /var/www/storage /var/www/bootstrap/cache"
+
 log "Atualizando dependências PHP..."
 docker compose exec -T app composer install \
   --no-dev --optimize-autoloader --no-interaction \

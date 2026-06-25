@@ -1,5 +1,5 @@
 # Admin (Next.js) em container.
-# Publica só em 127.0.0.1:3000 (Caddy/Nginx externo expõe em 443).
+# Publica em 0.0.0.0:3001 (Caddy/Nginx externo expõe em 443).
 #
 # Uso (rodar dentro de frontend/):
 #   docker compose up -d --build
@@ -17,4 +17,4 @@ services:
     container_name: store_admin
     restart: always
     ports:
-      - "0.0.0.0:3000:3000"
+      - "0.0.0.0:3001:3000"
