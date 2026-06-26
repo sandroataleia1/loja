@@ -114,7 +114,8 @@ log "Verificando .env do frontend..."
 
 log "Reconstruindo container frontend..."
 cd "$FRONTEND_DIR"
-docker compose up -d --build \
+docker compose down --remove-orphans 2>/dev/null || true
+docker compose up -d --build --force-recreate \
   || die "docker compose (frontend) falhou"
 ok "Container frontend reconstruído"
 
