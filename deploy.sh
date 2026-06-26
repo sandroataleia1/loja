@@ -114,9 +114,8 @@ log "Verificando .env do frontend..."
 
 log "Reconstruindo container frontend..."
 cd "$FRONTEND_DIR"
-# Para qualquer container com o nome store_admin (independente de projeto compose)
-docker stop store_admin 2>/dev/null || true
-docker rm   store_admin 2>/dev/null || true
+# Força remoção do container (independente do estado: running, created, exited…)
+docker rm -f store_admin 2>/dev/null || true
 docker compose up -d --build \
   || die "docker compose (frontend) falhou"
 ok "Container frontend reconstruído"
