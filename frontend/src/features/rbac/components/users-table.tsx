@@ -34,10 +34,6 @@ const ROLE_VARIANT_MAP: Record<string, 'default' | 'secondary' | 'outline' | 'su
   stock_operator:      'outline',
   cashier:             'outline',
 }
-const ROLE_SLUGS = [
-  'owner', 'manager', 'salesperson', 'cashier',
-  'stock_operator', 'financial', 'accounts_payable', 'accounts_receivable',
-]
 
 function RoleBadge({ slug, name }: { slug: string; name: string }) {
   return <Badge variant={ROLE_VARIANT_MAP[slug] ?? 'secondary'}>{name}</Badge>
@@ -85,7 +81,7 @@ function CreateUserModal({ onClose, roles }: { onClose: () => void; roles: Role[
   const [errors,          setErrors]          = useState<Record<string, string>>({})
 
   const { mutate: create, isPending } = useCreateUser()
-  const systemRoles = roles.filter((r) => ROLE_SLUGS.includes(r.slug))
+  const systemRoles = roles
 
   function validate() {
     const e: Record<string, string> = {}
@@ -225,7 +221,7 @@ function InviteUserModal({ onClose, roles }: { onClose: () => void; roles: Role[
   const [searching, setSearching]    = useState(false)
 
   const { mutate: assign, isPending } = useAssignRole()
-  const systemRoles = roles.filter((r) => ROLE_SLUGS.includes(r.slug))
+  const systemRoles = roles
 
   async function handleLookup() {
     if (!email.trim()) return
@@ -306,7 +302,7 @@ function InviteUserModal({ onClose, roles }: { onClose: () => void; roles: Role[
 function ChangeRoleModal({ tenantUser, roles, onClose }: { tenantUser: TenantUserData; roles: Role[]; onClose: () => void }) {
   const [roleId, setRoleId] = useState(tenantUser.role.uuid)
   const { mutate: changeRole, isPending } = useChangeRole()
-  const systemRoles = roles.filter((r) => ROLE_SLUGS.includes(r.slug))
+  const systemRoles = roles
 
   return (
     <Modal title={`Trocar perfil — ${tenantUser.name ?? tenantUser.email}`} onClose={onClose}>
