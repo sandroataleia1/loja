@@ -14,6 +14,7 @@ use App\Modules\Finance\Http\Requests\PayFinancialEntryRequest;
 use App\Modules\Finance\Http\Resources\FinancialEntryResource;
 use App\Modules\Finance\Models\FinancialEntry;
 use App\Shared\Traits\HasApiResponse;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -21,9 +22,12 @@ use App\Http\Controllers\Controller;
 final class FinancialEntryController extends Controller
 {
     use HasApiResponse;
+    use AuthorizesRequests;
 
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', FinancialEntry::class);
+
         $entries = FinancialEntry::query()
             ->with(['account', 'category', 'installments'])
             ->when($request->string('type')->value(), fn ($q, $v) => $q->where('type', $v))

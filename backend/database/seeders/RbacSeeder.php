@@ -82,7 +82,6 @@ final class RbacSeeder extends Seeder
             'dashboard.view',
             'customers.view',
             'sales.view',
-            'financial.view', 'financial.create', 'financial.update', 'financial.delete',
             'financial.accounts_receivable',
         ],
     ];
