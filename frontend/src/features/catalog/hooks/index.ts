@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { catalogService, type ProductFilters } from '@/services/catalog.service'
+import type { Brand, Category } from '@store/shared-types'
 import type {
   CreateBrandRequest,
   UpdateBrandRequest,
@@ -55,7 +56,8 @@ export function useCreateBrand() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateBrandRequest) => catalogService.createBrand(data),
-    onSuccess: () => {
+    onSuccess: (brand) => {
+      qc.setQueryData<Brand[]>(CATALOG_QUERY_KEYS.BRANDS, (old) => (old ? [...old, brand] : [brand]))
       qc.invalidateQueries({ queryKey: CATALOG_QUERY_KEYS.BRANDS })
     },
   })
@@ -96,7 +98,8 @@ export function useCreateCategory() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateCategoryRequest) => catalogService.createCategory(data),
-    onSuccess: () => {
+    onSuccess: (category) => {
+      qc.setQueryData<Category[]>(CATALOG_QUERY_KEYS.CATEGORIES, (old) => (old ? [...old, category] : [category]))
       qc.invalidateQueries({ queryKey: CATALOG_QUERY_KEYS.CATEGORIES })
     },
   })
