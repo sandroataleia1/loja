@@ -111,6 +111,7 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
 
   const [cepLoading, setCepLoading] = useState(false)
   const [cepError,   setCepError]   = useState<string | null>(null)
+  const [noNumber,   setNoNumber]   = useState(false)
   const zipcode = watch('zipcode')
 
   useEffect(() => {
@@ -178,8 +179,27 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
                 : errors.zipcode && <p className="text-xs text-destructive">{errors.zipcode.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label>Número *</Label>
-              <Input placeholder="123" {...register('number')} />
+              <div className="flex items-center justify-between">
+                <Label>Número *</Label>
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 rounded"
+                    checked={noNumber}
+                    onChange={(e) => {
+                      setNoNumber(e.target.checked)
+                      setValue('number', e.target.checked ? 'S/N' : '', { shouldValidate: true })
+                    }}
+                  />
+                  <span className="text-xs text-muted-foreground">Sem número</span>
+                </label>
+              </div>
+              <Input
+                placeholder="123"
+                disabled={noNumber}
+                className={noNumber ? 'bg-muted text-muted-foreground' : ''}
+                {...register('number')}
+              />
               {errors.number && <p className="text-xs text-destructive">{errors.number.message}</p>}
             </div>
           </div>
