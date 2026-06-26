@@ -38,10 +38,13 @@ enum PermissionEnum: string
     case CashierReopen = 'cashier.reopen';
 
     // ── Financial ─────────────────────────────────────────────────────────────
-    case FinancialView   = 'financial.view';
-    case FinancialCreate = 'financial.create';
-    case FinancialUpdate = 'financial.update';
-    case FinancialDelete = 'financial.delete';
+    case FinancialView              = 'financial.view';
+    case FinancialCreate            = 'financial.create';
+    case FinancialUpdate            = 'financial.update';
+    case FinancialDelete            = 'financial.delete';
+    case FinancialAccountsPayable   = 'financial.accounts_payable';
+    case FinancialAccountsReceivable = 'financial.accounts_receivable';
+    case FinancialBankingData        = 'financial.banking_data';
 
     // ── Fiscal ────────────────────────────────────────────────────────────────
     case FiscalView      = 'fiscal.view';
@@ -108,7 +111,8 @@ enum PermissionEnum: string
             self::SalesView, self::SalesCreate, self::SalesCancel, self::SalesDiscount     => 'sales',
             self::CashierOpen, self::CashierClose, self::CashierReopen                     => 'cashier',
             self::FinancialView, self::FinancialCreate, self::FinancialUpdate,
-            self::FinancialDelete                                                           => 'financial',
+            self::FinancialDelete, self::FinancialAccountsPayable,
+            self::FinancialAccountsReceivable, self::FinancialBankingData                  => 'financial',
             self::FiscalView, self::FiscalIssue, self::FiscalCancel,
             self::FiscalReprocess                                                           => 'fiscal',
             self::UsersView, self::UsersCreate, self::UsersUpdate, self::UsersDelete       => 'users',
@@ -150,10 +154,13 @@ enum PermissionEnum: string
             self::CashierOpen            => 'Abrir caixa',
             self::CashierClose           => 'Fechar caixa',
             self::CashierReopen          => 'Reabrir caixa',
-            self::FinancialView          => 'Visualizar financeiro',
-            self::FinancialCreate        => 'Criar lançamentos financeiros',
-            self::FinancialUpdate        => 'Editar lançamentos financeiros',
-            self::FinancialDelete        => 'Excluir lançamentos financeiros',
+            self::FinancialView               => 'Visualizar financeiro',
+            self::FinancialCreate             => 'Criar lançamentos financeiros',
+            self::FinancialUpdate             => 'Editar lançamentos financeiros',
+            self::FinancialDelete             => 'Excluir lançamentos financeiros',
+            self::FinancialAccountsPayable    => 'Contas a Pagar',
+            self::FinancialAccountsReceivable => 'Contas a Receber',
+            self::FinancialBankingData        => 'Dados bancários',
             self::FiscalView             => 'Visualizar documentos fiscais',
             self::FiscalIssue            => 'Emitir documentos fiscais',
             self::FiscalCancel           => 'Cancelar documentos fiscais',

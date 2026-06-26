@@ -63,7 +63,27 @@ final class RbacSeeder extends Seeder
             'customers.view',
             'sales.view',
             'financial.view', 'financial.create', 'financial.update', 'financial.delete',
+            'financial.accounts_payable', 'financial.accounts_receivable', 'financial.banking_data',
             'fiscal.view', 'fiscal.issue',
+        ],
+
+        RoleSlugEnum::AccountsPayable->value => [
+            'dashboard.view',
+            'customers.view',
+            'suppliers.view',
+            'sales.view',
+            'financial.view', 'financial.create', 'financial.update', 'financial.delete',
+            'financial.accounts_payable',
+            'financial.banking_data',
+            'purchase_orders.view',
+        ],
+
+        RoleSlugEnum::AccountsReceivable->value => [
+            'dashboard.view',
+            'customers.view',
+            'sales.view',
+            'financial.view', 'financial.create', 'financial.update', 'financial.delete',
+            'financial.accounts_receivable',
         ],
     ];
 
@@ -73,7 +93,9 @@ final class RbacSeeder extends Seeder
         RoleSlugEnum::Salesperson->value   => 'Vendedor',
         RoleSlugEnum::Cashier->value       => 'Caixa',
         RoleSlugEnum::StockOperator->value => 'Operador de Estoque',
-        RoleSlugEnum::Financial->value     => 'Financeiro',
+        RoleSlugEnum::Financial->value          => 'Financeiro',
+        RoleSlugEnum::AccountsPayable->value    => 'Contas a Pagar',
+        RoleSlugEnum::AccountsReceivable->value => 'Contas a Receber',
     ];
 
     public function run(): void

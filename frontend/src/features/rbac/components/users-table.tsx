@@ -25,14 +25,19 @@ import type { TenantUserData, Role } from '@store/shared-types'
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const ROLE_VARIANT_MAP: Record<string, 'default' | 'secondary' | 'outline' | 'success' | 'warning' | 'destructive'> = {
-  owner:          'default',
-  manager:        'secondary',
-  salesperson:    'success',
-  financial:      'warning',
-  stock_operator: 'outline',
-  cashier:        'outline',
+  owner:               'default',
+  manager:             'secondary',
+  salesperson:         'success',
+  financial:           'warning',
+  accounts_payable:    'warning',
+  accounts_receivable: 'warning',
+  stock_operator:      'outline',
+  cashier:             'outline',
 }
-const ROLE_SLUGS = ['owner', 'manager', 'salesperson', 'cashier', 'stock_operator', 'financial']
+const ROLE_SLUGS = [
+  'owner', 'manager', 'salesperson', 'cashier',
+  'stock_operator', 'financial', 'accounts_payable', 'accounts_receivable',
+]
 
 function RoleBadge({ slug, name }: { slug: string; name: string }) {
   return <Badge variant={ROLE_VARIANT_MAP[slug] ?? 'secondary'}>{name}</Badge>

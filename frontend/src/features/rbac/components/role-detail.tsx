@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Loader2, ChevronLeft } from 'lucide-react'
+import { Save, Loader2, ChevronLeft, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -33,12 +33,17 @@ const MODULE_LABELS: Record<string, string> = {
   cashier:           'Caixa',
   financial:         'Financeiro',
   fiscal:            'Fiscal',
-  users:             'Usuarios',
-  settings:          'Configuracoes',
+  users:             'Usuários',
+  settings:          'Configurações',
   suppliers:         'Fornecedores',
+  purchasing:        'Compras',
   purchase_orders:   'Pedidos de Compra',
   purchase_receipts: 'Recebimentos',
-  reports:           'Relatorios',
+  carriers:          'Transportadoras',
+  sellers:           'Vendedores',
+  partners:          'Parceiros',
+  cost_centers:      'Centros de Custo',
+  reports:           'Relatórios',
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
@@ -58,6 +63,7 @@ export function RoleDetail({ uuid }: RoleDetailProps) {
   const [description, setDescription] = useState('')
   const [selected,    setSelected]    = useState<Set<string>>(new Set())
   const [dirty,       setDirty]       = useState(false)
+  const [search,      setSearch]      = useState('')
 
   useEffect(() => {
     if (!role) return
@@ -80,7 +86,15 @@ export function RoleDetail({ uuid }: RoleDetailProps) {
     return <p className="text-sm text-muted-foreground text-center py-8">Perfil nao encontrado.</p>
   }
 
-  const grouped  = groupByModule(allPerms)
+  const filteredPerms = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return allPerms
+    return allPerms.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q)
+    )
+  }, [allPerms, search])
+
+  const grouped  = groupByModule(filteredPerms)
   const isSaving = savingInfo || savingPerms
 
   function togglePerm(permUuid: string) {
@@ -163,8 +177,35 @@ export function RoleDetail({ uuid }: RoleDetailProps) {
       </AppCard>
 
       {/* Editor de permissoes */}
-      <AppCard title="Permissoes de Acesso">
+      <AppCard title="Permissões de Acesso">
         <div className="space-y-6">
+          {/* Busca */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar permissão por nome…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-md border bg-background pl-9 pr-9 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {Object.keys(grouped).length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Nenhuma permissão encontrada para &quot;{search}&quot;.
+            </p>
+          )}
+
           {Object.entries(grouped).map(([module, perms]) => {
             const allSel  = perms.every((p) => selected.has(p.uuid))
             const someSel = perms.some((p) => selected.has(p.uuid))
