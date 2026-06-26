@@ -71,11 +71,16 @@ const TABS = [
     id:     'principal',
     label:  'Principal',
     fields: [
-      'name', 'slug', 'type', 'unit_of_measure', 'barcodes', 'location',
+      'name', 'slug', 'type', 'unit_of_measure', 'location',
       'base_price', 'cost_price',
       'brand_id', 'category_uuids',
       'short_description', 'description', 'internal_notes',
     ] as const,
+  },
+  {
+    id:     'codigos_barras',
+    label:  'Cód. Barras',
+    fields: ['barcodes'] as const,
   },
   {
     id:     'status',
@@ -359,62 +364,6 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
                   {...register('location')}
                 />
               </div>
-
-              {/* Códigos de barras */}
-              <div className="sm:col-span-2 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Códigos de Barras</Label>
-                  {barcodeFields.length < 2 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => appendBarcode({ value: '', type: 'ean13', is_primary: barcodeFields.length === 0 })}
-                    >
-                      <Plus className="mr-1 h-3.5 w-3.5" />
-                      Adicionar código
-                    </Button>
-                  )}
-                </div>
-                {barcodeFields.length === 0 && (
-                  <p className="text-xs text-muted-foreground">Nenhum código cadastrado.</p>
-                )}
-                {barcodeFields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2 items-start">
-                    <div className="flex-1 space-y-1">
-                      <div className="flex gap-2">
-                        <select
-                          className="w-36 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                          {...register(`barcodes.${index}.type`)}
-                        >
-                          {BARCODE_TYPE_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </select>
-                        <Input
-                          placeholder={index === 0 ? 'Código primário' : 'Código secundário'}
-                          {...register(`barcodes.${index}.value`)}
-                        />
-                      </div>
-                      {errors.barcodes?.[index]?.value && (
-                        <p className="text-xs text-destructive">{errors.barcodes[index].value?.message}</p>
-                      )}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="mt-0.5 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeBarcode(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                {errors.barcodes && !Array.isArray(errors.barcodes) && (
-                  <p className="text-xs text-destructive">{errors.barcodes.message}</p>
-                )}
-              </div>
             </div>
           </AppCard>
 
@@ -521,6 +470,66 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
           </AppCard>
 
         </div>
+      )}
+
+      {/* ── Tab: Códigos de Barras ── */}
+      {activeTab === 'codigos_barras' && (
+        <AppCard title="Códigos de Barras">
+          <div className="space-y-4 max-w-2xl">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Máximo de 2 códigos por produto.</p>
+              {barcodeFields.length < 2 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendBarcode({ value: '', type: 'ean13', is_primary: barcodeFields.length === 0 })}
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Adicionar código
+                </Button>
+              )}
+            </div>
+            {barcodeFields.length === 0 && (
+              <p className="text-xs text-muted-foreground">Nenhum código cadastrado. Clique em &quot;Adicionar código&quot; para incluir.</p>
+            )}
+            {barcodeFields.map((field, index) => (
+              <div key={field.id} className="flex gap-2 items-start">
+                <div className="flex-1 space-y-1">
+                  <div className="flex gap-2">
+                    <select
+                      className="w-36 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                      {...register(`barcodes.${index}.type`)}
+                    >
+                      {BARCODE_TYPE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                    <Input
+                      placeholder={index === 0 ? 'Código primário' : 'Código secundário'}
+                      {...register(`barcodes.${index}.value`)}
+                    />
+                  </div>
+                  {errors.barcodes?.[index]?.value && (
+                    <p className="text-xs text-destructive">{errors.barcodes[index].value?.message}</p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="mt-0.5 text-muted-foreground hover:text-destructive"
+                  onClick={() => removeBarcode(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            {errors.barcodes && !Array.isArray(errors.barcodes) && (
+              <p className="text-xs text-destructive">{errors.barcodes.message}</p>
+            )}
+          </div>
+        </AppCard>
       )}
 
       {/* ── Tab: Status ── */}
