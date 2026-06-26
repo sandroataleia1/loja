@@ -141,7 +141,7 @@ final class AuthController extends Controller
         $tenant = $tenantId ? Tenant::where('uuid', $tenantId)->first() : null;
 
         $memberships = $user->memberships()
-            ->with('role')
+            ->with('role.permissions')
             ->where('is_active', true)
             ->get();
 
