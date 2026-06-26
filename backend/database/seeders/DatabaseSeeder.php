@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Core\Auth\Actions\BootstrapTenantAction;
 use App\Core\Auth\Models\User;
 use App\Core\Tenancy\Models\Tenant;
 use App\Core\Tenancy\Services\TenantContext;
@@ -19,25 +20,37 @@ final class DatabaseSeeder extends Seeder
         $this->call(UnitSeeder::class);
         $this->call(PaymentSeeder::class);
 
-        $tenant = Tenant::factory()->create([
-            'name'       => 'Loja Demo',
-            'trade_name' => 'Loja Demo',
-            'legal_name' => 'Loja Demo Comércio LTDA',
-            'code'       => 'TEN001',
-            'slug'       => 'loja-demo',
-            'plan'       => 'pro',
-            'email'      => 'contato@lojademo.com.br',
-        ]);
+        /** @var Tenant $tenant */
+        $tenant = Tenant::firstOrCreate(
+            ['code' => 'TEN001'],
+            [
+                'name'       => 'Loja Demo',
+                'trade_name' => 'Loja Demo',
+                'legal_name' => 'Loja Demo Comércio LTDA',
+                'slug'       => 'loja-demo',
+                'plan'       => 'pro',
+                'email'      => 'contato@lojademo.com.br',
+            ],
+        );
 
         TenantContext::set($tenant->uuid);
 
-        $admin = User::factory()->forTenant($tenant)->admin()->create([
-            'name'  => 'Admin Demo',
-            'email' => 'admin@demo.com',
-            'password' => Hash::make('password'),
-        ]);
+        /** @var User $admin */
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@demo.com'],
+            [
+                'tenant_id' => $tenant->uuid,
+                'name'      => 'Admin Demo',
+                'password'  => Hash::make('password'),
+                'is_active' => true,
+            ],
+        );
 
-        User::factory()->forTenant($tenant)->count(5)->create();
+        app(BootstrapTenantAction::class)->execute($tenant->uuid, $admin);
+
+        if (User::where('tenant_id', $tenant->uuid)->count() < 3) {
+            User::factory()->forTenant($tenant)->count(5)->create();
+        }
 
         $this->call(ConstructionCategorySeeder::class);
         $this->call(ConstructionAttributeSeeder::class);
