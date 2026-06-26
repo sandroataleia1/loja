@@ -190,7 +190,7 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
       slug:              defaultValues?.slug              ?? '',
       type:              defaultValues?.type              ?? 'simple',
       unit_of_measure:   defaultValues?.unit_of_measure   ?? 'UN',
-      status:            defaultValues?.status            ?? 'draft',
+      status:            defaultValues?.status            ?? 'active',
       visibility:        defaultValues?.visibility        ?? 'PRIVATE',
       base_price:        defaultValues?.base_price        ?? '',
       cost_price:        defaultValues?.cost_price        ?? '',
