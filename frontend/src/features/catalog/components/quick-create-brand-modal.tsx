@@ -71,7 +71,7 @@ export function QuickCreateBrandModal({ open, onClose, onCreated }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={(e) => { e.stopPropagation(); void handleSubmit(onSubmit)(e) }} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="brand-name">Nome *</Label>
             <Input
