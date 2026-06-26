@@ -118,7 +118,6 @@ final readonly class CreateCustomerAction
                 $customer->commercialReferences()->delete();
                 foreach ($dto->commercialReferences as $ref) {
                     $customer->commercialReferences()->create([
-                        'tenant_id'      => $tenantId,
                         'company_name'   => $ref['company_name'],
                         'contact_person' => $ref['contact_person'] ?? null,
                         'phone'          => $ref['phone'] ?? null,
