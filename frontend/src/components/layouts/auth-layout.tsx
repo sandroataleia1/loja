@@ -7,22 +7,22 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <div className="mb-8 text-center">
         <div className="mx-auto mb-4 flex items-center justify-center gap-3">
           <Image
-            src="/icon-light.png"
-            alt="Logo"
+            src="/icon-light.svg"
+            alt="Atlas"
             width={40}
             height={40}
             className="block dark:hidden"
             priority
           />
           <Image
-            src="/icon-dark.png"
-            alt="Logo"
+            src="/icon-dark.svg"
+            alt="Atlas"
             width={40}
             height={40}
             className="hidden dark:block"
             priority
           />
-          <span className="text-3xl font-bold tracking-tight text-foreground">Loomi</span>
+          <span className="text-3xl font-bold tracking-tight text-foreground">Atlas</span>
         </div>
         <p className="text-sm text-muted-foreground">Plataforma operacional para varejo de material de construção</p>
       </div>

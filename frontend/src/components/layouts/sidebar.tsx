@@ -448,9 +448,9 @@ export function Sidebar({ collapsed: externalCollapsed, onCollapse, className }:
             collapsed ? 'justify-center px-2' : 'gap-2.5',
           )}
         >
-          <img src="/icon.svg" alt="Loomi" className="h-7 w-7 shrink-0" />
+          <img src="/icon.svg" alt="Atlas" className="h-7 w-7 shrink-0" />
           {!collapsed && (
-            <span className="text-base font-bold text-white tracking-tight">Loomi</span>
+            <span className="text-base font-bold text-white tracking-tight">Atlas</span>
           )}
         </div>
 

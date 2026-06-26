@@ -4,11 +4,12 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Store Admin',
-    default:  'Store Admin',
+    template: '%s | Atlas',
+    default:  'Atlas',
   },
   description: 'Plataforma operacional para varejo de material de construção',
   icons: {
+    icon: '/icon-light.svg',
     apple: '/icon-light.png',
   },
 }
