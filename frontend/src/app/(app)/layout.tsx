@@ -8,18 +8,22 @@ import { useAuth } from '@/hooks/use-auth'
 import { ROUTES } from '@/constants'
 
 // Map route prefixes to the minimum permission required to access them.
-// Order matters: more specific prefixes should come before their parents.
+// Order matters: more specific prefixes must come before their parents.
 const ROUTE_PERMISSIONS: Array<[prefix: string, permission: string]> = [
+  // Dashboard
+  ['/dashboard',      'dashboard.view'],
   // Cadastros / Catálogo
   ['/products',       'products.view'],
   ['/catalog',        'products.view'],
   // Estoque
   ['/inventory',      'inventory.view'],
-  // Financeiro
-  ['/financial',      'financial.view'],
+  // Financeiro — subrotas específicas ANTES do prefixo genérico
+  ['/financial/receivable', 'financial.accounts_receivable'],
+  ['/financial/payable',    'financial.accounts_payable'],
+  ['/financial',            'financial.view'],
   // Fiscal
   ['/fiscal',         'fiscal.view'],
-  // Comercial (orçamentos/pedidos) — sales.view
+  // Comercial (orçamentos/pedidos)
   ['/quotes',         'sales.view'],
   ['/orders',         'sales.view'],
   // PDV / Vendas
@@ -39,14 +43,19 @@ const ROUTE_PERMISSIONS: Array<[prefix: string, permission: string]> = [
   ['/store-access',   'users.view'],
   ['/audit-logs',     'users.view'],
   // Configurações
-  ['/settings',       'settings.view'],
-  ['/downloads',      'settings.view'],
-  // Sistema
   ['/settings/system', 'settings.view'],
+  ['/settings',        'settings.view'],
+  ['/downloads',       'settings.view'],
 ]
 
 function requiredPermission(pathname: string): string | null {
   return ROUTE_PERMISSIONS.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? null
+}
+
+/** Encontra a primeira rota que o usuário tem permissão de acessar. */
+function firstAccessibleRoute(hasPermission: (p: string) => boolean): string {
+  const found = ROUTE_PERMISSIONS.find(([, perm]) => hasPermission(perm))
+  return found ? found[0] : ROUTES.LOGIN
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -64,7 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const required = requiredPermission(pathname)
     if (required && !hasPermission(required)) {
-      router.replace(ROUTES.DASHBOARD)
+      router.replace(firstAccessibleRoute(hasPermission))
     }
   }, [isAuthenticated, isLoading, pathname, hasPermission, router])
 
@@ -82,7 +91,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Only do this check once permissions have been loaded (permissions.length > 0
   // or we're confident they're set — isLoading is false at this point).
   const required = requiredPermission(pathname)
-  if (required && !hasPermission(required)) return null
+  if (required && !hasPermission(required) && permissions.length > 0) return null
 
   return <AppLayout>{children}</AppLayout>
 }

@@ -79,7 +79,6 @@ final class RbacSeeder extends Seeder
         ],
 
         RoleSlugEnum::AccountsReceivable->value => [
-            'dashboard.view',
             'customers.view',
             'sales.view',
             'financial.accounts_receivable',
