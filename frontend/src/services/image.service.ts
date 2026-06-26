@@ -11,10 +11,10 @@ export const imageService = {
     form.append('file',           file)
     form.append('is_primary',     isPrimary ? '1' : '0')
     if (altText) form.append('alt_text', altText)
-    return apiPostForm<ProductMedia>('/images', form)
+    return apiPostForm<ProductMedia>('/catalog/images', form)
   },
 
   remove(imageUuid: string): Promise<void> {
-    return apiDelete<void>(`/images/${imageUuid}`)
+    return apiDelete<void>(`/catalog/images/${imageUuid}`)
   },
 }
