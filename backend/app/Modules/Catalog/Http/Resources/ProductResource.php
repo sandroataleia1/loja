@@ -53,6 +53,7 @@ final class ProductResource extends JsonResource
             'short_description'      => $this->short_description,
             'marketing_description'  => $this->marketing_description,
             'internal_notes'         => $this->internal_notes,
+            'location'               => $this->location,
             'seo'                    => $this->seo,
             // Analytics foundation — AI/campaigns future
             'sales_velocity'         => $this->sales_velocity,
@@ -69,6 +70,13 @@ final class ProductResource extends JsonResource
             'images'                 => $this->whenLoaded('images',               fn () => ImageResource::collection($this->images)),
             'media'                  => $this->whenLoaded('media',                fn () => MediaAssetResource::collection($this->media)),
             'tags'                   => $this->whenLoaded('tags',                 fn () => $this->tags->pluck('name')),
+            'barcodes'               => $this->whenLoaded('barcodes',            fn () => $this->barcodes->map(fn ($b) => [
+                'uuid'       => $b->uuid,
+                'value'      => $b->value,
+                'type'       => $b->barcode_type->value,
+                'type_label' => $b->barcode_type->label(),
+                'is_primary' => $b->is_primary,
+            ])),
             'created_at'             => $this->created_at?->toISOString(),
             'updated_at'             => $this->updated_at?->toISOString(),
         ];

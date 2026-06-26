@@ -40,6 +40,8 @@ final readonly class CreateProductDTO extends BaseDTO
         public ?string           $season,
         public ?string           $launchDate,
         public ?array            $seo,
+        public ?string           $location,
+        public ?array            $barcodes,
     ) {}
 
     public static function fromRequest(Request $request): static
@@ -61,8 +63,12 @@ final readonly class CreateProductDTO extends BaseDTO
             collectionId:         $request->string('collection_id')->value() ?: null,
             gridId:               $request->string('grid_id')->value() ?: null,
             unitId:               $request->string('unit_id')->value() ?: null,
-            basePriceCents:       $request->has('base_price_cents') ? $request->integer('base_price_cents') : null,
-            costPriceCents:       $request->has('cost_price_cents') ? $request->integer('cost_price_cents') : null,
+            basePriceCents:       $request->has('base_price_cents')
+                                    ? $request->integer('base_price_cents')
+                                    : ($request->has('base_price') ? (int) round($request->float('base_price') * 100) : null),
+            costPriceCents:       $request->has('cost_price_cents')
+                                    ? $request->integer('cost_price_cents')
+                                    : ($request->has('cost_price') ? (int) round($request->float('cost_price') * 100) : null),
             description:          $request->string('description')->value() ?: null,
             shortDescription:     $request->string('short_description')->value() ?: null,
             marketingDescription: $request->string('marketing_description')->value() ?: null,
@@ -73,6 +79,8 @@ final readonly class CreateProductDTO extends BaseDTO
             season:               $request->string('season')->value() ?: null,
             launchDate:           $request->string('launch_date')->value() ?: null,
             seo:                  $request->array('seo') ?: null,
+            location:             $request->string('location')->value() ?: null,
+            barcodes:             $request->has('barcodes') ? $request->array('barcodes') : null,
         );
     }
 }

@@ -107,6 +107,12 @@ export interface ResetPasswordRequest {
 
 // ── Product contracts ──────────────────────────────────────────────────────
 
+export interface ProductBarcodeInput {
+  value:      string
+  type:       string
+  is_primary: boolean
+}
+
 export interface CreateProductRequest {
   name:               string
   type?:              ProductType
@@ -117,11 +123,14 @@ export interface CreateProductRequest {
   category_uuids?:    string[]
   description?:       string | null
   short_description?: string | null
+  internal_notes?:    string | null
   base_price?:        number
   cost_price?:        number
   is_featured?:       boolean
   is_digital?:        boolean
   is_publishable?:    boolean
+  location?:          string | null
+  barcodes?:          ProductBarcodeInput[]
   // Fiscal
   ncm?:               string | null
   cest?:              string | null

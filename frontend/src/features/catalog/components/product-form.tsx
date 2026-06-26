@@ -1,9 +1,10 @@
 'use client'
 
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useEffect, useState } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,6 +42,15 @@ const UNIT_OPTIONS = [
   { value: 'SC', label: 'SC — Saco' },
 ] as const
 
+const BARCODE_TYPE_OPTIONS = [
+  { value: 'ean13',   label: 'EAN-13' },
+  { value: 'ean8',    label: 'EAN-8' },
+  { value: 'dun14',   label: 'DUN-14' },
+  { value: 'code128', label: 'Code 128' },
+  { value: 'qrcode',  label: 'QR Code' },
+  { value: 'custom',  label: 'Personalizado' },
+] as const
+
 const ORIGIN_OPTIONS = [
   { value: 0, label: '0 – Nacional' },
   { value: 1, label: '1 – Estrangeira (importação direta)' },
@@ -59,7 +69,7 @@ const TABS = [
   {
     id:     'identificacao',
     label:  'Identificação',
-    fields: ['name', 'slug', 'type', 'unit_of_measure'] as const,
+    fields: ['name', 'slug', 'type', 'unit_of_measure', 'barcodes', 'location'] as const,
   },
   {
     id:     'status',
@@ -79,7 +89,7 @@ const TABS = [
   {
     id:     'descricao',
     label:  'Descrição',
-    fields: ['short_description', 'description'] as const,
+    fields: ['short_description', 'description', 'internal_notes'] as const,
   },
   {
     id:     'configuracoes',
@@ -97,6 +107,12 @@ type TabId = (typeof TABS)[number]['id']
 
 // ── Zod Schema ────────────────────────────────────────────────────────────────
 
+const barcodeSchema = z.object({
+  value:      z.string().min(1, 'Código obrigatório').max(100),
+  type:       z.string().default('ean13'),
+  is_primary: z.boolean().default(false),
+})
+
 const productSchema = z.object({
   name:              z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
   slug:              z.string().min(2, 'Slug obrigatório'),
@@ -110,9 +126,12 @@ const productSchema = z.object({
   category_uuids:    z.array(z.string()).optional(),
   description:       z.string().optional().or(z.literal('')),
   short_description: z.string().max(500, 'Máximo 500 caracteres').optional().or(z.literal('')),
+  internal_notes:    z.string().optional().or(z.literal('')),
   is_featured:       z.boolean().optional(),
   is_digital:        z.boolean().optional(),
   is_publishable:    z.boolean().optional(),
+  location:          z.string().max(100).optional().or(z.literal('')),
+  barcodes:          z.array(barcodeSchema).max(2, 'Máximo 2 códigos de barras').optional(),
   ncm:               z.string().max(10).optional().or(z.literal('')),
   cest:              z.string().max(9).optional().or(z.literal('')),
   cfop_default:      z.string().max(5).optional().or(z.literal('')),
@@ -159,9 +178,7 @@ function TabBar({
             )}
           >
             {tab.label}
-            {hasError && (
-              <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-            )}
+            {hasError && <span className="h-1.5 w-1.5 rounded-full bg-destructive" />}
           </button>
         )
       })}
@@ -198,14 +215,26 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
       category_uuids:    defaultValues?.categories?.map((c) => c.uuid) ?? [],
       description:       defaultValues?.description       ?? '',
       short_description: defaultValues?.short_description ?? '',
+      internal_notes:    defaultValues?.internal_notes    ?? '',
       is_featured:       defaultValues?.is_featured       ?? false,
       is_digital:        defaultValues?.is_digital        ?? false,
       is_publishable:    defaultValues?.is_publishable    ?? false,
+      location:          defaultValues?.location          ?? '',
+      barcodes:          defaultValues?.barcodes?.map((b) => ({
+        value:      b.value,
+        type:       b.type,
+        is_primary: b.is_primary,
+      })) ?? [],
       ncm:               defaultValues?.ncm          ?? '',
       cest:              defaultValues?.cest         ?? '',
       cfop_default:      defaultValues?.cfop_default ?? '',
       origin_code:       defaultValues?.origin_code  ?? 0,
     },
+  })
+
+  const { fields: barcodeFields, append: appendBarcode, remove: removeBarcode } = useFieldArray({
+    control,
+    name: 'barcodes',
   })
 
   const nameValue = watch('name')
@@ -217,6 +246,10 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
   }, [nameValue, mode, setValue])
 
   function handleFormSubmit(values: ProductFormValues) {
+    const barcodes = (values.barcodes ?? [])
+      .filter((b) => b.value.trim() !== '')
+      .map((b, i) => ({ ...b, is_primary: i === 0 }))
+
     const payload: CreateProductRequest = {
       name:              values.name,
       type:              values.type,
@@ -229,9 +262,12 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
       category_uuids:    values.category_uuids?.length ? values.category_uuids : undefined,
       description:       values.description       || undefined,
       short_description: values.short_description || undefined,
+      internal_notes:    values.internal_notes    || undefined,
       is_featured:       values.is_featured,
       is_digital:        values.is_digital,
       is_publishable:    values.is_publishable,
+      location:          values.location || undefined,
+      barcodes:          barcodes.length ? barcodes : undefined,
       ncm:               values.ncm          || undefined,
       cest:              values.cest         || undefined,
       cfop_default:      values.cfop_default || undefined,
@@ -240,7 +276,6 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
     onSubmit(payload)
   }
 
-  // If submit has errors, jump to the first tab that has one
   function handleInvalid() {
     for (const tab of TABS) {
       if (tab.fields.some((f) => f in errors)) {
@@ -299,6 +334,72 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
                 ))}
               </select>
             </div>
+
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label htmlFor="location">Localização Física</Label>
+              <Input
+                id="location"
+                placeholder="Ex: Galpão A / Prateleira 3 / Corredor 2"
+                {...register('location')}
+              />
+              <p className="text-xs text-muted-foreground">Posição do produto no estoque físico</p>
+            </div>
+
+            {/* Códigos de barras */}
+            <div className="sm:col-span-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Códigos de Barras</Label>
+                {barcodeFields.length < 2 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendBarcode({ value: '', type: 'ean13', is_primary: barcodeFields.length === 0 })}
+                  >
+                    <Plus className="mr-1 h-3.5 w-3.5" />
+                    Adicionar código
+                  </Button>
+                )}
+              </div>
+              {barcodeFields.length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhum código de barras. Clique em &quot;Adicionar código&quot; para incluir.</p>
+              )}
+              {barcodeFields.map((field, index) => (
+                <div key={field.id} className="flex gap-2 items-start">
+                  <div className="flex-1 space-y-1">
+                    <div className="flex gap-2">
+                      <select
+                        className="w-36 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                        {...register(`barcodes.${index}.type`)}
+                      >
+                        {BARCODE_TYPE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <Input
+                        placeholder={index === 0 ? 'Código primário' : 'Código secundário'}
+                        {...register(`barcodes.${index}.value`)}
+                      />
+                    </div>
+                    {errors.barcodes?.[index]?.value && (
+                      <p className="text-xs text-destructive">{errors.barcodes[index].value?.message}</p>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="mt-0.5 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeBarcode(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {errors.barcodes && !Array.isArray(errors.barcodes) && (
+                <p className="text-xs text-destructive">{errors.barcodes.message}</p>
+              )}
+            </div>
           </div>
         </AppCard>
       )}
@@ -345,7 +446,7 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
         <AppCard title="Preços">
           <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
             <div className="space-y-1.5">
-              <Label htmlFor="base_price">Preço Base (R$)</Label>
+              <Label htmlFor="base_price">Preço de Venda (R$)</Label>
               <Input
                 id="base_price"
                 type="number"
@@ -357,7 +458,7 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
               {errors.base_price && <p className="text-xs text-destructive">{errors.base_price.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="cost_price">Custo (R$)</Label>
+              <Label htmlFor="cost_price">Preço de Custo (R$)</Label>
               <Input
                 id="cost_price"
                 type="number"
@@ -433,6 +534,15 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
                 className="w-full min-h-32 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
                 placeholder="Descrição detalhada do produto…"
                 {...register('description')}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="internal_notes">Observações Internas</Label>
+              <textarea
+                id="internal_notes"
+                className="w-full min-h-24 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
+                placeholder="Notas internas — não visíveis ao cliente…"
+                {...register('internal_notes')}
               />
             </div>
           </div>

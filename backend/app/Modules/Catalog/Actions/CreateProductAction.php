@@ -7,6 +7,7 @@ namespace App\Modules\Catalog\Actions;
 use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Catalog\DTOs\CreateProductDTO;
 use App\Modules\Catalog\Events\ProductCreated;
+use App\Modules\Catalog\Models\CatalogBarcode;
 use App\Modules\Catalog\Models\Product;
 use App\Shared\Actions\GenerateInternalCodeAction;
 use App\Shared\Enums\SequenceEntityEnum;
@@ -57,10 +58,30 @@ final readonly class CreateProductAction
             'is_digital'            => $dto->isDigital,
             'is_publishable'        => $dto->isPublishable,
             'seo'                   => $dto->seo,
+            'location'              => $dto->location,
         ]);
 
         if (! empty($dto->categoryUuids)) {
             $product->categories()->attach($dto->categoryUuids);
+        }
+
+        if (! empty($dto->barcodes)) {
+            $tenantId = TenantContext::getIdOrFail();
+            foreach ($dto->barcodes as $barcode) {
+                $value = trim($barcode['value'] ?? '');
+                if ($value === '') {
+                    continue;
+                }
+                CatalogBarcode::firstOrCreate(
+                    ['tenant_id' => $tenantId, 'value' => $value],
+                    [
+                        'product_id'   => $product->uuid,
+                        'variant_id'   => null,
+                        'barcode_type' => $barcode['type'] ?? 'ean13',
+                        'is_primary'   => (bool) ($barcode['is_primary'] ?? false),
+                    ],
+                );
+            }
         }
 
         ProductCreated::dispatch($product);

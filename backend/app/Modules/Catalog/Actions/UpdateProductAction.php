@@ -7,6 +7,7 @@ namespace App\Modules\Catalog\Actions;
 use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Catalog\DTOs\UpdateProductDTO;
 use App\Modules\Catalog\Events\ProductUpdated;
+use App\Modules\Catalog\Models\CatalogBarcode;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\Tag;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,8 @@ final readonly class UpdateProductAction
                 'is_featured'       => $dto->isFeatured,
                 'is_digital'        => $dto->isDigital,
                 'seo'               => $dto->seo,
+                'internal_notes'    => $dto->internalNotes,
+                'location'          => $dto->location,
             ], fn ($v) => $v !== null);
 
             $rawOriginal = collect(array_keys($data))
@@ -55,12 +58,38 @@ final readonly class UpdateProductAction
                 $this->syncTags($product, $dto->tags);
             }
 
+            if ($dto->barcodes !== null) {
+                $this->syncBarcodes($product, $dto->barcodes);
+            }
+
             if ($changed !== []) {
                 ProductUpdated::dispatch($product->refresh(), $changed);
             }
 
             return $product->refresh();
         });
+    }
+
+    /** @param array<array{value:string,type:string,is_primary:bool}> $barcodes */
+    private function syncBarcodes(Product $product, array $barcodes): void
+    {
+        $tenantId = TenantContext::getIdOrFail();
+        $product->barcodes()->delete();
+        foreach ($barcodes as $barcode) {
+            $value = trim($barcode['value'] ?? '');
+            if ($value === '') {
+                continue;
+            }
+            CatalogBarcode::firstOrCreate(
+                ['tenant_id' => $tenantId, 'value' => $value],
+                [
+                    'product_id'   => $product->uuid,
+                    'variant_id'   => null,
+                    'barcode_type' => $barcode['type'] ?? 'ean13',
+                    'is_primary'   => (bool) ($barcode['is_primary'] ?? false),
+                ],
+            );
+        }
     }
 
     /** @param string[] $tagNames */

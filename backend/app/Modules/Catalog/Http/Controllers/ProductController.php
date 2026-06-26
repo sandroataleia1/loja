@@ -93,7 +93,7 @@ final class ProductController extends Controller
     {
         $this->authorize('view', $product);
 
-        $product->load(['brand', 'categories', 'collection', 'grid', 'variants.attributes', 'images', 'tags']);
+        $product->load(['brand', 'categories', 'collection', 'grid', 'variants.attributes', 'images', 'tags', 'barcodes']);
 
         return $this->success(new ProductResource($product));
     }
@@ -104,7 +104,7 @@ final class ProductController extends Controller
 
         $product = $action->execute($product, UpdateProductDTO::fromRequest($request));
 
-        return $this->success(new ProductResource($product->load(['brand', 'categories', 'collection', 'grid', 'tags'])));
+        return $this->success(new ProductResource($product->load(['brand', 'categories', 'collection', 'grid', 'tags', 'barcodes'])));
     }
 
     public function destroy(Product $product): JsonResponse

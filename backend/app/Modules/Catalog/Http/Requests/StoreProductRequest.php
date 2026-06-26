@@ -42,6 +42,12 @@ final class StoreProductRequest extends FormRequest
             'cest'             => ['nullable', 'string', 'max:9'],
             'cfop_default'     => ['nullable', 'string', 'max:5'],
             'origin_code'      => ['nullable', 'integer', 'between:0,8'],
+            'location'          => ['nullable', 'string', 'max:100'],
+            // Barcodes (até 2 por produto)
+            'barcodes'          => ['nullable', 'array', 'max:2'],
+            'barcodes.*.value'  => ['required_with:barcodes', 'string', 'max:100'],
+            'barcodes.*.type'   => ['nullable', 'string', 'in:ean13,ean8,dun14,code128,qrcode,custom'],
+            'barcodes.*.is_primary' => ['boolean'],
             // SEO
             'seo'               => ['nullable', 'array'],
             'seo.title'         => ['nullable', 'string', 'max:70'],

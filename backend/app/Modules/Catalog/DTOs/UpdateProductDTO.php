@@ -34,6 +34,9 @@ final readonly class UpdateProductDTO extends BaseDTO
         public ?bool             $isDigital,
         public ?array            $seo,
         public ?array            $tags,
+        public ?string           $internalNotes,
+        public ?string           $location,
+        public ?array            $barcodes,
     ) {}
 
     public static function fromRequest(Request $request): static
@@ -54,14 +57,21 @@ final readonly class UpdateProductDTO extends BaseDTO
             collectionId:     $request->has('collection_id') ? ($request->string('collection_id')->value() ?: null) : null,
             gridId:           $request->has('grid_id') ? ($request->string('grid_id')->value() ?: null) : null,
             unitId:           $request->has('unit_id') ? ($request->string('unit_id')->value() ?: null) : null,
-            basePriceCents:   $request->has('base_price_cents') ? $request->integer('base_price_cents') : null,
-            costPriceCents:   $request->has('cost_price_cents') ? $request->integer('cost_price_cents') : null,
+            basePriceCents:   $request->has('base_price_cents')
+                                ? $request->integer('base_price_cents')
+                                : ($request->has('base_price') ? (int) round($request->float('base_price') * 100) : null),
+            costPriceCents:   $request->has('cost_price_cents')
+                                ? $request->integer('cost_price_cents')
+                                : ($request->has('cost_price') ? (int) round($request->float('cost_price') * 100) : null),
             description:      $request->has('description') ? ($request->string('description')->value() ?: null) : null,
             shortDescription: $request->has('short_description') ? ($request->string('short_description')->value() ?: null) : null,
             isFeatured:       $request->has('is_featured') ? $request->boolean('is_featured') : null,
             isDigital:        $request->has('is_digital') ? $request->boolean('is_digital') : null,
             seo:              $request->has('seo') ? $request->array('seo') : null,
             tags:             $request->has('tags') ? $request->array('tags') : null,
+            internalNotes:    $request->has('internal_notes') ? ($request->string('internal_notes')->value() ?: null) : null,
+            location:         $request->has('location') ? ($request->string('location')->value() ?: null) : null,
+            barcodes:         $request->has('barcodes') ? $request->array('barcodes') : null,
         );
     }
 }

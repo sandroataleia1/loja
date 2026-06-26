@@ -164,13 +164,19 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
                   <dd>{product.visibility_label}</dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-muted-foreground">Preço Base</dt>
-                  <dd>{formatBRL(product.base_price)}</dd>
+                  <dt className="font-medium text-muted-foreground">Preço de Venda</dt>
+                  <dd className="font-semibold">{formatBRL(product.base_price)}</dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-muted-foreground">Custo</dt>
+                  <dt className="font-medium text-muted-foreground">Preço de Custo</dt>
                   <dd>{formatBRL(product.cost_price)}</dd>
                 </div>
+                {product.location && (
+                  <div className="sm:col-span-2">
+                    <dt className="font-medium text-muted-foreground">Localização Física</dt>
+                    <dd className="font-mono text-xs mt-0.5 bg-muted px-2 py-1 rounded w-fit">{product.location}</dd>
+                  </div>
+                )}
                 <div>
                   <dt className="font-medium text-muted-foreground">Destaque</dt>
                   <dd>{product.is_featured ? 'Sim' : 'Não'}</dd>
@@ -180,18 +186,40 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
                   <dd>{product.is_digital ? 'Sim' : 'Não'}</dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-muted-foreground">Criado em</dt>
-                  <dd>{new Date(product.created_at).toLocaleDateString('pt-BR')}</dd>
+                  <dt className="font-medium text-muted-foreground">Cadastrado em</dt>
+                  <dd>{new Date(product.created_at).toLocaleString('pt-BR')}</dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-muted-foreground">Atualizado em</dt>
-                  <dd>{new Date(product.updated_at).toLocaleDateString('pt-BR')}</dd>
+                  <dt className="font-medium text-muted-foreground">Última alteração</dt>
+                  <dd>{new Date(product.updated_at).toLocaleString('pt-BR')}</dd>
                 </div>
               </dl>
             </AppCard>
+
+            {product.barcodes && product.barcodes.length > 0 && (
+              <AppCard title="Códigos de Barras">
+                <div className="space-y-2">
+                  {product.barcodes.map((b) => (
+                    <div key={b.uuid} className="flex items-center gap-3 text-sm">
+                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">{b.type_label}</span>
+                      <span className="font-mono">{b.value}</span>
+                      {b.is_primary && (
+                        <span className="text-xs text-primary font-medium">Principal</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </AppCard>
+            )}
+
             {product.description && (
               <AppCard title="Descrição">
                 <p className="text-sm whitespace-pre-wrap">{product.description}</p>
+              </AppCard>
+            )}
+            {product.internal_notes && (
+              <AppCard title="Observações Internas">
+                <p className="text-sm whitespace-pre-wrap text-muted-foreground">{product.internal_notes}</p>
               </AppCard>
             )}
             {(product.ncm || product.cest || product.cfop_default || product.origin_code != null) && (

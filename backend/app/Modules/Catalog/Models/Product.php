@@ -69,6 +69,7 @@ final class Product extends BaseModel
         'weight_net_g',
         'dimensions',
         'qr_code_url',
+        'location',
     ];
 
     protected function casts(): array

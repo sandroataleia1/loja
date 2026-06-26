@@ -203,6 +203,14 @@ export interface ProductMedia {
   is_primary: boolean
 }
 
+export interface ProductBarcode {
+  uuid:       string
+  value:      string
+  type:       string
+  type_label: string
+  is_primary: boolean
+}
+
 export interface Product {
   uuid:              string
   code:              string
@@ -210,6 +218,7 @@ export interface Product {
   slug:              string
   description:       string | null
   short_description: string | null
+  internal_notes:    string | null
   type:                   ProductType
   type_label:             string
   unit_of_measure:        UnitOfMeasure | null
@@ -228,11 +237,13 @@ export interface Product {
   is_featured:       boolean
   is_digital:        boolean
   is_publishable:    boolean
+  location:          string | null
   brand?:            Brand
   brand_id:          string | null
   categories?:       Category[]
   variants?:         ProductVariant[]
   images?:           ProductMedia[]
+  barcodes?:         ProductBarcode[]
   created_at:        string
   updated_at:        string
 }
