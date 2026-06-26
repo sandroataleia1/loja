@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useEffect, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
+import { NumericFormat } from 'react-number-format'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -116,8 +117,8 @@ const productSchema = z.object({
   unit_of_measure:   z.enum(['UN', 'M', 'M2', 'M3', 'KG', 'LT', 'CX', 'SC'] as const).nullable().optional(),
   status:            z.enum(['draft', 'active', 'inactive', 'archived', 'seasonal'] as const, { required_error: 'Status obrigatório' }),
   visibility:        z.enum(['PRIVATE', 'PUBLIC', 'UNLISTED'] as const).optional(),
-  base_price:        z.coerce.number().positive('Deve ser positivo').optional().or(z.literal('')),
-  cost_price:        z.coerce.number().positive('Deve ser positivo').optional().or(z.literal('')),
+  base_price:        z.number().positive('Deve ser positivo').optional().nullable(),
+  cost_price:        z.number().positive('Deve ser positivo').optional().nullable(),
   brand_id:          z.string().nullable().optional(),
   category_uuids:    z.array(z.string()).optional(),
   description:       z.string().optional().or(z.literal('')),
@@ -225,8 +226,8 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
       unit_of_measure:   defaultValues?.unit_of_measure   ?? 'UN',
       status:            defaultValues?.status            ?? 'active',
       visibility:        defaultValues?.visibility        ?? 'PRIVATE',
-      base_price:        defaultValues?.base_price        ?? '',
-      cost_price:        defaultValues?.cost_price        ?? '',
+      base_price:        defaultValues?.base_price        ?? null,
+      cost_price:        defaultValues?.cost_price        ?? null,
       brand_id:          defaultValues?.brand_id          ?? null,
       category_uuids:    defaultValues?.categories?.map((c) => c.uuid) ?? [],
       description:       defaultValues?.description       ?? '',
@@ -272,8 +273,8 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
       unit_of_measure:   values.unit_of_measure ?? undefined,
       status:            values.status,
       visibility:        values.visibility,
-      base_price:        values.base_price ? Number(values.base_price) : undefined,
-      cost_price:        values.cost_price ? Number(values.cost_price) : undefined,
+      base_price:        values.base_price ?? undefined,
+      cost_price:        values.cost_price ?? undefined,
       brand_id:          values.brand_id   || undefined,
       category_uuids:    values.category_uuids?.length ? values.category_uuids : undefined,
       description:       values.description       || undefined,
@@ -371,26 +372,46 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
           <AppCard title="Preços">
             <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
               <div className="space-y-1.5">
-                <Label htmlFor="base_price">Preço de Venda (R$)</Label>
-                <Input
-                  id="base_price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0,00"
-                  {...register('base_price')}
+                <Label htmlFor="base_price">Preço de Venda</Label>
+                <Controller
+                  control={control}
+                  name="base_price"
+                  render={({ field }) => (
+                    <NumericFormat
+                      id="base_price"
+                      customInput={Input}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      decimalScale={2}
+                      fixedDecimalScale
+                      prefix="R$ "
+                      placeholder="R$ 0,00"
+                      value={field.value ?? ''}
+                      onValueChange={(vals) => field.onChange(vals.floatValue ?? null)}
+                    />
+                  )}
                 />
                 {errors.base_price && <p className="text-xs text-destructive">{errors.base_price.message}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="cost_price">Preço de Custo (R$)</Label>
-                <Input
-                  id="cost_price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0,00"
-                  {...register('cost_price')}
+                <Label htmlFor="cost_price">Preço de Custo</Label>
+                <Controller
+                  control={control}
+                  name="cost_price"
+                  render={({ field }) => (
+                    <NumericFormat
+                      id="cost_price"
+                      customInput={Input}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      decimalScale={2}
+                      fixedDecimalScale
+                      prefix="R$ "
+                      placeholder="R$ 0,00"
+                      value={field.value ?? ''}
+                      onValueChange={(vals) => field.onChange(vals.floatValue ?? null)}
+                    />
+                  )}
                 />
                 {errors.cost_price && <p className="text-xs text-destructive">{errors.cost_price.message}</p>}
               </div>
