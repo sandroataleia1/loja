@@ -4,6 +4,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useEffect, useState } from 'react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,7 +28,7 @@ function slugify(str: string): string {
     .replace(/\s+/g, '-')
 }
 
-// ── Zod Schema ────────────────────────────────────────────────────────────────
+// ── Options ───────────────────────────────────────────────────────────────────
 
 const UNIT_OPTIONS = [
   { value: 'UN', label: 'UN — Unidade' },
@@ -52,31 +53,70 @@ const ORIGIN_OPTIONS = [
   { value: 8, label: '8 – Nacional, conteúdo importado > 40% e ≤ 70%' },
 ] as const
 
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+const TABS = [
+  {
+    id:     'identificacao',
+    label:  'Identificação',
+    fields: ['name', 'slug', 'type', 'unit_of_measure'] as const,
+  },
+  {
+    id:     'status',
+    label:  'Status',
+    fields: ['status', 'visibility'] as const,
+  },
+  {
+    id:     'precos',
+    label:  'Preços',
+    fields: ['base_price', 'cost_price'] as const,
+  },
+  {
+    id:     'classificacao',
+    label:  'Classificação',
+    fields: ['brand_id', 'category_uuids'] as const,
+  },
+  {
+    id:     'descricao',
+    label:  'Descrição',
+    fields: ['short_description', 'description'] as const,
+  },
+  {
+    id:     'configuracoes',
+    label:  'Configurações',
+    fields: ['is_featured', 'is_digital', 'is_publishable'] as const,
+  },
+  {
+    id:     'fiscal',
+    label:  'Fiscal',
+    fields: ['ncm', 'cest', 'cfop_default', 'origin_code'] as const,
+  },
+] as const
+
+type TabId = (typeof TABS)[number]['id']
+
+// ── Zod Schema ────────────────────────────────────────────────────────────────
+
 const productSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
-  slug: z.string().min(2, 'Slug obrigatório'),
-  type: z.enum(['simple', 'variable', 'kit'] as const, {
-    required_error: 'Tipo obrigatório',
-  }),
-  unit_of_measure: z.enum(['UN', 'M', 'M2', 'M3', 'KG', 'LT', 'CX', 'SC'] as const).nullable().optional(),
-  status: z.enum(['draft', 'active', 'inactive', 'archived', 'seasonal'] as const, {
-    required_error: 'Status obrigatório',
-  }),
-  visibility: z.enum(['PRIVATE', 'PUBLIC', 'UNLISTED'] as const).optional(),
-  base_price: z.coerce.number().positive('Deve ser positivo').optional().or(z.literal('')),
-  cost_price: z.coerce.number().positive('Deve ser positivo').optional().or(z.literal('')),
-  brand_id:       z.string().nullable().optional(),
-  category_uuids: z.array(z.string()).optional(),
+  name:              z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
+  slug:              z.string().min(2, 'Slug obrigatório'),
+  type:              z.enum(['simple', 'variable', 'kit'] as const, { required_error: 'Tipo obrigatório' }),
+  unit_of_measure:   z.enum(['UN', 'M', 'M2', 'M3', 'KG', 'LT', 'CX', 'SC'] as const).nullable().optional(),
+  status:            z.enum(['draft', 'active', 'inactive', 'archived', 'seasonal'] as const, { required_error: 'Status obrigatório' }),
+  visibility:        z.enum(['PRIVATE', 'PUBLIC', 'UNLISTED'] as const).optional(),
+  base_price:        z.coerce.number().positive('Deve ser positivo').optional().or(z.literal('')),
+  cost_price:        z.coerce.number().positive('Deve ser positivo').optional().or(z.literal('')),
+  brand_id:          z.string().nullable().optional(),
+  category_uuids:    z.array(z.string()).optional(),
   description:       z.string().optional().or(z.literal('')),
   short_description: z.string().max(500, 'Máximo 500 caracteres').optional().or(z.literal('')),
-  is_featured:    z.boolean().optional(),
-  is_digital:     z.boolean().optional(),
-  is_publishable: z.boolean().optional(),
-  // Fiscal
-  ncm:          z.string().max(10).optional().or(z.literal('')),
-  cest:         z.string().max(9).optional().or(z.literal('')),
-  cfop_default: z.string().max(5).optional().or(z.literal('')),
-  origin_code:  z.coerce.number().int().min(0).max(8).optional(),
+  is_featured:       z.boolean().optional(),
+  is_digital:        z.boolean().optional(),
+  is_publishable:    z.boolean().optional(),
+  ncm:               z.string().max(10).optional().or(z.literal('')),
+  cest:              z.string().max(9).optional().or(z.literal('')),
+  cfop_default:      z.string().max(5).optional().or(z.literal('')),
+  origin_code:       z.coerce.number().int().min(0).max(8).optional(),
 })
 
 type ProductFormValues = z.infer<typeof productSchema>
@@ -90,9 +130,49 @@ interface ProductFormProps {
   mode:           'create' | 'edit'
 }
 
+// ── Tab bar ───────────────────────────────────────────────────────────────────
+
+function TabBar({
+  active,
+  errors,
+  onChange,
+}: {
+  active:   TabId
+  errors:   Record<string, unknown>
+  onChange: (id: TabId) => void
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {TABS.map((tab) => {
+        const hasError = tab.fields.some((f) => f in errors)
+        const isActive = active === tab.id
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onChange(tab.id)}
+            className={cn(
+              'relative inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+              isActive
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            )}
+          >
+            {tab.label}
+            {hasError && (
+              <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: ProductFormProps) {
+  const [activeTab,         setActiveTab]         = useState<TabId>('identificacao')
   const [brandModalOpen,    setBrandModalOpen]    = useState(false)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
 
@@ -130,7 +210,6 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
 
   const nameValue = watch('name')
 
-  // Auto-generate slug from name in create mode
   useEffect(() => {
     if (mode === 'create') {
       setValue('slug', slugify(nameValue ?? ''))
@@ -161,161 +240,267 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
     onSubmit(payload)
   }
 
+  // If submit has errors, jump to the first tab that has one
+  function handleInvalid() {
+    for (const tab of TABS) {
+      if (tab.fields.some((f) => f in errors)) {
+        setActiveTab(tab.id)
+        break
+      }
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit, handleInvalid)} className="space-y-6">
 
-      {/* ── Section 1: Identificação ── */}
-      <AppCard title="Identificação">
-        <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+      {/* ── Tab buttons ── */}
+      <TabBar active={activeTab} errors={errors} onChange={setActiveTab} />
 
-          {/* name */}
-          <div className="sm:col-span-2 space-y-1.5">
-            <Label htmlFor="name">Nome *</Label>
-            <Input id="name" placeholder="Nome do produto" {...register('name')} />
-            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+      {/* ── Tab: Identificação ── */}
+      {activeTab === 'identificacao' && (
+        <AppCard title="Identificação">
+          <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label htmlFor="name">Nome *</Label>
+              <Input id="name" placeholder="Nome do produto" {...register('name')} />
+              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+            </div>
+
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label htmlFor="slug">Slug</Label>
+              <Input id="slug" placeholder="slug-do-produto" {...register('slug')} />
+              {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="type">Tipo *</Label>
+              <select
+                id="type"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                {...register('type')}
+              >
+                <option value="simple">Simples</option>
+                <option value="variable">Variável</option>
+                <option value="kit">Kit</option>
+              </select>
+              {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="unit_of_measure">Unidade de Medida</Label>
+              <select
+                id="unit_of_measure"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                {...register('unit_of_measure')}
+              >
+                {UNIT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
+        </AppCard>
+      )}
 
-          {/* slug */}
-          <div className="sm:col-span-2 space-y-1.5">
-            <Label htmlFor="slug">Slug</Label>
-            <Input id="slug" placeholder="slug-do-produto" {...register('slug')} />
-            {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
+      {/* ── Tab: Status ── */}
+      {activeTab === 'status' && (
+        <AppCard title="Status e Visibilidade">
+          <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+
+            <div className="space-y-1.5">
+              <Label htmlFor="status">Status *</Label>
+              <select
+                id="status"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                {...register('status')}
+              >
+                <option value="draft">Rascunho</option>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+                <option value="archived">Arquivado</option>
+                <option value="seasonal">Sazonal</option>
+              </select>
+              {errors.status && <p className="text-xs text-destructive">{errors.status.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="visibility">Visibilidade</Label>
+              <select
+                id="visibility"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                {...register('visibility')}
+              >
+                <option value="PRIVATE">Privado</option>
+                <option value="PUBLIC">Público</option>
+                <option value="UNLISTED">Não listado</option>
+              </select>
+            </div>
           </div>
+        </AppCard>
+      )}
 
-          {/* type */}
-          <div className="space-y-1.5">
-            <Label htmlFor="type">Tipo *</Label>
-            <select
-              id="type"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              {...register('type')}
-            >
-              <option value="simple">Simples</option>
-              <option value="variable">Variável</option>
-              <option value="kit">Kit</option>
-            </select>
-            {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
+      {/* ── Tab: Preços ── */}
+      {activeTab === 'precos' && (
+        <AppCard title="Preços">
+          <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+            <div className="space-y-1.5">
+              <Label htmlFor="base_price">Preço Base (R$)</Label>
+              <Input
+                id="base_price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0,00"
+                {...register('base_price')}
+              />
+              {errors.base_price && <p className="text-xs text-destructive">{errors.base_price.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cost_price">Custo (R$)</Label>
+              <Input
+                id="cost_price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0,00"
+                {...register('cost_price')}
+              />
+              {errors.cost_price && <p className="text-xs text-destructive">{errors.cost_price.message}</p>}
+            </div>
           </div>
+        </AppCard>
+      )}
 
-          {/* unit_of_measure */}
-          <div className="space-y-1.5">
-            <Label htmlFor="unit_of_measure">Unidade de Medida</Label>
-            <select
-              id="unit_of_measure"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              {...register('unit_of_measure')}
-            >
-              {UNIT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-            {errors.unit_of_measure && <p className="text-xs text-destructive">{errors.unit_of_measure.message}</p>}
+      {/* ── Tab: Classificação ── */}
+      {activeTab === 'classificacao' && (
+        <AppCard title="Marca e Categorias">
+          <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+            <div className="space-y-1.5">
+              <Label>Marca</Label>
+              <Controller
+                control={control}
+                name="brand_id"
+                render={({ field }) => (
+                  <BrandSelector
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
+                    onQuickCreate={() => setBrandModalOpen(true)}
+                  />
+                )}
+              />
+            </div>
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label>Categorias</Label>
+              <Controller
+                control={control}
+                name="category_uuids"
+                render={({ field }) => (
+                  <CategorySelector
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
+                    onQuickCreate={() => setCategoryModalOpen(true)}
+                  />
+                )}
+              />
+            </div>
           </div>
-        </div>
-      </AppCard>
+        </AppCard>
+      )}
 
-      {/* ── Section 2: Status e Visibilidade ── */}
-      <AppCard title="Status e Visibilidade">
-        <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
-
-          {/* status */}
-          <div className="space-y-1.5">
-            <Label htmlFor="status">Status *</Label>
-            <select
-              id="status"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              {...register('status')}
-            >
-              <option value="draft">Rascunho</option>
-              <option value="active">Ativo</option>
-              <option value="inactive">Inativo</option>
-              <option value="archived">Arquivado</option>
-              <option value="seasonal">Sazonal</option>
-            </select>
-            {errors.status && <p className="text-xs text-destructive">{errors.status.message}</p>}
-          </div>
-
-          {/* visibility */}
-          <div className="space-y-1.5">
-            <Label htmlFor="visibility">Visibilidade</Label>
-            <select
-              id="visibility"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              {...register('visibility')}
-            >
-              <option value="PRIVATE">Privado</option>
-              <option value="PUBLIC">Público</option>
-              <option value="UNLISTED">Não listado</option>
-            </select>
-          </div>
-        </div>
-      </AppCard>
-
-      {/* ── Section 3: Preços ── */}
-      <AppCard title="Preços">
-        <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
-          <div className="space-y-1.5">
-            <Label htmlFor="base_price">Preço Base (R$)</Label>
-            <Input
-              id="base_price"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0,00"
-              {...register('base_price')}
-            />
-            {errors.base_price && <p className="text-xs text-destructive">{errors.base_price.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cost_price">Custo (R$)</Label>
-            <Input
-              id="cost_price"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0,00"
-              {...register('cost_price')}
-            />
-            {errors.cost_price && <p className="text-xs text-destructive">{errors.cost_price.message}</p>}
-          </div>
-        </div>
-      </AppCard>
-
-      {/* ── Section 4: Marca e Categorias ── */}
-      <AppCard title="Marca e Categorias">
-        <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
-          <div className="space-y-1.5">
-            <Label>Marca</Label>
-            <Controller
-              control={control}
-              name="brand_id"
-              render={({ field }) => (
-                <BrandSelector
-                  value={field.value ?? null}
-                  onChange={field.onChange}
-                  disabled={isSubmitting}
-                  onQuickCreate={() => setBrandModalOpen(true)}
-                />
+      {/* ── Tab: Descrição ── */}
+      {activeTab === 'descricao' && (
+        <AppCard title="Descrição">
+          <div className="space-y-4 max-w-2xl">
+            <div className="space-y-1.5">
+              <Label htmlFor="short_description">Descrição Curta</Label>
+              <textarea
+                id="short_description"
+                className="w-full min-h-20 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
+                placeholder="Descrição resumida (até 500 caracteres)…"
+                {...register('short_description')}
+              />
+              {errors.short_description && (
+                <p className="text-xs text-destructive">{errors.short_description.message}</p>
               )}
-            />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="description">Descrição Completa</Label>
+              <textarea
+                id="description"
+                className="w-full min-h-32 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
+                placeholder="Descrição detalhada do produto…"
+                {...register('description')}
+              />
+            </div>
           </div>
-          <div className="sm:col-span-2 space-y-1.5">
-            <Label>Categorias</Label>
-            <Controller
-              control={control}
-              name="category_uuids"
-              render={({ field }) => (
-                <CategorySelector
-                  value={field.value ?? []}
-                  onChange={field.onChange}
-                  disabled={isSubmitting}
-                  onQuickCreate={() => setCategoryModalOpen(true)}
-                />
-              )}
-            />
+        </AppCard>
+      )}
+
+      {/* ── Tab: Configurações ── */}
+      {activeTab === 'configuracoes' && (
+        <AppCard title="Configurações">
+          <div className="space-y-3 max-w-2xl">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" {...register('is_featured')} className="accent-primary" />
+              <span className="text-sm">Produto em destaque</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" {...register('is_digital')} className="accent-primary" />
+              <span className="text-sm">Produto digital</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" {...register('is_publishable')} className="accent-primary" />
+              <span className="text-sm">Pode ser publicado</span>
+            </label>
           </div>
-        </div>
-      </AppCard>
+        </AppCard>
+      )}
+
+      {/* ── Tab: Fiscal ── */}
+      {activeTab === 'fiscal' && (
+        <AppCard title="Dados Fiscais">
+          <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+
+            <div className="space-y-1.5">
+              <Label htmlFor="ncm">NCM</Label>
+              <Input id="ncm" placeholder="00000000" maxLength={10} {...register('ncm')} />
+              <p className="text-xs text-muted-foreground">Nomenclatura Comum do Mercosul (8 dígitos)</p>
+              {errors.ncm && <p className="text-xs text-destructive">{errors.ncm.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cest">CEST</Label>
+              <Input id="cest" placeholder="0000000" maxLength={9} {...register('cest')} />
+              <p className="text-xs text-muted-foreground">Código Especificador da Substituição Tributária (7 dígitos)</p>
+              {errors.cest && <p className="text-xs text-destructive">{errors.cest.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cfop_default">CFOP Padrão</Label>
+              <Input id="cfop_default" placeholder="5102" maxLength={5} {...register('cfop_default')} />
+              <p className="text-xs text-muted-foreground">Código Fiscal de Operações — saída padrão (4 dígitos)</p>
+              {errors.cfop_default && <p className="text-xs text-destructive">{errors.cfop_default.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="origin_code">Origem da Mercadoria</Label>
+              <select
+                id="origin_code"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                {...register('origin_code')}
+              >
+                {ORIGIN_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              {errors.origin_code && <p className="text-xs text-destructive">{errors.origin_code.message}</p>}
+            </div>
+          </div>
+        </AppCard>
+      )}
 
       {/* ── Modais de criação rápida ── */}
       <QuickCreateBrandModal
@@ -335,112 +520,6 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
           setCategoryModalOpen(false)
         }}
       />
-
-      {/* ── Section 5: Descrição ── */}
-      <AppCard title="Descrição">
-        <div className="space-y-4 max-w-2xl">
-          <div className="space-y-1.5">
-            <Label htmlFor="short_description">Descrição Curta</Label>
-            <textarea
-              id="short_description"
-              className="w-full min-h-20 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
-              placeholder="Descrição resumida (até 500 caracteres)…"
-              {...register('short_description')}
-            />
-            {errors.short_description && (
-              <p className="text-xs text-destructive">{errors.short_description.message}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="description">Descrição Completa</Label>
-            <textarea
-              id="description"
-              className="w-full min-h-32 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
-              placeholder="Descrição detalhada do produto…"
-              {...register('description')}
-            />
-          </div>
-        </div>
-      </AppCard>
-
-      {/* ── Section 6: Configurações ── */}
-      <AppCard title="Configurações">
-        <div className="space-y-3 max-w-2xl">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" {...register('is_featured')} className="accent-primary" />
-            <span className="text-sm">Produto em destaque</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" {...register('is_digital')} className="accent-primary" />
-            <span className="text-sm">Produto digital</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" {...register('is_publishable')} className="accent-primary" />
-            <span className="text-sm">Pode ser publicado</span>
-          </label>
-        </div>
-      </AppCard>
-
-      {/* ── Section 7: Dados Fiscais ── */}
-      <AppCard title="Dados Fiscais">
-        <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
-
-          {/* NCM */}
-          <div className="space-y-1.5">
-            <Label htmlFor="ncm">NCM</Label>
-            <Input
-              id="ncm"
-              placeholder="00000000"
-              maxLength={10}
-              {...register('ncm')}
-            />
-            <p className="text-xs text-muted-foreground">Nomenclatura Comum do Mercosul (8 dígitos)</p>
-            {errors.ncm && <p className="text-xs text-destructive">{errors.ncm.message}</p>}
-          </div>
-
-          {/* CEST */}
-          <div className="space-y-1.5">
-            <Label htmlFor="cest">CEST</Label>
-            <Input
-              id="cest"
-              placeholder="0000000"
-              maxLength={9}
-              {...register('cest')}
-            />
-            <p className="text-xs text-muted-foreground">Código Especificador da Substituição Tributária (7 dígitos)</p>
-            {errors.cest && <p className="text-xs text-destructive">{errors.cest.message}</p>}
-          </div>
-
-          {/* CFOP */}
-          <div className="space-y-1.5">
-            <Label htmlFor="cfop_default">CFOP Padrão</Label>
-            <Input
-              id="cfop_default"
-              placeholder="5102"
-              maxLength={5}
-              {...register('cfop_default')}
-            />
-            <p className="text-xs text-muted-foreground">Código Fiscal de Operações — saída padrão (4 dígitos)</p>
-            {errors.cfop_default && <p className="text-xs text-destructive">{errors.cfop_default.message}</p>}
-          </div>
-
-          {/* Origem */}
-          <div className="space-y-1.5">
-            <Label htmlFor="origin_code">Origem da Mercadoria</Label>
-            <select
-              id="origin_code"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              {...register('origin_code')}
-            >
-              {ORIGIN_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-            {errors.origin_code && <p className="text-xs text-destructive">{errors.origin_code.message}</p>}
-          </div>
-
-        </div>
-      </AppCard>
 
       {/* ── Actions ── */}
       <div className="flex gap-2">
