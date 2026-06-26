@@ -96,10 +96,22 @@ const customerSchema = z.object({
   guarantor_phone:    z.string().max(20).optional().or(z.literal('')),
   guarantor_address:  z.string().max(500).optional().or(z.literal('')),
   guarantor_income:   z.number().min(0).optional().nullable(),
+  spouse_profession:    z.string().max(200).optional().or(z.literal('')),
+  spouse_birth_date:    z.string().optional().or(z.literal('')),
+  spouse_gender:        z.string().optional().or(z.literal('')),
+  guarantor_profession: z.string().max(200).optional().or(z.literal('')),
+  guarantor_birth_date: z.string().optional().or(z.literal('')),
+  guarantor_gender:     z.string().optional().or(z.literal('')),
   notes:            z.string().max(2000).optional().or(z.literal('')),
   addresses:        z.array(addressSchema).optional(),
   contacts:         z.array(contactSchema).optional(),
   commercial_references: z.array(commercialReferenceSchema).optional(),
+  purchase_references: z.array(z.object({
+    person_type:   z.enum(['CUSTOMER', 'SPOUSE', 'GUARANTOR'] as const),
+    company_name:  z.string().min(1).max(200),
+    phone:         z.string().max(20).optional().or(z.literal('')),
+    monthly_limit: z.number().min(0).optional().nullable(),
+  })).optional(),
   tags:             z.array(z.string()).optional(),
 }).superRefine((data, ctx) => {
   const digits = (data.document ?? '').replace(/\D/g, '')
@@ -636,6 +648,117 @@ ${['MARRIED', 'STABLE_UNION'].includes(values.civil_status ?? '') || !filled ? `
 </html>`
 }
 
+// ── Purchase Reference Section ────────────────────────────────────────────────
+
+function PurchaseRefSection({
+  personType, label, fields, onAdd, onRemove,
+}: {
+  personType: 'CUSTOMER' | 'SPOUSE' | 'GUARANTOR'
+  label:      string
+  fields:     Array<{ id: string; person_type: string; company_name: string; phone?: string; monthly_limit?: number | null }>
+  onAdd:      (data: { person_type: 'CUSTOMER' | 'SPOUSE' | 'GUARANTOR'; company_name: string; phone?: string; monthly_limit?: number | null }) => void
+  onRemove:   (index: number) => void
+}) {
+  const [adding,       setAdding]       = useState(false)
+  const [companyName,  setCompanyName]  = useState('')
+  const [phone,        setPhone]        = useState('')
+  const [monthlyLimit, setMonthlyLimit] = useState<number | null>(null)
+  const [err,          setErr]          = useState('')
+
+  const filtered = fields
+    .map((f, i) => ({ ...f, _originalIndex: i }))
+    .filter((f) => f.person_type === personType)
+
+  function handleAdd() {
+    if (!companyName.trim()) { setErr('Empresa obrigatória'); return }
+    onAdd({ person_type: personType, company_name: companyName.trim(), phone: phone || undefined, monthly_limit: monthlyLimit })
+    setCompanyName(''); setPhone(''); setMonthlyLimit(null); setAdding(false); setErr('')
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">{label}</p>
+        {!adding && (
+          <Button type="button" size="sm" variant="outline" onClick={() => setAdding(true)}>
+            <Plus className="h-3.5 w-3.5 mr-1" />Adicionar
+          </Button>
+        )}
+      </div>
+
+      {adding && (
+        <div className="border rounded-lg p-3 space-y-3 bg-muted/20">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2 space-y-1">
+              <Label>Empresa/Loja *</Label>
+              <Input
+                placeholder="Nome da empresa"
+                value={companyName}
+                onChange={(e) => { setCompanyName(e.target.value); setErr('') }}
+                autoFocus
+              />
+              {err && <p className="text-xs text-destructive">{err}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Telefone</Label>
+              <PatternFormat
+                customInput={Input}
+                format="(##) #####-####"
+                placeholder="(11) 99999-9999"
+                value={phone}
+                onValueChange={(vals) => setPhone(vals.formattedValue)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Limite mensal</Label>
+              <NumericFormat
+                customInput={Input}
+                thousandSeparator="."
+                decimalSeparator=","
+                decimalScale={2}
+                fixedDecimalScale
+                prefix="R$ "
+                placeholder="R$ 0,00"
+                value={monthlyLimit ?? ''}
+                onValueChange={(vals) => setMonthlyLimit(vals.floatValue ?? null)}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" onClick={handleAdd}>Adicionar</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => { setAdding(false); setErr('') }}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+
+      {filtered.length === 0 && !adding && (
+        <p className="text-xs text-muted-foreground">Nenhuma referência adicionada.</p>
+      )}
+
+      {filtered.map((f) => (
+        <div key={f.id} className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-2.5">
+          <div className="flex-1 min-w-0 text-sm">
+            <p className="font-medium">{f.company_name}</p>
+            <p className="text-xs text-muted-foreground">
+              {f.phone && <span>{f.phone}</span>}
+              {f.monthly_limit != null && (
+                <span className="ml-2">Limite: R$ {Number(f.monthly_limit).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              )}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onRemove(f._originalIndex)}
+            className="shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface CustomerFormProps {
@@ -675,10 +798,17 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
       guarantor_phone:       (defaultValues as any)?.guarantor_phone      ?? '',
       guarantor_address:     (defaultValues as any)?.guarantor_address    ?? '',
       guarantor_income:      (defaultValues as any)?.guarantor_income     ?? null,
+      spouse_profession:     (defaultValues as any)?.spouse_profession    ?? '',
+      spouse_birth_date:     (defaultValues as any)?.spouse_birth_date    ?? '',
+      spouse_gender:         (defaultValues as any)?.spouse_gender        ?? '',
+      guarantor_profession:  (defaultValues as any)?.guarantor_profession ?? '',
+      guarantor_birth_date:  (defaultValues as any)?.guarantor_birth_date ?? '',
+      guarantor_gender:      (defaultValues as any)?.guarantor_gender     ?? '',
       notes:                 defaultValues?.notes                         ?? '',
       addresses:             defaultValues?.addresses                     ?? [],
       contacts:              defaultValues?.contacts                      ?? [],
       commercial_references: (defaultValues as any)?.commercial_references ?? [],
+      purchase_references:   (defaultValues as any)?.purchase_references  ?? [],
       tags:                  defaultValues?.tags                          ?? [],
     },
   })
@@ -687,9 +817,10 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
   const civilStatus = watch('civil_status')
   const formValues  = watch()
 
-  const { fields: addressFields,   append: appendAddress,  remove: removeAddress  } = useFieldArray({ control, name: 'addresses' })
-  const { fields: contactFields,   append: appendContact,  remove: removeContact  } = useFieldArray({ control, name: 'contacts' })
-  const { fields: commRefFields,   append: appendCommRef,  remove: removeCommRef  } = useFieldArray({ control, name: 'commercial_references' })
+  const { fields: addressFields,      append: appendAddress,     remove: removeAddress     } = useFieldArray({ control, name: 'addresses' })
+  const { fields: contactFields,      append: appendContact,     remove: removeContact     } = useFieldArray({ control, name: 'contacts' })
+  const { fields: commRefFields,      append: appendCommRef,     remove: removeCommRef     } = useFieldArray({ control, name: 'commercial_references' })
+  const { fields: purchaseRefFields,  append: appendPurchaseRef, remove: removePurchaseRef } = useFieldArray({ control, name: 'purchase_references' })
 
   const showSpouseSection = personType === 'INDIVIDUAL' && (civilStatus === 'MARRIED' || civilStatus === 'STABLE_UNION')
 
@@ -723,10 +854,22 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
       guarantor_phone:       values.guarantor_phone       || undefined,
       guarantor_address:     values.guarantor_address     || undefined,
       guarantor_income:      values.guarantor_income      ?? undefined,
+      spouse_profession:     values.spouse_profession     || undefined,
+      spouse_birth_date:     values.spouse_birth_date     || undefined,
+      spouse_gender:         values.spouse_gender         || undefined,
+      guarantor_profession:  values.guarantor_profession  || undefined,
+      guarantor_birth_date:  values.guarantor_birth_date  || undefined,
+      guarantor_gender:      values.guarantor_gender      || undefined,
       notes:                 values.notes                 || undefined,
       addresses:             values.addresses?.length     ? values.addresses             : undefined,
       contacts:              values.contacts?.length      ? values.contacts              : undefined,
       commercial_references: values.commercial_references?.length ? values.commercial_references : undefined,
+      purchase_references:   values.purchase_references?.length ? values.purchase_references.map(r => ({
+        person_type:   r.person_type,
+        company_name:  r.company_name,
+        phone:         r.phone || undefined,
+        monthly_limit: r.monthly_limit ?? undefined,
+      })) : undefined,
       tags:                  values.tags?.length          ? values.tags                  : undefined,
     })
   }
@@ -964,6 +1107,29 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
                         )}
                       />
                     </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Profissão</Label>
+                      <Input placeholder="Profissão do cônjuge" {...register('spouse_profession')} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Data de Nascimento</Label>
+                      <Input type="date" {...register('spouse_birth_date')} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Sexo</Label>
+                      <select
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        {...register('spouse_gender')}
+                      >
+                        <option value="">Selecione...</option>
+                        <option value="M">Masculino</option>
+                        <option value="F">Feminino</option>
+                        <option value="O">Outro</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1166,6 +1332,59 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
                     className="w-full min-h-16 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
                     placeholder="Endereço completo do avalista…"
                     {...register('guarantor_address')}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Profissão</Label>
+                  <Input placeholder="Profissão do avalista" {...register('guarantor_profession')} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Data de Nascimento</Label>
+                  <Input type="date" {...register('guarantor_birth_date')} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Sexo</Label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    {...register('guarantor_gender')}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Feminino</option>
+                    <option value="O">Outro</option>
+                  </select>
+                </div>
+              </div>
+            </AppCard>
+
+            <AppCard title="Referências de Compras">
+              <div className="space-y-6">
+                <PurchaseRefSection
+                  personType="CUSTOMER"
+                  label="Do Cliente"
+                  fields={purchaseRefFields}
+                  onAdd={appendPurchaseRef}
+                  onRemove={removePurchaseRef}
+                />
+                <div className="border-t pt-4">
+                  <PurchaseRefSection
+                    personType="SPOUSE"
+                    label="Do Cônjuge"
+                    fields={purchaseRefFields}
+                    onAdd={appendPurchaseRef}
+                    onRemove={removePurchaseRef}
+                  />
+                </div>
+                <div className="border-t pt-4">
+                  <PurchaseRefSection
+                    personType="GUARANTOR"
+                    label="Do Avalista"
+                    fields={purchaseRefFields}
+                    onAdd={appendPurchaseRef}
+                    onRemove={removePurchaseRef}
                   />
                 </div>
               </div>

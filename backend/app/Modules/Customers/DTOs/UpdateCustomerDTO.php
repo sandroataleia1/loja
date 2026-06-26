@@ -39,6 +39,13 @@ final readonly class UpdateCustomerDTO extends BaseDTO
         public readonly ?string         $guarantorAddress,
         public readonly ?float          $guarantorIncome,
         public readonly ?array          $commercialReferences,
+        public readonly ?string         $spouseProfession,
+        public readonly ?string         $spouseBirthDate,
+        public readonly ?string         $spouseGender,
+        public readonly ?string         $guarantorProfession,
+        public readonly ?string         $guarantorBirthDate,
+        public readonly ?string         $guarantorGender,
+        public readonly ?array          $purchaseReferences,
     ) {}
 
     public static function fromRequest(Request $request): static
@@ -74,6 +81,13 @@ final readonly class UpdateCustomerDTO extends BaseDTO
             guarantorAddress:     $request->has('guarantor_address') ? ($request->string('guarantor_address')->toString() ?: null) : null,
             guarantorIncome:      $request->has('guarantor_income') ? ($request->filled('guarantor_income') ? (float) $request->input('guarantor_income') : null) : null,
             commercialReferences: $request->has('commercial_references') ? $request->array('commercial_references') : null,
+            spouseProfession:     $request->has('spouse_profession') ? ($request->string('spouse_profession')->toString() ?: null) : null,
+            spouseBirthDate:      $request->has('spouse_birth_date') ? ($request->string('spouse_birth_date')->toString() ?: null) : null,
+            spouseGender:         $request->has('spouse_gender') ? ($request->string('spouse_gender')->toString() ?: null) : null,
+            guarantorProfession:  $request->has('guarantor_profession') ? ($request->string('guarantor_profession')->toString() ?: null) : null,
+            guarantorBirthDate:   $request->has('guarantor_birth_date') ? ($request->string('guarantor_birth_date')->toString() ?: null) : null,
+            guarantorGender:      $request->has('guarantor_gender') ? ($request->string('guarantor_gender')->toString() ?: null) : null,
+            purchaseReferences:   $request->has('purchase_references') ? $request->array('purchase_references') : null,
         );
     }
 }

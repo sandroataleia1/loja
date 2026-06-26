@@ -38,6 +38,13 @@ final readonly class CreateCustomerDTO extends BaseDTO
         public readonly ?string        $guarantorAddress,
         public readonly ?float         $guarantorIncome,
         public readonly array          $commercialReferences,
+        public readonly ?string        $spouseProfession,
+        public readonly ?string        $spouseBirthDate,
+        public readonly ?string        $spouseGender,
+        public readonly ?string        $guarantorProfession,
+        public readonly ?string        $guarantorBirthDate,
+        public readonly ?string        $guarantorGender,
+        public readonly array          $purchaseReferences,
     ) {}
 
     public static function fromRequest(Request $request): static
@@ -70,6 +77,13 @@ final readonly class CreateCustomerDTO extends BaseDTO
             guarantorAddress:     $request->string('guarantor_address')->toString() ?: null,
             guarantorIncome:      $request->filled('guarantor_income') ? (float) $request->input('guarantor_income') : null,
             commercialReferences: $request->array('commercial_references') ?: [],
+            spouseProfession:     $request->string('spouse_profession')->toString() ?: null,
+            spouseBirthDate:      $request->string('spouse_birth_date')->toString() ?: null,
+            spouseGender:         $request->string('spouse_gender')->toString() ?: null,
+            guarantorProfession:  $request->string('guarantor_profession')->toString() ?: null,
+            guarantorBirthDate:   $request->string('guarantor_birth_date')->toString() ?: null,
+            guarantorGender:      $request->string('guarantor_gender')->toString() ?: null,
+            purchaseReferences:   $request->array('purchase_references') ?: [],
         );
     }
 }

@@ -59,6 +59,12 @@ final class Customer extends BaseModel
         'guarantor_phone',
         'guarantor_address',
         'guarantor_income',
+        'spouse_profession',
+        'spouse_birth_date',
+        'spouse_gender',
+        'guarantor_profession',
+        'guarantor_birth_date',
+        'guarantor_gender',
     ];
 
     protected function casts(): array
@@ -67,6 +73,8 @@ final class Customer extends BaseModel
             'person_type'         => PersonTypeEnum::class,
             'status'              => CustomerStatusEnum::class,
             'birth_date'          => 'date',
+            'spouse_birth_date'   => 'date',
+            'guarantor_birth_date' => 'date',
             'blocked_at'          => 'datetime',
             'last_purchase_at'    => 'datetime',
             'total_purchases'     => 'decimal:2',
@@ -163,5 +171,10 @@ final class Customer extends BaseModel
     public function commercialReferences(): HasMany
     {
         return $this->hasMany(CustomerCommercialReference::class, 'customer_id', 'uuid');
+    }
+
+    public function purchaseReferences(): HasMany
+    {
+        return $this->hasMany(CustomerPurchaseReference::class, 'customer_id', 'uuid');
     }
 }

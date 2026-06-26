@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Customers\Http\Resources;
 
 use App\Modules\Customers\Http\Resources\CustomerCommercialReferenceResource;
+use App\Modules\Customers\Http\Resources\CustomerPurchaseReferenceResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -43,6 +44,13 @@ final class CustomerResource extends JsonResource
             'guarantor_phone'     => $this->guarantor_phone,
             'guarantor_address'   => $this->guarantor_address,
             'guarantor_income'    => $this->guarantor_income,
+            'spouse_profession'    => $this->spouse_profession,
+            'spouse_birth_date'    => $this->spouse_birth_date?->toDateString(),
+            'spouse_gender'        => $this->spouse_gender,
+            'guarantor_profession' => $this->guarantor_profession,
+            'guarantor_birth_date' => $this->guarantor_birth_date?->toDateString(),
+            'guarantor_gender'     => $this->guarantor_gender,
+            'purchase_references'  => CustomerPurchaseReferenceResource::collection($this->whenLoaded('purchaseReferences')),
             'is_active'           => $this->is_active,
             'is_default_consumer' => $this->is_default_consumer,
             'seller_id'           => $this->seller_id,

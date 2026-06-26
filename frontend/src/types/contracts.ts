@@ -191,6 +191,13 @@ export interface CustomerCommercialReferenceInput {
   notes?:          string
 }
 
+export interface CustomerPurchaseReferenceInput {
+  person_type:    'CUSTOMER' | 'SPOUSE' | 'GUARANTOR'
+  company_name:   string
+  phone?:         string
+  monthly_limit?: number
+}
+
 export interface CreateCustomerRequest {
   person_type:  PersonType
   name:         string
@@ -211,10 +218,17 @@ export interface CreateCustomerRequest {
   guarantor_phone?:    string
   guarantor_address?:  string
   guarantor_income?:   number
+  spouse_profession?:    string
+  spouse_birth_date?:    string
+  spouse_gender?:        string
+  guarantor_profession?: string
+  guarantor_birth_date?: string
+  guarantor_gender?:     string
   notes?:       string
   addresses?:   CustomerAddressInput[]
   contacts?:    CustomerContactInput[]
   commercial_references?: CustomerCommercialReferenceInput[]
+  purchase_references?:   CustomerPurchaseReferenceInput[]
   tags?:        string[]
 }
 

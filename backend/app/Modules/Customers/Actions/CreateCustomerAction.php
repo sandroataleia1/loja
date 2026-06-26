@@ -66,11 +66,17 @@ final readonly class CreateCustomerAction
                 'spouse_phone'       => $dto->spousePhone,
                 'spouse_employer'    => $dto->spouseEmployer,
                 'spouse_income'      => $dto->spouseIncome,
-                'guarantor_name'     => $dto->guarantorName,
-                'guarantor_document' => $dto->guarantorDocument,
-                'guarantor_phone'    => $dto->guarantorPhone,
-                'guarantor_address'  => $dto->guarantorAddress,
-                'guarantor_income'   => $dto->guarantorIncome,
+                'guarantor_name'        => $dto->guarantorName,
+                'guarantor_document'    => $dto->guarantorDocument,
+                'guarantor_phone'       => $dto->guarantorPhone,
+                'guarantor_address'     => $dto->guarantorAddress,
+                'guarantor_income'      => $dto->guarantorIncome,
+                'spouse_profession'     => $dto->spouseProfession,
+                'spouse_birth_date'     => $dto->spouseBirthDate,
+                'spouse_gender'         => $dto->spouseGender,
+                'guarantor_profession'  => $dto->guarantorProfession,
+                'guarantor_birth_date'  => $dto->guarantorBirthDate,
+                'guarantor_gender'      => $dto->guarantorGender,
             ]);
 
             // Create addresses
@@ -122,6 +128,19 @@ final readonly class CreateCustomerAction
                         'contact_person' => $ref['contact_person'] ?? null,
                         'phone'          => $ref['phone'] ?? null,
                         'notes'          => $ref['notes'] ?? null,
+                    ]);
+                }
+            }
+
+            // Sync purchase references
+            if (! empty($dto->purchaseReferences)) {
+                $customer->purchaseReferences()->delete();
+                foreach ($dto->purchaseReferences as $ref) {
+                    $customer->purchaseReferences()->create([
+                        'person_type'   => $ref['person_type'],
+                        'company_name'  => $ref['company_name'],
+                        'phone'         => $ref['phone'] ?? null,
+                        'monthly_limit' => isset($ref['monthly_limit']) ? (float) $ref['monthly_limit'] : null,
                     ]);
                 }
             }

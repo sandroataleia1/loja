@@ -116,6 +116,24 @@ final readonly class UpdateCustomerAction
             if ($dto->guarantorIncome !== null) {
                 $fields['guarantor_income'] = $dto->guarantorIncome;
             }
+            if ($dto->spouseProfession !== null) {
+                $fields['spouse_profession'] = $dto->spouseProfession;
+            }
+            if ($dto->spouseBirthDate !== null) {
+                $fields['spouse_birth_date'] = $dto->spouseBirthDate;
+            }
+            if ($dto->spouseGender !== null) {
+                $fields['spouse_gender'] = $dto->spouseGender;
+            }
+            if ($dto->guarantorProfession !== null) {
+                $fields['guarantor_profession'] = $dto->guarantorProfession;
+            }
+            if ($dto->guarantorBirthDate !== null) {
+                $fields['guarantor_birth_date'] = $dto->guarantorBirthDate;
+            }
+            if ($dto->guarantorGender !== null) {
+                $fields['guarantor_gender'] = $dto->guarantorGender;
+            }
 
             if (! empty($fields)) {
                 $customer->update($fields);
@@ -199,6 +217,19 @@ final readonly class UpdateCustomerAction
                         'contact_person' => $ref['contact_person'] ?? null,
                         'phone'          => $ref['phone'] ?? null,
                         'notes'          => $ref['notes'] ?? null,
+                    ]);
+                }
+            }
+
+            // Sync purchase references when provided
+            if ($dto->purchaseReferences !== null) {
+                $customer->purchaseReferences()->delete();
+                foreach ($dto->purchaseReferences as $ref) {
+                    $customer->purchaseReferences()->create([
+                        'person_type'   => $ref['person_type'],
+                        'company_name'  => $ref['company_name'],
+                        'phone'         => $ref['phone'] ?? null,
+                        'monthly_limit' => isset($ref['monthly_limit']) ? (float) $ref['monthly_limit'] : null,
                     ]);
                 }
             }

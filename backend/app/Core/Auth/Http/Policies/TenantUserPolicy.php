@@ -20,6 +20,7 @@ final class TenantUserPolicy
 
     public function view(User $user, TenantUser $tenantUser): bool
     {
+        if ($tenantUser->user_id === $user->id) return true;
         return $user->hasPermission(PermissionEnum::UsersView);
     }
 
