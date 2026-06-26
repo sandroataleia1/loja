@@ -68,29 +68,19 @@ const ORIGIN_OPTIONS = [
 
 const TABS = [
   {
-    id:     'identificacao',
-    label:  'Identificação',
-    fields: ['name', 'slug', 'type', 'unit_of_measure', 'barcodes', 'location'] as const,
+    id:     'principal',
+    label:  'Principal',
+    fields: [
+      'name', 'slug', 'type', 'unit_of_measure', 'barcodes', 'location',
+      'base_price', 'cost_price',
+      'brand_id', 'category_uuids',
+      'short_description', 'description', 'internal_notes',
+    ] as const,
   },
   {
     id:     'status',
     label:  'Status',
     fields: ['status', 'visibility'] as const,
-  },
-  {
-    id:     'precos',
-    label:  'Preços',
-    fields: ['base_price', 'cost_price'] as const,
-  },
-  {
-    id:     'classificacao',
-    label:  'Classificação',
-    fields: ['brand_id', 'category_uuids'] as const,
-  },
-  {
-    id:     'descricao',
-    label:  'Descrição',
-    fields: ['short_description', 'description', 'internal_notes'] as const,
   },
   {
     id:     'configuracoes',
@@ -210,7 +200,7 @@ function TabBar({
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, images, onRefreshImages }: ProductFormProps) {
-  const [activeTab,         setActiveTab]         = useState<AllTabId>('identificacao')
+  const [activeTab,         setActiveTab]         = useState<AllTabId>('principal')
   const [brandModalOpen,    setBrandModalOpen]    = useState(false)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
 
@@ -314,117 +304,223 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
       {/* ── Tab buttons ── */}
       <TabBar active={activeTab} errors={errors} onChange={setActiveTab} showImages={showImages} />
 
-      {/* ── Tab: Identificação ── */}
-      {activeTab === 'identificacao' && (
-        <AppCard title="Identificação">
-          <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+      {/* ── Tab: Principal ── */}
+      {activeTab === 'principal' && (
+        <div className="space-y-6">
 
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label htmlFor="name">Nome *</Label>
-              <Input id="name" placeholder="Nome do produto" {...register('name')} />
-              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-            </div>
+          {/* Identificação */}
+          <AppCard title="Identificação">
+            <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
 
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label htmlFor="slug">Slug</Label>
-              <Input id="slug" placeholder="slug-do-produto" {...register('slug')} />
-              {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
-            </div>
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label htmlFor="name">Nome *</Label>
+                <Input id="name" placeholder="Nome do produto" {...register('name')} />
+                {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+              </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="type">Tipo *</Label>
-              <select
-                id="type"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                {...register('type')}
-              >
-                <option value="simple">Simples</option>
-                <option value="variable">Variável</option>
-                <option value="kit">Kit</option>
-              </select>
-              {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
-            </div>
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label htmlFor="slug">Slug</Label>
+                <Input id="slug" placeholder="slug-do-produto" {...register('slug')} />
+                {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
+              </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="unit_of_measure">Unidade de Medida</Label>
-              <select
-                id="unit_of_measure"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                {...register('unit_of_measure')}
-              >
-                {UNIT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <div className="space-y-1.5">
+                <Label htmlFor="type">Tipo *</Label>
+                <select
+                  id="type"
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  {...register('type')}
+                >
+                  <option value="simple">Simples</option>
+                  <option value="variable">Variável</option>
+                  <option value="kit">Kit</option>
+                </select>
+                {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="unit_of_measure">Unidade de Medida</Label>
+                <select
+                  id="unit_of_measure"
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  {...register('unit_of_measure')}
+                >
+                  {UNIT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label htmlFor="location">Localização Física</Label>
+                <Input
+                  id="location"
+                  placeholder="Ex: Galpão A / Prateleira 3 / Corredor 2"
+                  {...register('location')}
+                />
+              </div>
+
+              {/* Códigos de barras */}
+              <div className="sm:col-span-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Códigos de Barras</Label>
+                  {barcodeFields.length < 2 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => appendBarcode({ value: '', type: 'ean13', is_primary: barcodeFields.length === 0 })}
+                    >
+                      <Plus className="mr-1 h-3.5 w-3.5" />
+                      Adicionar código
+                    </Button>
+                  )}
+                </div>
+                {barcodeFields.length === 0 && (
+                  <p className="text-xs text-muted-foreground">Nenhum código cadastrado.</p>
+                )}
+                {barcodeFields.map((field, index) => (
+                  <div key={field.id} className="flex gap-2 items-start">
+                    <div className="flex-1 space-y-1">
+                      <div className="flex gap-2">
+                        <select
+                          className="w-36 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                          {...register(`barcodes.${index}.type`)}
+                        >
+                          {BARCODE_TYPE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                        <Input
+                          placeholder={index === 0 ? 'Código primário' : 'Código secundário'}
+                          {...register(`barcodes.${index}.value`)}
+                        />
+                      </div>
+                      {errors.barcodes?.[index]?.value && (
+                        <p className="text-xs text-destructive">{errors.barcodes[index].value?.message}</p>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="mt-0.5 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeBarcode(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
-              </select>
-            </div>
-
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label htmlFor="location">Localização Física</Label>
-              <Input
-                id="location"
-                placeholder="Ex: Galpão A / Prateleira 3 / Corredor 2"
-                {...register('location')}
-              />
-              <p className="text-xs text-muted-foreground">Posição do produto no estoque físico</p>
-            </div>
-
-            {/* Códigos de barras */}
-            <div className="sm:col-span-2 space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Códigos de Barras</Label>
-                {barcodeFields.length < 2 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => appendBarcode({ value: '', type: 'ean13', is_primary: barcodeFields.length === 0 })}
-                  >
-                    <Plus className="mr-1 h-3.5 w-3.5" />
-                    Adicionar código
-                  </Button>
+                {errors.barcodes && !Array.isArray(errors.barcodes) && (
+                  <p className="text-xs text-destructive">{errors.barcodes.message}</p>
                 )}
               </div>
-              {barcodeFields.length === 0 && (
-                <p className="text-xs text-muted-foreground">Nenhum código de barras. Clique em &quot;Adicionar código&quot; para incluir.</p>
-              )}
-              {barcodeFields.map((field, index) => (
-                <div key={field.id} className="flex gap-2 items-start">
-                  <div className="flex-1 space-y-1">
-                    <div className="flex gap-2">
-                      <select
-                        className="w-36 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                        {...register(`barcodes.${index}.type`)}
-                      >
-                        {BARCODE_TYPE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                      <Input
-                        placeholder={index === 0 ? 'Código primário' : 'Código secundário'}
-                        {...register(`barcodes.${index}.value`)}
-                      />
-                    </div>
-                    {errors.barcodes?.[index]?.value && (
-                      <p className="text-xs text-destructive">{errors.barcodes[index].value?.message}</p>
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="mt-0.5 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeBarcode(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {errors.barcodes && !Array.isArray(errors.barcodes) && (
-                <p className="text-xs text-destructive">{errors.barcodes.message}</p>
-              )}
             </div>
-          </div>
-        </AppCard>
+          </AppCard>
+
+          {/* Preços */}
+          <AppCard title="Preços">
+            <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+              <div className="space-y-1.5">
+                <Label htmlFor="base_price">Preço de Venda (R$)</Label>
+                <Input
+                  id="base_price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0,00"
+                  {...register('base_price')}
+                />
+                {errors.base_price && <p className="text-xs text-destructive">{errors.base_price.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cost_price">Preço de Custo (R$)</Label>
+                <Input
+                  id="cost_price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0,00"
+                  {...register('cost_price')}
+                />
+                {errors.cost_price && <p className="text-xs text-destructive">{errors.cost_price.message}</p>}
+              </div>
+            </div>
+          </AppCard>
+
+          {/* Marca e Categorias */}
+          <AppCard title="Classificação">
+            <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+              <div className="space-y-1.5">
+                <Label>Marca</Label>
+                <Controller
+                  control={control}
+                  name="brand_id"
+                  render={({ field }) => (
+                    <BrandSelector
+                      value={field.value ?? null}
+                      onChange={field.onChange}
+                      disabled={isSubmitting}
+                      onQuickCreate={() => setBrandModalOpen(true)}
+                    />
+                  )}
+                />
+              </div>
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label>Categorias</Label>
+                <Controller
+                  control={control}
+                  name="category_uuids"
+                  render={({ field }) => (
+                    <CategorySelector
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      disabled={isSubmitting}
+                      onQuickCreate={() => setCategoryModalOpen(true)}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+          </AppCard>
+
+          {/* Descrição */}
+          <AppCard title="Descrição">
+            <div className="space-y-4 max-w-2xl">
+              <div className="space-y-1.5">
+                <Label htmlFor="short_description">Descrição Curta</Label>
+                <textarea
+                  id="short_description"
+                  className="w-full min-h-20 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
+                  placeholder="Descrição resumida (até 500 caracteres)…"
+                  {...register('short_description')}
+                />
+                {errors.short_description && (
+                  <p className="text-xs text-destructive">{errors.short_description.message}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="description">Descrição Completa</Label>
+                <textarea
+                  id="description"
+                  className="w-full min-h-32 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
+                  placeholder="Descrição detalhada do produto…"
+                  {...register('description')}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="internal_notes">Observações Internas</Label>
+                <textarea
+                  id="internal_notes"
+                  className="w-full min-h-24 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
+                  placeholder="Notas internas — não visíveis ao cliente…"
+                  {...register('internal_notes')}
+                />
+              </div>
+            </div>
+          </AppCard>
+
+        </div>
       )}
 
       {/* ── Tab: Status ── */}
@@ -459,114 +555,6 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
                 <option value="PUBLIC">Público</option>
                 <option value="UNLISTED">Não listado</option>
               </select>
-            </div>
-          </div>
-        </AppCard>
-      )}
-
-      {/* ── Tab: Preços ── */}
-      {activeTab === 'precos' && (
-        <AppCard title="Preços">
-          <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
-            <div className="space-y-1.5">
-              <Label htmlFor="base_price">Preço de Venda (R$)</Label>
-              <Input
-                id="base_price"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0,00"
-                {...register('base_price')}
-              />
-              {errors.base_price && <p className="text-xs text-destructive">{errors.base_price.message}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="cost_price">Preço de Custo (R$)</Label>
-              <Input
-                id="cost_price"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0,00"
-                {...register('cost_price')}
-              />
-              {errors.cost_price && <p className="text-xs text-destructive">{errors.cost_price.message}</p>}
-            </div>
-          </div>
-        </AppCard>
-      )}
-
-      {/* ── Tab: Classificação ── */}
-      {activeTab === 'classificacao' && (
-        <AppCard title="Marca e Categorias">
-          <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
-            <div className="space-y-1.5">
-              <Label>Marca</Label>
-              <Controller
-                control={control}
-                name="brand_id"
-                render={({ field }) => (
-                  <BrandSelector
-                    value={field.value ?? null}
-                    onChange={field.onChange}
-                    disabled={isSubmitting}
-                    onQuickCreate={() => setBrandModalOpen(true)}
-                  />
-                )}
-              />
-            </div>
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label>Categorias</Label>
-              <Controller
-                control={control}
-                name="category_uuids"
-                render={({ field }) => (
-                  <CategorySelector
-                    value={field.value ?? []}
-                    onChange={field.onChange}
-                    disabled={isSubmitting}
-                    onQuickCreate={() => setCategoryModalOpen(true)}
-                  />
-                )}
-              />
-            </div>
-          </div>
-        </AppCard>
-      )}
-
-      {/* ── Tab: Descrição ── */}
-      {activeTab === 'descricao' && (
-        <AppCard title="Descrição">
-          <div className="space-y-4 max-w-2xl">
-            <div className="space-y-1.5">
-              <Label htmlFor="short_description">Descrição Curta</Label>
-              <textarea
-                id="short_description"
-                className="w-full min-h-20 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
-                placeholder="Descrição resumida (até 500 caracteres)…"
-                {...register('short_description')}
-              />
-              {errors.short_description && (
-                <p className="text-xs text-destructive">{errors.short_description.message}</p>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="description">Descrição Completa</Label>
-              <textarea
-                id="description"
-                className="w-full min-h-32 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
-                placeholder="Descrição detalhada do produto…"
-                {...register('description')}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="internal_notes">Observações Internas</Label>
-              <textarea
-                id="internal_notes"
-                className="w-full min-h-24 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
-                placeholder="Notas internas — não visíveis ao cliente…"
-                {...register('internal_notes')}
-              />
             </div>
           </div>
         </AppCard>
