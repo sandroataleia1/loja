@@ -184,16 +184,37 @@ export interface CustomerContactInput {
   is_primary?: boolean
 }
 
+export interface CustomerCommercialReferenceInput {
+  company_name:    string
+  contact_person?: string
+  phone?:          string
+  notes?:          string
+}
+
 export interface CreateCustomerRequest {
   person_type:  PersonType
   name:         string
   trade_name?:  string
   document?:    string
+  rg?:          string
+  ie?:          string
   email?:       string
   birth_date?:  string
+  civil_status?:    string
+  spouse_name?:     string
+  spouse_document?: string
+  spouse_phone?:    string
+  spouse_employer?: string
+  spouse_income?:   number
+  guarantor_name?:     string
+  guarantor_document?: string
+  guarantor_phone?:    string
+  guarantor_address?:  string
+  guarantor_income?:   number
   notes?:       string
   addresses?:   CustomerAddressInput[]
   contacts?:    CustomerContactInput[]
+  commercial_references?: CustomerCommercialReferenceInput[]
   tags?:        string[]
 }
 

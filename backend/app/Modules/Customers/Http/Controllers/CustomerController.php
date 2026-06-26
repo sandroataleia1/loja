@@ -91,14 +91,14 @@ final class CustomerController extends Controller
 
         $customer = $action->execute(CreateCustomerDTO::fromRequest($request));
 
-        return $this->created(new CustomerResource($customer->load(['addresses', 'contacts', 'tags'])));
+        return $this->created(new CustomerResource($customer->load(['addresses', 'contacts', 'tags', 'commercialReferences'])));
     }
 
     public function show(Customer $customer): JsonResponse
     {
         $this->authorize('view', $customer);
 
-        return $this->success(new CustomerResource($customer->load(['addresses', 'contacts', 'tags'])));
+        return $this->success(new CustomerResource($customer->load(['addresses', 'contacts', 'tags', 'commercialReferences'])));
     }
 
     public function update(UpdateCustomerRequest $request, Customer $customer, UpdateCustomerAction $action): JsonResponse

@@ -48,6 +48,17 @@ final class Customer extends BaseModel
         'last_purchase_at',
         'total_purchases',
         'total_orders',
+        'civil_status',
+        'spouse_name',
+        'spouse_document',
+        'spouse_phone',
+        'spouse_employer',
+        'spouse_income',
+        'guarantor_name',
+        'guarantor_document',
+        'guarantor_phone',
+        'guarantor_address',
+        'guarantor_income',
     ];
 
     protected function casts(): array
@@ -147,5 +158,10 @@ final class Customer extends BaseModel
             'uuid',
             'uuid',
         );
+    }
+
+    public function commercialReferences(): HasMany
+    {
+        return $this->hasMany(CustomerCommercialReference::class, 'customer_id', 'uuid');
     }
 }

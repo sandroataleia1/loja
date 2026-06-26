@@ -49,6 +49,23 @@ final class UpdateCustomerRequest extends FormRequest
 
             'tags'                    => ['nullable', 'array'],
             'tags.*'                  => ['uuid', 'exists:customer_tags,uuid'],
+
+            'civil_status'     => ['nullable', 'string', 'in:SINGLE,MARRIED,DIVORCED,WIDOWED,STABLE_UNION,OTHER'],
+            'spouse_name'      => ['nullable', 'string', 'max:200'],
+            'spouse_document'  => ['nullable', 'string', 'max:20'],
+            'spouse_phone'     => ['nullable', 'string', 'max:20'],
+            'spouse_employer'  => ['nullable', 'string', 'max:200'],
+            'spouse_income'    => ['nullable', 'numeric', 'min:0'],
+            'guarantor_name'     => ['nullable', 'string', 'max:200'],
+            'guarantor_document' => ['nullable', 'string', 'max:20'],
+            'guarantor_phone'    => ['nullable', 'string', 'max:20'],
+            'guarantor_address'  => ['nullable', 'string', 'max:500'],
+            'guarantor_income'   => ['nullable', 'numeric', 'min:0'],
+            'commercial_references'                  => ['nullable', 'array', 'max:10'],
+            'commercial_references.*.company_name'   => ['required_with:commercial_references.*', 'string', 'max:200'],
+            'commercial_references.*.contact_person' => ['nullable', 'string', 'max:200'],
+            'commercial_references.*.phone'          => ['nullable', 'string', 'max:20'],
+            'commercial_references.*.notes'          => ['nullable', 'string', 'max:500'],
         ];
     }
 }

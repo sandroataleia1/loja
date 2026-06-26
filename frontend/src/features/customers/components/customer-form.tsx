@@ -3,9 +3,9 @@
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, MapPin, Phone, X, Loader2 } from 'lucide-react'
+import { Plus, Trash2, MapPin, Phone, X, Loader2, Printer, Building2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { PatternFormat } from 'react-number-format'
+import { PatternFormat, NumericFormat } from 'react-number-format'
 import { Button }   from '@/components/ui/button'
 import { Input }    from '@/components/ui/input'
 import { Label }    from '@/components/ui/label'
@@ -60,17 +60,47 @@ const contactSchema = z.object({
   is_primary: z.boolean().optional(),
 })
 
+const commercialReferenceSchema = z.object({
+  company_name:   z.string().min(1, 'Empresa obrigatória').max(200),
+  contact_person: z.string().max(200).optional().or(z.literal('')),
+  phone:          z.string().max(20).optional().or(z.literal('')),
+  notes:          z.string().max(500).optional().or(z.literal('')),
+})
+
+const CIVIL_STATUS_OPTIONS = [
+  { value: 'SINGLE',       label: 'Solteiro(a)' },
+  { value: 'MARRIED',      label: 'Casado(a)' },
+  { value: 'DIVORCED',     label: 'Divorciado(a)' },
+  { value: 'WIDOWED',      label: 'Viúvo(a)' },
+  { value: 'STABLE_UNION', label: 'União Estável' },
+  { value: 'OTHER',        label: 'Outro' },
+]
+
 const customerSchema = z.object({
-  person_type: z.enum(['INDIVIDUAL', 'COMPANY'] as const),
-  name:        z.string().min(2, 'Nome deve ter ao menos 2 caracteres').max(200),
-  trade_name:  z.string().max(150).optional().or(z.literal('')),
-  document:    z.string().max(20).optional().or(z.literal('')),
-  email:       z.string().email('E-mail inválido').optional().or(z.literal('')),
-  birth_date:  z.string().optional().or(z.literal('')),
-  notes:       z.string().max(2000).optional().or(z.literal('')),
-  addresses:   z.array(addressSchema).optional(),
-  contacts:    z.array(contactSchema).optional(),
-  tags:        z.array(z.string()).optional(),
+  person_type:      z.enum(['INDIVIDUAL', 'COMPANY'] as const),
+  name:             z.string().min(2, 'Nome deve ter ao menos 2 caracteres').max(200),
+  trade_name:       z.string().max(150).optional().or(z.literal('')),
+  document:         z.string().max(20).optional().or(z.literal('')),
+  rg:               z.string().max(20).optional().or(z.literal('')),
+  ie:               z.string().max(30).optional().or(z.literal('')),
+  email:            z.string().email('E-mail inválido').optional().or(z.literal('')),
+  birth_date:       z.string().optional().or(z.literal('')),
+  civil_status:     z.string().optional().or(z.literal('')),
+  spouse_name:      z.string().max(200).optional().or(z.literal('')),
+  spouse_document:  z.string().max(20).optional().or(z.literal('')),
+  spouse_phone:     z.string().max(20).optional().or(z.literal('')),
+  spouse_employer:  z.string().max(200).optional().or(z.literal('')),
+  spouse_income:    z.number().min(0).optional().nullable(),
+  guarantor_name:     z.string().max(200).optional().or(z.literal('')),
+  guarantor_document: z.string().max(20).optional().or(z.literal('')),
+  guarantor_phone:    z.string().max(20).optional().or(z.literal('')),
+  guarantor_address:  z.string().max(500).optional().or(z.literal('')),
+  guarantor_income:   z.number().min(0).optional().nullable(),
+  notes:            z.string().max(2000).optional().or(z.literal('')),
+  addresses:        z.array(addressSchema).optional(),
+  contacts:         z.array(contactSchema).optional(),
+  commercial_references: z.array(commercialReferenceSchema).optional(),
+  tags:             z.array(z.string()).optional(),
 }).superRefine((data, ctx) => {
   const digits = (data.document ?? '').replace(/\D/g, '')
   if (data.person_type === 'INDIVIDUAL') {
@@ -86,9 +116,10 @@ const customerSchema = z.object({
   }
 })
 
-type CustomerFormValues  = z.infer<typeof customerSchema>
-type AddressValues       = z.infer<typeof addressSchema>
-type ContactValues       = z.infer<typeof contactSchema>
+type CustomerFormValues      = z.infer<typeof customerSchema>
+type AddressValues           = z.infer<typeof addressSchema>
+type ContactValues           = z.infer<typeof contactSchema>
+type CommercialRefValues     = z.infer<typeof commercialReferenceSchema>
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -96,6 +127,17 @@ const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
   PHONE: 'Telefone', WHATSAPP: 'WhatsApp', EMAIL: 'E-mail',
   INSTAGRAM: 'Instagram', OTHER: 'Outro',
 }
+
+// ── Tab helpers ───────────────────────────────────────────────────────────────
+
+type TabId = 'principal' | 'enderecos' | 'referencias' | 'observacoes'
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'principal',   label: 'Dados Principais' },
+  { id: 'enderecos',   label: 'Endereços & Contatos' },
+  { id: 'referencias', label: 'Referências' },
+  { id: 'observacoes', label: 'Observações' },
+]
 
 // ── Address Dialog ────────────────────────────────────────────────────────────
 
@@ -333,6 +375,267 @@ function ContactDialog({ isFirst, onAdd, onClose }: {
   )
 }
 
+// ── Commercial Reference Dialog ───────────────────────────────────────────────
+
+function CommercialRefDialog({ onAdd, onClose }: {
+  onAdd:   (data: CommercialRefValues) => void
+  onClose: () => void
+}) {
+  const { register, handleSubmit, control, formState: { errors } } = useForm<CommercialRefValues>({
+    resolver: zodResolver(commercialReferenceSchema),
+    defaultValues: { company_name: '', contact_person: '', phone: '', notes: '' },
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-card border rounded-2xl shadow-2xl w-full max-w-md flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b">
+          <p className="font-bold">Nova Referência Comercial</p>
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form
+          id="commercial-ref-dialog-form"
+          onSubmit={handleSubmit((data) => { onAdd(data); onClose() })}
+          className="p-5 space-y-4"
+        >
+          <div className="space-y-1.5">
+            <Label>Empresa *</Label>
+            <Input placeholder="Nome da empresa" {...register('company_name')} />
+            {errors.company_name && <p className="text-xs text-destructive">{errors.company_name.message}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Pessoa de Contato</Label>
+            <Input placeholder="Nome do responsável" {...register('contact_person')} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Telefone</Label>
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field }) => (
+                <PatternFormat
+                  customInput={Input}
+                  format="(##) #####-####"
+                  placeholder="(11) 99999-9999"
+                  value={field.value ?? ''}
+                  onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                />
+              )}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Observação</Label>
+            <Input placeholder="Observações sobre a referência" {...register('notes')} />
+          </div>
+        </form>
+
+        <div className="flex justify-end gap-3 px-5 py-4 border-t">
+          <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button type="submit" form="commercial-ref-dialog-form">Adicionar referência</Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Print ─────────────────────────────────────────────────────────────────────
+
+function buildPrintHtml(values: CustomerFormValues, filled: boolean): string {
+  const line = (width = 200) =>
+    `<span style="border-bottom:1px solid #000;display:inline-block;width:${width}px;">&nbsp;</span>`
+
+  const field = (value: string | number | null | undefined, width = 200) =>
+    filled && value ? `<strong>${value}</strong>` : line(width)
+
+  const civilLabel = CIVIL_STATUS_OPTIONS.find((o) => o.value === values.civil_status)?.label ?? ''
+
+  const refs = (values.commercial_references ?? [])
+    .map((ref, i) => `
+      <tr>
+        <td style="padding:4px 8px;border:1px solid #ccc;">${i + 1}</td>
+        <td style="padding:4px 8px;border:1px solid #ccc;">${filled ? ref.company_name : line(150)}</td>
+        <td style="padding:4px 8px;border:1px solid #ccc;">${filled ? (ref.contact_person ?? '') : line(120)}</td>
+        <td style="padding:4px 8px;border:1px solid #ccc;">${filled ? (ref.phone ?? '') : line(100)}</td>
+        <td style="padding:4px 8px;border:1px solid #ccc;">${filled ? (ref.notes ?? '') : line(150)}</td>
+      </tr>`)
+    .join('')
+
+  const emptyRows = !filled || (values.commercial_references ?? []).length < 3
+    ? Array.from({ length: Math.max(0, 3 - (values.commercial_references ?? []).length) })
+        .map(() => `
+          <tr>
+            <td style="padding:4px 8px;border:1px solid #ccc;">&nbsp;</td>
+            <td style="padding:4px 8px;border:1px solid #ccc;">${line(150)}</td>
+            <td style="padding:4px 8px;border:1px solid #ccc;">${line(120)}</td>
+            <td style="padding:4px 8px;border:1px solid #ccc;">${line(100)}</td>
+            <td style="padding:4px 8px;border:1px solid #ccc;">${line(150)}</td>
+          </tr>`)
+        .join('')
+    : ''
+
+  const today = new Date().toLocaleDateString('pt-BR')
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>Ficha de Cadastro de Cliente</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11pt; margin: 20mm 15mm; color: #000; }
+  h1 { font-size: 14pt; text-align: center; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 9pt; color: #555; margin-bottom: 16px; }
+  h2 { font-size: 11pt; background: #f0f0f0; padding: 4px 8px; border-left: 3px solid #333; margin: 16px 0 8px; }
+  .row { display: flex; gap: 24px; margin-bottom: 10px; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; gap: 2px; }
+  .field label { font-size: 8pt; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 8px; font-size: 10pt; }
+  th { background: #f0f0f0; padding: 4px 8px; border: 1px solid #ccc; text-align: left; font-size: 9pt; }
+  @media print { body { margin: 10mm 12mm; } }
+</style>
+</head>
+<body>
+<h1>FICHA DE CADASTRO DE CLIENTE</h1>
+<p class="subtitle">Data de impressão: ${today}</p>
+
+<h2>Dados Pessoais</h2>
+<div class="row">
+  <div class="field" style="flex:2">
+    <label>${values.person_type === 'COMPANY' ? 'Razão Social' : 'Nome Completo'}</label>
+    ${field(values.name, 300)}
+  </div>
+  <div class="field" style="flex:1">
+    <label>${values.person_type === 'COMPANY' ? 'CNPJ' : 'CPF'}</label>
+    ${field(values.document, 160)}
+  </div>
+</div>
+${values.person_type === 'INDIVIDUAL' ? `
+<div class="row">
+  <div class="field" style="flex:1">
+    <label>RG</label>
+    ${field(values.rg, 120)}
+  </div>
+  <div class="field" style="flex:1">
+    <label>Data de Nascimento</label>
+    ${field(values.birth_date, 120)}
+  </div>
+  <div class="field" style="flex:1">
+    <label>Estado Civil</label>
+    ${field(civilLabel, 130)}
+  </div>
+</div>` : `
+<div class="row">
+  <div class="field" style="flex:2">
+    <label>Nome Fantasia</label>
+    ${field(values.trade_name, 240)}
+  </div>
+  <div class="field" style="flex:1">
+    <label>I.E.</label>
+    ${field(values.ie, 140)}
+  </div>
+</div>`}
+<div class="row">
+  <div class="field" style="flex:2">
+    <label>E-mail</label>
+    ${field(values.email, 240)}
+  </div>
+</div>
+
+${['MARRIED', 'STABLE_UNION'].includes(values.civil_status ?? '') || !filled ? `
+<h2>Dados do Cônjuge</h2>
+<div class="row">
+  <div class="field" style="flex:2">
+    <label>Nome</label>
+    ${field(values.spouse_name, 260)}
+  </div>
+  <div class="field" style="flex:1">
+    <label>CPF</label>
+    ${field(values.spouse_document, 140)}
+  </div>
+</div>
+<div class="row">
+  <div class="field" style="flex:1">
+    <label>Telefone</label>
+    ${field(values.spouse_phone, 140)}
+  </div>
+  <div class="field" style="flex:2">
+    <label>Empresa/Empregador</label>
+    ${field(values.spouse_employer, 200)}
+  </div>
+  <div class="field" style="flex:1">
+    <label>Renda Mensal</label>
+    ${field(values.spouse_income != null ? `R$ ${Number(values.spouse_income).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '', 120)}
+  </div>
+</div>` : ''}
+
+<h2>Referências Comerciais</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:30px">#</th>
+      <th>Empresa</th>
+      <th>Contato</th>
+      <th>Telefone</th>
+      <th>Observação</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${refs}${emptyRows}
+  </tbody>
+</table>
+
+<h2>Dados do Avalista</h2>
+<div class="row">
+  <div class="field" style="flex:2">
+    <label>Nome</label>
+    ${field(values.guarantor_name, 260)}
+  </div>
+  <div class="field" style="flex:1">
+    <label>CPF</label>
+    ${field(values.guarantor_document, 140)}
+  </div>
+</div>
+<div class="row">
+  <div class="field" style="flex:1">
+    <label>Telefone</label>
+    ${field(values.guarantor_phone, 140)}
+  </div>
+  <div class="field" style="flex:1">
+    <label>Renda Mensal</label>
+    ${field(values.guarantor_income != null ? `R$ ${Number(values.guarantor_income).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '', 120)}
+  </div>
+</div>
+<div class="row">
+  <div class="field" style="flex:1">
+    <label>Endereço</label>
+    ${field(values.guarantor_address, 400)}
+  </div>
+</div>
+
+<h2>Observações</h2>
+<div style="min-height:60px;border:1px solid #ccc;padding:6px 8px;border-radius:4px;">
+  ${filled && values.notes ? values.notes : '&nbsp;'}
+</div>
+
+<div style="margin-top:40px;display:flex;gap:60px;justify-content:center;">
+  <div style="text-align:center;">
+    <div style="border-top:1px solid #000;width:200px;padding-top:4px;font-size:9pt;">Assinatura do Cliente</div>
+  </div>
+  <div style="text-align:center;">
+    <div style="border-top:1px solid #000;width:200px;padding-top:4px;font-size:9pt;">Responsável</div>
+  </div>
+</div>
+
+<script>window.print()</script>
+</body>
+</html>`
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface CustomerFormProps {
@@ -345,45 +648,86 @@ interface CustomerFormProps {
 // ── Main Form ─────────────────────────────────────────────────────────────────
 
 export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: CustomerFormProps) {
-  const [showAddressDialog, setShowAddressDialog] = useState(false)
-  const [showContactDialog, setShowContactDialog] = useState(false)
+  const [activeTab,           setActiveTab]           = useState<TabId>('principal')
+  const [showAddressDialog,   setShowAddressDialog]   = useState(false)
+  const [showContactDialog,   setShowContactDialog]   = useState(false)
+  const [showCommRefDialog,   setShowCommRefDialog]   = useState(false)
 
   const { register, handleSubmit, control, watch, formState: { errors } } = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
-      person_type: defaultValues?.person_type ?? 'INDIVIDUAL',
-      name:        defaultValues?.name        ?? '',
-      trade_name:  defaultValues?.trade_name  ?? '',
-      document:    defaultValues?.document    ?? '',
-      email:       defaultValues?.email       ?? '',
-      birth_date:  defaultValues?.birth_date  ?? '',
-      notes:       defaultValues?.notes       ?? '',
-      addresses:   defaultValues?.addresses   ?? [],
-      contacts:    defaultValues?.contacts    ?? [],
-      tags:        defaultValues?.tags        ?? [],
+      person_type:           (defaultValues as any)?.person_type          ?? 'INDIVIDUAL',
+      name:                  defaultValues?.name                          ?? '',
+      trade_name:            defaultValues?.trade_name                    ?? '',
+      document:              defaultValues?.document                      ?? '',
+      rg:                    (defaultValues as any)?.rg                   ?? '',
+      ie:                    (defaultValues as any)?.ie                   ?? '',
+      email:                 defaultValues?.email                         ?? '',
+      birth_date:            defaultValues?.birth_date                    ?? '',
+      civil_status:          (defaultValues as any)?.civil_status         ?? '',
+      spouse_name:           (defaultValues as any)?.spouse_name          ?? '',
+      spouse_document:       (defaultValues as any)?.spouse_document      ?? '',
+      spouse_phone:          (defaultValues as any)?.spouse_phone         ?? '',
+      spouse_employer:       (defaultValues as any)?.spouse_employer      ?? '',
+      spouse_income:         (defaultValues as any)?.spouse_income        ?? null,
+      guarantor_name:        (defaultValues as any)?.guarantor_name       ?? '',
+      guarantor_document:    (defaultValues as any)?.guarantor_document   ?? '',
+      guarantor_phone:       (defaultValues as any)?.guarantor_phone      ?? '',
+      guarantor_address:     (defaultValues as any)?.guarantor_address    ?? '',
+      guarantor_income:      (defaultValues as any)?.guarantor_income     ?? null,
+      notes:                 defaultValues?.notes                         ?? '',
+      addresses:             defaultValues?.addresses                     ?? [],
+      contacts:              defaultValues?.contacts                      ?? [],
+      commercial_references: (defaultValues as any)?.commercial_references ?? [],
+      tags:                  defaultValues?.tags                          ?? [],
     },
   })
 
-  const personType = watch('person_type')
+  const personType  = watch('person_type')
+  const civilStatus = watch('civil_status')
+  const formValues  = watch()
 
-  const { fields: addressFields, append: appendAddress, remove: removeAddress } =
-    useFieldArray({ control, name: 'addresses' })
+  const { fields: addressFields,   append: appendAddress,  remove: removeAddress  } = useFieldArray({ control, name: 'addresses' })
+  const { fields: contactFields,   append: appendContact,  remove: removeContact  } = useFieldArray({ control, name: 'contacts' })
+  const { fields: commRefFields,   append: appendCommRef,  remove: removeCommRef  } = useFieldArray({ control, name: 'commercial_references' })
 
-  const { fields: contactFields, append: appendContact, remove: removeContact } =
-    useFieldArray({ control, name: 'contacts' })
+  const showSpouseSection = personType === 'INDIVIDUAL' && (civilStatus === 'MARRIED' || civilStatus === 'STABLE_UNION')
+
+  function handlePrint(filled: boolean) {
+    const html = buildPrintHtml(formValues, filled)
+    const win  = window.open('', '_blank', 'width=900,height=700')
+    if (win) {
+      win.document.write(html)
+      win.document.close()
+    }
+  }
 
   function handleFormSubmit(values: CustomerFormValues) {
     onSubmit({
-      person_type: values.person_type,
-      name:        values.name,
-      trade_name:  values.trade_name  || undefined,
-      document:    values.document    || undefined,
-      email:       values.email       || undefined,
-      birth_date:  values.birth_date  || undefined,
-      notes:       values.notes       || undefined,
-      addresses:   values.addresses?.length ? values.addresses : undefined,
-      contacts:    values.contacts?.length  ? values.contacts  : undefined,
-      tags:        values.tags?.length      ? values.tags      : undefined,
+      person_type:           values.person_type,
+      name:                  values.name,
+      trade_name:            values.trade_name            || undefined,
+      document:              values.document              || undefined,
+      rg:                    values.rg                    || undefined,
+      ie:                    values.ie                    || undefined,
+      email:                 values.email                 || undefined,
+      birth_date:            values.birth_date            || undefined,
+      civil_status:          values.civil_status          || undefined,
+      spouse_name:           values.spouse_name           || undefined,
+      spouse_document:       values.spouse_document       || undefined,
+      spouse_phone:          values.spouse_phone          || undefined,
+      spouse_employer:       values.spouse_employer       || undefined,
+      spouse_income:         values.spouse_income         ?? undefined,
+      guarantor_name:        values.guarantor_name        || undefined,
+      guarantor_document:    values.guarantor_document    || undefined,
+      guarantor_phone:       values.guarantor_phone       || undefined,
+      guarantor_address:     values.guarantor_address     || undefined,
+      guarantor_income:      values.guarantor_income      ?? undefined,
+      notes:                 values.notes                 || undefined,
+      addresses:             values.addresses?.length     ? values.addresses             : undefined,
+      contacts:              values.contacts?.length      ? values.contacts              : undefined,
+      commercial_references: values.commercial_references?.length ? values.commercial_references : undefined,
+      tags:                  values.tags?.length          ? values.tags                  : undefined,
     })
   }
 
@@ -391,185 +735,474 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
     <>
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
 
-        {/* ── Dados Principais ── */}
-        <AppCard title="Dados Principais">
-          <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label>Tipo de Pessoa *</Label>
-              <Controller
-                control={control}
-                name="person_type"
-                render={({ field }) => (
-                  <div className="flex gap-4">
-                    {(['INDIVIDUAL', 'COMPANY'] as const).map((pt) => (
-                      <label key={pt} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          value={pt}
-                          checked={field.value === pt}
-                          onChange={() => field.onChange(pt)}
-                          className="accent-primary"
-                        />
-                        <span className="text-sm">{pt === 'INDIVIDUAL' ? 'Pessoa Física' : 'Pessoa Jurídica'}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              />
-              {errors.person_type && <p className="text-xs text-destructive">{errors.person_type.message}</p>}
-            </div>
-
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label htmlFor="name">Nome *</Label>
-              <Input id="name" placeholder="Nome completo" {...register('name')} />
-              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-            </div>
-
-            {personType === 'COMPANY' && (
-              <div className="sm:col-span-2 space-y-1.5">
-                <Label htmlFor="trade_name">Nome Fantasia</Label>
-                <Input id="trade_name" placeholder="Nome fantasia" {...register('trade_name')} />
-              </div>
+        {/* ── Actions bar ── */}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => handlePrint(false)}
+            >
+              <Printer className="h-3.5 w-3.5 mr-1.5" />
+              Imprimir em branco
+            </Button>
+            {mode === 'edit' && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => handlePrint(true)}
+              >
+                <Printer className="h-3.5 w-3.5 mr-1.5" />
+                Imprimir ficha
+              </Button>
             )}
+          </div>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Salvando…' : mode === 'create' ? 'Criar Cliente' : 'Salvar Alterações'}
+          </Button>
+        </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="document">{personType === 'COMPANY' ? 'CNPJ' : 'CPF'}</Label>
+        {/* ── Tabs ── */}
+        <div className="border-b flex gap-0">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={[
+                'px-4 py-2 text-sm font-medium transition-colors',
+                activeTab === tab.id
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground',
+              ].join(' ')}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Tab: Dados Principais ── */}
+        {activeTab === 'principal' && (
+          <AppCard title="Dados Principais">
+            <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+              {/* Tipo de Pessoa */}
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label>Tipo de Pessoa *</Label>
+                <Controller
+                  control={control}
+                  name="person_type"
+                  render={({ field }) => (
+                    <div className="flex gap-4">
+                      {(['INDIVIDUAL', 'COMPANY'] as const).map((pt) => (
+                        <label key={pt} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            value={pt}
+                            checked={field.value === pt}
+                            onChange={() => field.onChange(pt)}
+                            className="accent-primary"
+                          />
+                          <span className="text-sm">{pt === 'INDIVIDUAL' ? 'Pessoa Física' : 'Pessoa Jurídica'}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                />
+                {errors.person_type && <p className="text-xs text-destructive">{errors.person_type.message}</p>}
+              </div>
+
+              {/* Nome */}
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label htmlFor="name">{personType === 'COMPANY' ? 'Razão Social *' : 'Nome Completo *'}</Label>
+                <Input id="name" placeholder={personType === 'COMPANY' ? 'Razão social' : 'Nome completo'} {...register('name')} />
+                {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+              </div>
+
+              {/* Nome Fantasia (COMPANY only) */}
+              {personType === 'COMPANY' && (
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label htmlFor="trade_name">Nome Fantasia</Label>
+                  <Input id="trade_name" placeholder="Nome fantasia" {...register('trade_name')} />
+                </div>
+              )}
+
+              {/* CPF/CNPJ */}
+              <div className="space-y-1.5">
+                <Label htmlFor="document">{personType === 'COMPANY' ? 'CNPJ' : 'CPF *'}</Label>
+                <Controller
+                  control={control}
+                  name="document"
+                  render={({ field }) => (
+                    <PatternFormat
+                      id="document"
+                      customInput={Input}
+                      format={personType === 'COMPANY' ? '##.###.###/####-##' : '###.###.###-##'}
+                      placeholder={personType === 'COMPANY' ? '00.000.000/0000-00' : '000.000.000-00'}
+                      value={field.value ?? ''}
+                      onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                    />
+                  )}
+                />
+                {errors.document && <p className="text-xs text-destructive">{errors.document.message}</p>}
+              </div>
+
+              {/* RG (INDIVIDUAL only) */}
+              {personType === 'INDIVIDUAL' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="rg">RG</Label>
+                  <Input id="rg" placeholder="0000000" {...register('rg')} />
+                </div>
+              )}
+
+              {/* IE */}
+              <div className="space-y-1.5">
+                <Label htmlFor="ie">Inscrição Estadual</Label>
+                <Input id="ie" placeholder="Inscrição Estadual" {...register('ie')} />
+              </div>
+
+              {/* E-mail */}
+              <div className="space-y-1.5">
+                <Label htmlFor="email">E-mail</Label>
+                <Input id="email" type="email" placeholder="email@exemplo.com" {...register('email')} />
+                {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+              </div>
+
+              {/* Data de Nascimento (INDIVIDUAL only) */}
+              {personType === 'INDIVIDUAL' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="birth_date">Data de Nascimento</Label>
+                  <Input id="birth_date" type="date" {...register('birth_date')} />
+                </div>
+              )}
+
+              {/* Estado Civil (INDIVIDUAL only) */}
+              {personType === 'INDIVIDUAL' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="civil_status">Estado Civil</Label>
+                  <select
+                    id="civil_status"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    {...register('civil_status')}
+                  >
+                    <option value="">Selecione…</option>
+                    {CIVIL_STATUS_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Dados do Cônjuge (colapsável) */}
+              {showSpouseSection && (
+                <div className="sm:col-span-2 space-y-4 rounded-xl border border-dashed p-4">
+                  <p className="text-sm font-semibold text-muted-foreground">Dados do Cônjuge</p>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="sm:col-span-2 space-y-1.5">
+                      <Label>Nome do cônjuge</Label>
+                      <Input placeholder="Nome completo" {...register('spouse_name')} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>CPF do cônjuge</Label>
+                      <Controller
+                        control={control}
+                        name="spouse_document"
+                        render={({ field }) => (
+                          <PatternFormat
+                            customInput={Input}
+                            format="###.###.###-##"
+                            placeholder="000.000.000-00"
+                            value={field.value ?? ''}
+                            onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Telefone do cônjuge</Label>
+                      <Controller
+                        control={control}
+                        name="spouse_phone"
+                        render={({ field }) => (
+                          <PatternFormat
+                            customInput={Input}
+                            format="(##) #####-####"
+                            placeholder="(11) 99999-9999"
+                            value={field.value ?? ''}
+                            onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Empresa/Empregador</Label>
+                      <Input placeholder="Nome da empresa" {...register('spouse_employer')} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Renda mensal</Label>
+                      <Controller
+                        control={control}
+                        name="spouse_income"
+                        render={({ field }) => (
+                          <NumericFormat
+                            customInput={Input}
+                            prefix="R$ "
+                            thousandSeparator="."
+                            decimalSeparator=","
+                            decimalScale={2}
+                            fixedDecimalScale
+                            placeholder="R$ 0,00"
+                            value={field.value ?? ''}
+                            onValueChange={(vals) => field.onChange(vals.floatValue ?? null)}
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </AppCard>
+        )}
+
+        {/* ── Tab: Endereços & Contatos ── */}
+        {activeTab === 'enderecos' && (
+          <div className="space-y-6">
+            <AppCard
+              title="Endereços"
+              actions={
+                <Button type="button" size="sm" variant="outline" onClick={() => setShowAddressDialog(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Adicionar endereço
+                </Button>
+              }
+            >
+              {addressFields.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum endereço cadastrado.</p>
+              ) : (
+                <div className="space-y-2">
+                  {addressFields.map((field, index) => (
+                    <div key={field.id} className="flex items-start gap-3 rounded-xl border bg-muted/30 px-4 py-3">
+                      <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                      <div className="flex-1 min-w-0 text-sm">
+                        <p className="font-medium">{field.street}, {field.number}{field.complement ? ` — ${field.complement}` : ''}</p>
+                        <p className="text-muted-foreground text-xs mt-0.5">
+                          {field.district} · {field.city}/{field.state} · {field.zipcode}
+                          {field.is_default && <span className="ml-2 inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">Padrão</span>}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeAddress(index)}
+                        className="shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label="Remover endereço"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </AppCard>
+
+            <AppCard
+              title="Contatos"
+              actions={
+                <Button type="button" size="sm" variant="outline" onClick={() => setShowContactDialog(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Adicionar contato
+                </Button>
+              }
+            >
+              {contactFields.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum contato cadastrado.</p>
+              ) : (
+                <div className="space-y-2">
+                  {contactFields.map((field, index) => (
+                    <div key={field.id} className="flex items-center gap-3 rounded-xl border bg-muted/30 px-4 py-3">
+                      <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div className="flex-1 min-w-0 text-sm">
+                        <p className="font-medium">{field.value}</p>
+                        <p className="text-muted-foreground text-xs mt-0.5">
+                          {CONTACT_TYPE_LABELS[field.type as ContactType]}
+                          {field.label ? ` · ${field.label}` : ''}
+                          {field.is_primary && <span className="ml-2 inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">Principal</span>}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeContact(index)}
+                        className="shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label="Remover contato"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </AppCard>
+          </div>
+        )}
+
+        {/* ── Tab: Referências ── */}
+        {activeTab === 'referencias' && (
+          <div className="space-y-6">
+            <AppCard
+              title="Referências Comerciais"
+              actions={
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowCommRefDialog(true)}
+                  disabled={commRefFields.length >= 10}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Adicionar referência
+                </Button>
+              }
+            >
+              {commRefFields.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma referência comercial cadastrada.</p>
+              ) : (
+                <div className="space-y-2">
+                  {commRefFields.map((field, index) => (
+                    <div key={field.id} className="flex items-start gap-3 rounded-xl border bg-muted/30 px-4 py-3">
+                      <Building2 className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                      <div className="flex-1 min-w-0 text-sm">
+                        <p className="font-medium">{field.company_name}</p>
+                        <p className="text-muted-foreground text-xs mt-0.5">
+                          {field.contact_person && `${field.contact_person}`}
+                          {field.phone && ` · ${field.phone}`}
+                          {field.notes && ` · ${field.notes}`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeCommRef(index)}
+                        className="shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label="Remover referência"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </AppCard>
+
+            <AppCard title="Dados do Avalista">
+              <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label>Nome do avalista</Label>
+                  <Input placeholder="Nome completo" {...register('guarantor_name')} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>CPF do avalista</Label>
+                  <Controller
+                    control={control}
+                    name="guarantor_document"
+                    render={({ field }) => (
+                      <PatternFormat
+                        customInput={Input}
+                        format="###.###.###-##"
+                        placeholder="000.000.000-00"
+                        value={field.value ?? ''}
+                        onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Telefone</Label>
+                  <Controller
+                    control={control}
+                    name="guarantor_phone"
+                    render={({ field }) => (
+                      <PatternFormat
+                        customInput={Input}
+                        format="(##) #####-####"
+                        placeholder="(11) 99999-9999"
+                        value={field.value ?? ''}
+                        onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Renda mensal</Label>
+                  <Controller
+                    control={control}
+                    name="guarantor_income"
+                    render={({ field }) => (
+                      <NumericFormat
+                        customInput={Input}
+                        prefix="R$ "
+                        thousandSeparator="."
+                        decimalSeparator=","
+                        decimalScale={2}
+                        fixedDecimalScale
+                        placeholder="R$ 0,00"
+                        value={field.value ?? ''}
+                        onValueChange={(vals) => field.onChange(vals.floatValue ?? null)}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label>Endereço</Label>
+                  <textarea
+                    className="w-full min-h-16 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
+                    placeholder="Endereço completo do avalista…"
+                    {...register('guarantor_address')}
+                  />
+                </div>
+              </div>
+            </AppCard>
+          </div>
+        )}
+
+        {/* ── Tab: Observações ── */}
+        {activeTab === 'observacoes' && (
+          <div className="space-y-6">
+            <AppCard title="Tags">
               <Controller
                 control={control}
-                name="document"
+                name="tags"
                 render={({ field }) => (
-                  <PatternFormat
-                    id="document"
-                    customInput={Input}
-                    format={personType === 'COMPANY' ? '##.###.###/####-##' : '###.###.###-##'}
-                    placeholder={personType === 'COMPANY' ? '00.000.000/0000-00' : '000.000.000-00'}
-                    value={field.value ?? ''}
-                    onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                  <CustomerTagSelector
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
                   />
                 )}
               />
-              {errors.document && <p className="text-xs text-destructive">{errors.document.message}</p>}
-            </div>
+            </AppCard>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" placeholder="email@exemplo.com" {...register('email')} />
-              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-            </div>
-
-            {personType === 'INDIVIDUAL' && (
-              <div className="space-y-1.5">
-                <Label htmlFor="birth_date">Data de Nascimento</Label>
-                <Input id="birth_date" type="date" {...register('birth_date')} />
-              </div>
-            )}
-          </div>
-        </AppCard>
-
-        {/* ── Endereços ── */}
-        <AppCard
-          title="Endereços"
-          actions={
-            <Button type="button" size="sm" variant="outline" onClick={() => setShowAddressDialog(true)}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Adicionar endereço
-            </Button>
-          }
-        >
-          {addressFields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum endereço cadastrado.</p>
-          ) : (
-            <div className="space-y-2">
-              {addressFields.map((field, index) => (
-                <div key={field.id} className="flex items-start gap-3 rounded-xl border bg-muted/30 px-4 py-3">
-                  <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-                  <div className="flex-1 min-w-0 text-sm">
-                    <p className="font-medium">{field.street}, {field.number}{field.complement ? ` — ${field.complement}` : ''}</p>
-                    <p className="text-muted-foreground text-xs mt-0.5">
-                      {field.district} · {field.city}/{field.state} · {field.zipcode}
-                      {field.is_default && <span className="ml-2 inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">Padrão</span>}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeAddress(index)}
-                    className="shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors"
-                    aria-label="Remover endereço"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </AppCard>
-
-        {/* ── Contatos ── */}
-        <AppCard
-          title="Contatos"
-          actions={
-            <Button type="button" size="sm" variant="outline" onClick={() => setShowContactDialog(true)}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Adicionar contato
-            </Button>
-          }
-        >
-          {contactFields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum contato cadastrado.</p>
-          ) : (
-            <div className="space-y-2">
-              {contactFields.map((field, index) => (
-                <div key={field.id} className="flex items-center gap-3 rounded-xl border bg-muted/30 px-4 py-3">
-                  <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="flex-1 min-w-0 text-sm">
-                    <p className="font-medium">{field.value}</p>
-                    <p className="text-muted-foreground text-xs mt-0.5">
-                      {CONTACT_TYPE_LABELS[field.type as ContactType]}
-                      {field.label ? ` · ${field.label}` : ''}
-                      {field.is_primary && <span className="ml-2 inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">Principal</span>}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeContact(index)}
-                    className="shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors"
-                    aria-label="Remover contato"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </AppCard>
-
-        {/* ── Tags ── */}
-        <AppCard title="Tags">
-          <Controller
-            control={control}
-            name="tags"
-            render={({ field }) => (
-              <CustomerTagSelector
-                value={field.value ?? []}
-                onChange={field.onChange}
-                disabled={isSubmitting}
+            <AppCard title="Observações">
+              <textarea
+                className="w-full min-h-24 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
+                placeholder="Observações gerais sobre o cliente…"
+                {...register('notes')}
               />
-            )}
-          />
-        </AppCard>
+              {errors.notes && <p className="text-xs text-destructive">{errors.notes.message}</p>}
+            </AppCard>
+          </div>
+        )}
 
-        {/* ── Observações ── */}
-        <AppCard title="Observações">
-          <textarea
-            className="w-full min-h-24 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
-            placeholder="Observações gerais sobre o cliente…"
-            {...register('notes')}
-          />
-          {errors.notes && <p className="text-xs text-destructive">{errors.notes.message}</p>}
-        </AppCard>
-
-        {/* ── Actions ── */}
-        <div className="flex gap-2">
+        {/* ── Bottom submit ── */}
+        <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Salvando…' : mode === 'create' ? 'Criar Cliente' : 'Salvar Alterações'}
           </Button>
@@ -590,6 +1223,13 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
           isFirst={contactFields.length === 0}
           onAdd={(data) => appendContact(data)}
           onClose={() => setShowContactDialog(false)}
+        />
+      )}
+
+      {showCommRefDialog && (
+        <CommercialRefDialog
+          onAdd={(data) => appendCommRef(data)}
+          onClose={() => setShowCommRefDialog(false)}
         />
       )}
     </>

@@ -47,19 +47,30 @@ final readonly class CreateCustomerAction
             $code = $this->generateCode->execute($tenantId, SequenceEntityEnum::Customer);
 
             $customer = Customer::create([
-                'code'         => $code,
-                'person_type'  => $dto->personType->value,
-                'name'         => $dto->name,
-                'trade_name'   => $dto->tradeName,
-                'document'     => $dto->document,
-                'rg'           => $dto->rg,
-                'ie'           => $dto->ie,
-                'im'           => $dto->im,
-                'situation'    => $dto->situation ?? 'active',
-                'credit_limit' => $dto->creditLimit ?? 0,
-                'email'        => $dto->email,
-                'birth_date'   => $dto->birthDate,
-                'notes'        => $dto->notes,
+                'code'               => $code,
+                'person_type'        => $dto->personType->value,
+                'name'               => $dto->name,
+                'trade_name'         => $dto->tradeName,
+                'document'           => $dto->document,
+                'rg'                 => $dto->rg,
+                'ie'                 => $dto->ie,
+                'im'                 => $dto->im,
+                'situation'          => $dto->situation ?? 'active',
+                'credit_limit'       => $dto->creditLimit ?? 0,
+                'email'              => $dto->email,
+                'birth_date'         => $dto->birthDate,
+                'notes'              => $dto->notes,
+                'civil_status'       => $dto->civilStatus,
+                'spouse_name'        => $dto->spouseName,
+                'spouse_document'    => $dto->spouseDocument,
+                'spouse_phone'       => $dto->spousePhone,
+                'spouse_employer'    => $dto->spouseEmployer,
+                'spouse_income'      => $dto->spouseIncome,
+                'guarantor_name'     => $dto->guarantorName,
+                'guarantor_document' => $dto->guarantorDocument,
+                'guarantor_phone'    => $dto->guarantorPhone,
+                'guarantor_address'  => $dto->guarantorAddress,
+                'guarantor_income'   => $dto->guarantorIncome,
             ]);
 
             // Create addresses
@@ -100,6 +111,20 @@ final readonly class CreateCustomerAction
             // Sync tags
             if (! empty($dto->tags)) {
                 $customer->tags()->sync($dto->tags);
+            }
+
+            // Sync commercial references
+            if (! empty($dto->commercialReferences)) {
+                $customer->commercialReferences()->delete();
+                foreach ($dto->commercialReferences as $ref) {
+                    $customer->commercialReferences()->create([
+                        'tenant_id'      => $tenantId,
+                        'company_name'   => $ref['company_name'],
+                        'contact_person' => $ref['contact_person'] ?? null,
+                        'phone'          => $ref['phone'] ?? null,
+                        'notes'          => $ref['notes'] ?? null,
+                    ]);
+                }
             }
 
             $this->audit->record(new AuditLogDTO(

@@ -83,6 +83,39 @@ final readonly class UpdateCustomerAction
             if ($dto->isActive !== null) {
                 $fields['is_active'] = $dto->isActive;
             }
+            if ($dto->civilStatus !== null) {
+                $fields['civil_status'] = $dto->civilStatus;
+            }
+            if ($dto->spouseName !== null) {
+                $fields['spouse_name'] = $dto->spouseName;
+            }
+            if ($dto->spouseDocument !== null) {
+                $fields['spouse_document'] = $dto->spouseDocument;
+            }
+            if ($dto->spousePhone !== null) {
+                $fields['spouse_phone'] = $dto->spousePhone;
+            }
+            if ($dto->spouseEmployer !== null) {
+                $fields['spouse_employer'] = $dto->spouseEmployer;
+            }
+            if ($dto->spouseIncome !== null) {
+                $fields['spouse_income'] = $dto->spouseIncome;
+            }
+            if ($dto->guarantorName !== null) {
+                $fields['guarantor_name'] = $dto->guarantorName;
+            }
+            if ($dto->guarantorDocument !== null) {
+                $fields['guarantor_document'] = $dto->guarantorDocument;
+            }
+            if ($dto->guarantorPhone !== null) {
+                $fields['guarantor_phone'] = $dto->guarantorPhone;
+            }
+            if ($dto->guarantorAddress !== null) {
+                $fields['guarantor_address'] = $dto->guarantorAddress;
+            }
+            if ($dto->guarantorIncome !== null) {
+                $fields['guarantor_income'] = $dto->guarantorIncome;
+            }
 
             if (! empty($fields)) {
                 $customer->update($fields);
@@ -155,6 +188,20 @@ final readonly class UpdateCustomerAction
             // Sync tags when provided
             if ($dto->tags !== null) {
                 $customer->tags()->sync($dto->tags);
+            }
+
+            // Sync commercial references when provided
+            if ($dto->commercialReferences !== null) {
+                $customer->commercialReferences()->delete();
+                foreach ($dto->commercialReferences as $ref) {
+                    $customer->commercialReferences()->create([
+                        'tenant_id'      => $tenantId,
+                        'company_name'   => $ref['company_name'],
+                        'contact_person' => $ref['contact_person'] ?? null,
+                        'phone'          => $ref['phone'] ?? null,
+                        'notes'          => $ref['notes'] ?? null,
+                    ]);
+                }
             }
 
             $this->audit->record(new AuditLogDTO(
