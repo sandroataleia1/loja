@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { Loader2 } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/login.schema'
 import { useLoginMutation } from '@/hooks/use-login'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import { ROUTES } from '@/constants'
 
 export function LoginForm() {
   const { mutate: login, isPending } = useLoginMutation()
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   const form = useForm<LoginFormValues>({
     resolver:      zodResolver(loginSchema),
@@ -21,7 +23,12 @@ export function LoginForm() {
   })
 
   function onSubmit(values: LoginFormValues) {
-    login(values)
+    setLoginError(null)
+    login(values, {
+      onError: () => {
+        setLoginError('E-mail ou senha incorretos. Verifique seus dados e tente novamente.')
+      },
+    })
   }
 
   return (
@@ -41,7 +48,7 @@ export function LoginForm() {
                 <FormItem>
                   <FormLabel>E-mail</FormLabel>
                   <FormControl>
-                    <Input placeholder="voce@empresa.com" type="email" autoComplete="email" {...field} />
+                    <Input placeholder="voce@empresa.com" type="email" autoComplete="email" {...field} onChange={(e) => { field.onChange(e); setLoginError(null) }} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -63,7 +70,7 @@ export function LoginForm() {
                     </Link>
                   </div>
                   <FormControl>
-                    <Input placeholder="••••••••" type="password" autoComplete="current-password" {...field} />
+                    <Input placeholder="••••••••" type="password" autoComplete="current-password" {...field} onChange={(e) => { field.onChange(e); setLoginError(null) }} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -72,6 +79,12 @@ export function LoginForm() {
           </CardContent>
 
           <CardFooter className="flex flex-col gap-3">
+            {loginError && (
+              <div className="w-full flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{loginError}</span>
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               {isPending ? 'Entrando...' : 'Entrar'}
