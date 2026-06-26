@@ -114,8 +114,10 @@ log "Verificando .env do frontend..."
 
 log "Reconstruindo container frontend..."
 cd "$FRONTEND_DIR"
-docker compose down --remove-orphans 2>/dev/null || true
-docker compose up -d --build --force-recreate \
+# Para qualquer container com o nome store_admin (independente de projeto compose)
+docker stop store_admin 2>/dev/null || true
+docker rm   store_admin 2>/dev/null || true
+docker compose up -d --build \
   || die "docker compose (frontend) falhou"
 ok "Container frontend reconstruído"
 
