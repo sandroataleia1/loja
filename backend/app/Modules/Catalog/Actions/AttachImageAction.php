@@ -84,7 +84,7 @@ final readonly class AttachImageAction
         $src  = match (true) {
             str_contains((string) $mime, 'jpeg') => @imagecreatefromjpeg($file->getRealPath()),
             str_contains((string) $mime, 'png')  => @imagecreatefrompng($file->getRealPath()),
-            str_contains((string) $mime, 'webp') => @imagecreatefromwebp($file->getRealPath()),
+            str_contains((string) $mime, 'webp') => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($file->getRealPath()) : false,
             str_contains((string) $mime, 'gif')  => @imagecreatefromgif($file->getRealPath()),
             default                               => false,
         };
