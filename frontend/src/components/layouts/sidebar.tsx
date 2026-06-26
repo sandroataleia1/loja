@@ -128,15 +128,20 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Financeiro',
-    icon:  Banknote,
+    label: 'Contas a Pagar',
+    icon:  TrendingDown,
     items: [
-      { label: 'Visão Geral',      href: ROUTES.FINANCIAL,            icon: Banknote,       permission: 'financial.view'   },
-      { label: 'A Pagar',          href: ROUTES.FINANCIAL_PAYABLE,    icon: TrendingDown,   permission: 'financial.view'   },
-      { label: 'A Receber',        href: ROUTES.FINANCIAL_RECEIVABLE, icon: TrendingUp,     permission: 'financial.view'   },
-      { label: 'Transferências',   href: ROUTES.FINANCIAL_TRANSFERS,  icon: ArrowLeftRight, permission: 'financial.view'   },
-      { label: 'Contas Bancárias', href: ROUTES.FINANCIAL_ACCOUNTS,   icon: Wallet,         permission: 'financial.view'   },
-      { label: 'Categorias',       href: ROUTES.FINANCIAL_CATEGORIES, icon: Tags,           permission: 'financial.create' },
+      { label: 'A Pagar',          href: ROUTES.FINANCIAL_PAYABLE,    icon: TrendingDown,   permission: 'financial.accounts_payable' },
+      { label: 'Contas Bancárias', href: ROUTES.FINANCIAL_ACCOUNTS,   icon: Wallet,         permission: 'financial.accounts_payable' },
+      { label: 'Transferências',   href: ROUTES.FINANCIAL_TRANSFERS,  icon: ArrowLeftRight, permission: 'financial.accounts_payable' },
+      { label: 'Categorias',       href: ROUTES.FINANCIAL_CATEGORIES, icon: Tags,           permission: 'financial.accounts_payable' },
+    ],
+  },
+  {
+    label: 'Contas a Receber',
+    icon:  TrendingUp,
+    items: [
+      { label: 'A Receber',  href: ROUTES.FINANCIAL_RECEIVABLE, icon: TrendingUp, permission: 'financial.accounts_receivable' },
     ],
   },
   {
