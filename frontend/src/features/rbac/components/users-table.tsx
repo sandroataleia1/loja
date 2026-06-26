@@ -71,22 +71,24 @@ function Modal({ title, subtitle, onClose, children }: {
 // ── Modal: Criar novo usuario ─────────────────────────────────────────────────
 
 function CreateUserModal({ onClose, roles }: { onClose: () => void; roles: Role[] }) {
-  const [name,        setName]        = useState('')
-  const [email,       setEmail]       = useState('')
-  const [password,    setPassword]    = useState('')
-  const [showPass,    setShowPass]    = useState(false)
-  const [roleId,      setRoleId]      = useState('')
-  const [errors,      setErrors]      = useState<Record<string, string>>({})
+  const [name,            setName]            = useState('')
+  const [email,           setEmail]           = useState('')
+  const [password,        setPassword]        = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [showPass,        setShowPass]        = useState(false)
+  const [roleId,          setRoleId]          = useState('')
+  const [errors,          setErrors]          = useState<Record<string, string>>({})
 
   const { mutate: create, isPending } = useCreateUser()
   const systemRoles = roles.filter((r) => ROLE_SLUGS.includes(r.slug))
 
   function validate() {
     const e: Record<string, string> = {}
-    if (!name.trim())            e.name     = 'Nome obrigatorio'
-    if (!email.trim())           e.email    = 'E-mail obrigatorio'
-    if (password.length < 8)     e.password = 'Minimo 8 caracteres'
-    if (!roleId)                 e.role_id  = 'Selecione um perfil'
+    if (!name.trim())                    e.name            = 'Nome obrigatorio'
+    if (!email.trim())                   e.email           = 'E-mail obrigatorio'
+    if (password.length < 8)             e.password        = 'Minimo 8 caracteres'
+    if (password !== passwordConfirm)    e.passwordConfirm = 'As senhas não conferem'
+    if (!roleId)                         e.role_id         = 'Selecione um perfil'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -145,9 +147,9 @@ function CreateUserModal({ onClose, roles }: { onClose: () => void; roles: Role[
           <div className="relative">
             <Input
               type={showPass ? 'text' : 'password'}
-              placeholder="Minimo 8 caracteres"
+              placeholder="Mínimo 8 caracteres"
               value={password}
-              onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: '' })) }}
+              onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: '', passwordConfirm: '' })) }}
               className="pr-10"
             />
             <button
@@ -159,6 +161,17 @@ function CreateUserModal({ onClose, roles }: { onClose: () => void; roles: Role[
             </button>
           </div>
           {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Confirmar senha *</Label>
+          <Input
+            type={showPass ? 'text' : 'password'}
+            placeholder="Repita a senha"
+            value={passwordConfirm}
+            onChange={(e) => { setPasswordConfirm(e.target.value); setErrors((p) => ({ ...p, passwordConfirm: '' })) }}
+          />
+          {errors.passwordConfirm && <p className="text-xs text-destructive">{errors.passwordConfirm}</p>}
         </div>
 
         <div className="space-y-1.5">
