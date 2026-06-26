@@ -10,12 +10,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AppCard } from '@/components/shared/app-card'
+import { ProductImageManager } from './product-image-manager'
 import { BrandSelector } from './brand-selector'
 import { CategorySelector } from './category-selector'
 import { QuickCreateBrandModal } from './quick-create-brand-modal'
 import { QuickCreateCategoryModal } from './quick-create-category-modal'
 import type { CreateProductRequest } from '@store/contracts'
-import type { Product } from '@store/shared-types'
+import type { Product, ProductMedia } from '@store/shared-types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -143,22 +144,28 @@ type ProductFormValues = z.infer<typeof productSchema>
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface ProductFormProps {
-  defaultValues?: Partial<Product>
-  onSubmit:       (data: CreateProductRequest) => void
-  isSubmitting:   boolean
-  mode:           'create' | 'edit'
+  defaultValues?:   Partial<Product>
+  onSubmit:         (data: CreateProductRequest) => void
+  isSubmitting:     boolean
+  mode:             'create' | 'edit'
+  images?:          ProductMedia[]
+  onRefreshImages?: () => void
 }
 
 // ── Tab bar ───────────────────────────────────────────────────────────────────
+
+type AllTabId = TabId | 'imagens'
 
 function TabBar({
   active,
   errors,
   onChange,
+  showImages,
 }: {
-  active:   TabId
-  errors:   Record<string, unknown>
-  onChange: (id: TabId) => void
+  active:      AllTabId
+  errors:      Record<string, unknown>
+  onChange:    (id: AllTabId) => void
+  showImages:  boolean
 }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -182,14 +189,28 @@ function TabBar({
           </button>
         )
       })}
+      {showImages && (
+        <button
+          type="button"
+          onClick={() => onChange('imagens')}
+          className={cn(
+            'relative inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+            active === 'imagens'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          )}
+        >
+          Imagens
+        </button>
+      )}
     </div>
   )
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: ProductFormProps) {
-  const [activeTab,         setActiveTab]         = useState<TabId>('identificacao')
+export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, images, onRefreshImages }: ProductFormProps) {
+  const [activeTab,         setActiveTab]         = useState<AllTabId>('identificacao')
   const [brandModalOpen,    setBrandModalOpen]    = useState(false)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
 
@@ -285,11 +306,13 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
     }
   }
 
+  const showImages = mode === 'edit' && !!defaultValues?.uuid
+
   return (
     <form onSubmit={handleSubmit(handleFormSubmit, handleInvalid)} className="space-y-6">
 
       {/* ── Tab buttons ── */}
-      <TabBar active={activeTab} errors={errors} onChange={setActiveTab} />
+      <TabBar active={activeTab} errors={errors} onChange={setActiveTab} showImages={showImages} />
 
       {/* ── Tab: Identificação ── */}
       {activeTab === 'identificacao' && (
@@ -609,6 +632,17 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode }: Pro
               {errors.origin_code && <p className="text-xs text-destructive">{errors.origin_code.message}</p>}
             </div>
           </div>
+        </AppCard>
+      )}
+
+      {/* ── Tab: Imagens (edit only) ── */}
+      {activeTab === 'imagens' && showImages && (
+        <AppCard title="Imagens do Produto">
+          <ProductImageManager
+            productUuid={defaultValues!.uuid!}
+            images={images ?? []}
+            onRefresh={onRefreshImages ?? (() => {})}
+          />
         </AppCard>
       )}
 

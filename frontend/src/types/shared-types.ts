@@ -195,12 +195,15 @@ export interface Grid {
 }
 
 export interface ProductMedia {
-  uuid?:      string
-  product_id: string
-  type:       'image' | 'video'
-  url:        string
-  sort_order: number
-  is_primary: boolean
+  uuid:          string
+  url:           string
+  thumbnail_url: string | null
+  alt_text:      string | null
+  sort_order:    number
+  is_primary:    boolean
+  width:         number | null
+  height:        number | null
+  size_bytes:    number | null
 }
 
 export interface ProductBarcode {

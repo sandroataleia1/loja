@@ -19,7 +19,7 @@ interface EditProductPageProps {
 
 function EditProductContent({ uuid }: { uuid: string }) {
   const router = useRouter()
-  const { data: product, isLoading, isError } = useProduct(uuid)
+  const { data: product, isLoading, isError, refetch } = useProduct(uuid)
   const { mutate: updateProduct, isPending }  = useUpdateProduct(uuid)
 
   function handleSubmit(data: CreateProductRequest) {
@@ -57,6 +57,8 @@ function EditProductContent({ uuid }: { uuid: string }) {
       defaultValues={product}
       onSubmit={handleSubmit}
       isSubmitting={isPending}
+      images={product.images ?? []}
+      onRefreshImages={() => void refetch()}
     />
   )
 }

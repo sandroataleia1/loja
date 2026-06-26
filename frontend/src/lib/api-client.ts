@@ -104,5 +104,14 @@ export async function apiDelete<T = void>(path: string): Promise<T> {
   return (body as { data: T }).data
 }
 
+export async function apiPostForm<T>(path: string, form: FormData): Promise<T> {
+  const res = await apiClient.post<ApiResponse<T>>(path, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  const body = res.data
+  if (!body.success) throw new Error((body as { message: string }).message)
+  return (body as { data: T }).data
+}
+
 // Keep the legacy export for backward compatibility
 export { apiClient as api }

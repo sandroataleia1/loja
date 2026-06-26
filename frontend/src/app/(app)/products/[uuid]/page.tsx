@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { AppPageHeader } from '@/components/shared/app-page-header'
 import { AppCard } from '@/components/shared/app-card'
 import { VariantTable } from '@/features/catalog/components/variant-table'
+import { ProductImageManager } from '@/features/catalog/components/product-image-manager'
 import {
   useProduct,
   useVariants,
@@ -284,27 +285,11 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
         {/* Media tab */}
         {activeTab === 'media' && (
           <AppCard title="Imagens">
-            {!product.images || product.images.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma imagem cadastrada.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {product.images.map((img, i) => (
-                  <div key={img.uuid ?? i} className="relative rounded-md border overflow-hidden aspect-square bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.url}
-                      alt={`Imagem ${i + 1}`}
-                      className="object-cover w-full h-full"
-                    />
-                    {img.is_primary && (
-                      <span className="absolute top-1 left-1 text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
-                        Principal
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <ProductImageManager
+              productUuid={uuid}
+              images={product.images ?? []}
+              onRefresh={() => void refetchProduct()}
+            />
           </AppCard>
         )}
       </div>
