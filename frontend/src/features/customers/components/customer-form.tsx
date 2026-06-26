@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, Trash2, MapPin, Phone, X, Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { PatternFormat } from 'react-number-format'
 import { Button }   from '@/components/ui/button'
 import { Input }    from '@/components/ui/input'
 import { Label }    from '@/components/ui/label'
@@ -103,7 +104,7 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
   onAdd:   (data: AddressValues) => void
   onClose: () => void
 }) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<AddressValues>({
+  const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<AddressValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: { country: 'BR', is_default: isFirst },
   })
@@ -154,7 +155,20 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
             <div className="space-y-1.5">
               <Label>CEP *</Label>
               <div className="relative">
-                <Input placeholder="00000-000" {...register('zipcode')} className={cepLoading ? 'pr-8' : ''} />
+                <Controller
+                  control={control}
+                  name="zipcode"
+                  render={({ field }) => (
+                    <PatternFormat
+                      customInput={Input}
+                      format="#####-###"
+                      placeholder="00000-000"
+                      className={cepLoading ? 'pr-8' : ''}
+                      value={field.value ?? ''}
+                      onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                    />
+                  )}
+                />
                 {cepLoading && (
                   <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                 )}
@@ -223,10 +237,11 @@ function ContactDialog({ isFirst, onAdd, onClose }: {
   onAdd:   (data: ContactValues) => void
   onClose: () => void
 }) {
-  const { register, handleSubmit, formState: { errors } } = useForm<ContactValues>({
+  const { register, handleSubmit, control, watch, formState: { errors } } = useForm<ContactValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: { type: 'PHONE', value: '', label: '', is_primary: isFirst },
   })
+  const contactType = watch('type')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -258,7 +273,23 @@ function ContactDialog({ isFirst, onAdd, onClose }: {
 
           <div className="space-y-1.5">
             <Label>Valor *</Label>
-            <Input placeholder="(11) 99999-9999" {...register('value')} />
+            {(contactType === 'PHONE' || contactType === 'WHATSAPP') ? (
+              <Controller
+                control={control}
+                name="value"
+                render={({ field }) => (
+                  <PatternFormat
+                    customInput={Input}
+                    format="(##) #####-####"
+                    placeholder="(11) 99999-9999"
+                    value={field.value ?? ''}
+                    onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                  />
+                )}
+              />
+            ) : (
+              <Input placeholder={contactType === 'EMAIL' ? 'email@exemplo.com' : '@usuario ou link'} {...register('value')} />
+            )}
             {errors.value && <p className="text-xs text-destructive">{errors.value.message}</p>}
           </div>
 
@@ -383,11 +414,21 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
 
             <div className="space-y-1.5">
               <Label htmlFor="document">{personType === 'COMPANY' ? 'CNPJ' : 'CPF'}</Label>
-              <Input
-                id="document"
-                placeholder={personType === 'COMPANY' ? '00.000.000/0000-00' : '000.000.000-00'}
-                {...register('document')}
+              <Controller
+                control={control}
+                name="document"
+                render={({ field }) => (
+                  <PatternFormat
+                    id="document"
+                    customInput={Input}
+                    format={personType === 'COMPANY' ? '##.###.###/####-##' : '###.###.###-##'}
+                    placeholder={personType === 'COMPANY' ? '00.000.000/0000-00' : '000.000.000-00'}
+                    value={field.value ?? ''}
+                    onValueChange={(vals) => field.onChange(vals.formattedValue)}
+                  />
+                )}
               />
+              {errors.document && <p className="text-xs text-destructive">{errors.document.message}</p>}
             </div>
 
             <div className="space-y-1.5">
