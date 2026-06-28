@@ -10,12 +10,14 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { AppCard } from '@/components/shared/app-card'
 import { ProductImageManager } from './product-image-manager'
 import { BrandSelector } from './brand-selector'
 import { CategorySelector } from './category-selector'
 import { QuickCreateBrandModal } from './quick-create-brand-modal'
 import { QuickCreateCategoryModal } from './quick-create-category-modal'
+import { useAuth } from '@/hooks/use-auth'
 import type { CreateProductRequest } from '@store/contracts'
 import type { Product, ProductMedia } from '@store/shared-types'
 
@@ -98,6 +100,25 @@ const TABS = [
     label:  'Fiscal',
     fields: ['ncm', 'cest', 'cfop_default', 'origin_code'] as const,
   },
+  {
+    id:     'logistica',
+    label:  'Logística',
+    fields: [
+      'weight_gross_g', 'weight_net_g',
+      'dim_width_cm', 'dim_height_cm', 'dim_depth_cm',
+      'min_sale_qty', 'sale_multiplier',
+    ] as const,
+  },
+  {
+    id:     'seo',
+    label:  'SEO',
+    fields: ['seo_title', 'seo_description', 'is_on_sale', 'sale_ends_at'] as const,
+  },
+  {
+    id:     'atributos',
+    label:  'Atributos',
+    fields: ['technical_attributes'] as const,
+  },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
@@ -133,6 +154,24 @@ const productSchema = z.object({
   cest:              z.string().max(9).optional().or(z.literal('')),
   cfop_default:      z.string().max(5).optional().or(z.literal('')),
   origin_code:       z.coerce.number().int().min(0).max(8).optional(),
+  // Logística
+  weight_gross_g:    z.number().int().nonnegative().nullable().optional(),
+  weight_net_g:      z.number().int().nonnegative().nullable().optional(),
+  dim_width_cm:      z.number().nonnegative().nullable().optional(),
+  dim_height_cm:     z.number().nonnegative().nullable().optional(),
+  dim_depth_cm:      z.number().nonnegative().nullable().optional(),
+  min_sale_qty:      z.number().int().positive().nullable().optional(),
+  sale_multiplier:   z.number().positive().nullable().optional(),
+  // SEO
+  seo_title:         z.string().max(60).nullable().optional(),
+  seo_description:   z.string().max(160).nullable().optional(),
+  is_on_sale:        z.boolean().optional(),
+  sale_ends_at:      z.string().nullable().optional(),
+  // Atributos Técnicos
+  technical_attributes: z.array(z.object({
+    name:  z.string().min(1, 'Nome obrigatório'),
+    value: z.string().min(1, 'Valor obrigatório'),
+  })).optional(),
 })
 
 type ProductFormValues = z.infer<typeof productSchema>
@@ -163,43 +202,64 @@ function TabBar({
   onChange:    (id: AllTabId) => void
   showImages:  boolean
 }) {
+  const allTabs: { id: AllTabId; label: string }[] = [
+    ...TABS.map((t) => ({ id: t.id as AllTabId, label: t.label })),
+    ...(showImages ? [{ id: 'imagens' as AllTabId, label: 'Imagens' }] : []),
+  ]
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {TABS.map((tab) => {
-        const hasError = tab.fields.some((f) => f in errors)
-        const isActive = active === tab.id
-        return (
+    <>
+      {/* Mobile: select dropdown */}
+      <div className="md:hidden mb-4">
+        <select
+          value={active}
+          onChange={(e) => onChange(e.target.value as AllTabId)}
+          className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+        >
+          {allTabs.map((t) => (
+            <option key={t.id} value={t.id}>{t.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Desktop: button tabs */}
+      <div className="hidden md:flex flex-wrap gap-2">
+        {TABS.map((tab) => {
+          const hasError = tab.fields.some((f) => f in errors)
+          const isActive = active === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onChange(tab.id)}
+              className={cn(
+                'relative inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+            >
+              {tab.label}
+              {hasError && <span className="h-1.5 w-1.5 rounded-full bg-destructive" />}
+            </button>
+          )
+        })}
+        {showImages && (
           <button
-            key={tab.id}
             type="button"
-            onClick={() => onChange(tab.id)}
+            onClick={() => onChange('imagens')}
             className={cn(
               'relative inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors',
-              isActive
+              active === 'imagens'
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground',
             )}
           >
-            {tab.label}
-            {hasError && <span className="h-1.5 w-1.5 rounded-full bg-destructive" />}
+            Imagens
           </button>
-        )
-      })}
-      {showImages && (
-        <button
-          type="button"
-          onClick={() => onChange('imagens')}
-          className={cn(
-            'relative inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors',
-            active === 'imagens'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-          )}
-        >
-          Imagens
-        </button>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -209,6 +269,9 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
   const [activeTab,         setActiveTab]         = useState<AllTabId>('principal')
   const [brandModalOpen,    setBrandModalOpen]    = useState(false)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
+
+  const { hasPermission } = useAuth()
+  const canViewCost = hasPermission('products.view_cost')
 
   const {
     register,
@@ -246,6 +309,21 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
       cest:              defaultValues?.cest         ?? '',
       cfop_default:      defaultValues?.cfop_default ?? '',
       origin_code:       defaultValues?.origin_code  ?? 0,
+      // Logística
+      weight_gross_g:    null,
+      weight_net_g:      null,
+      dim_width_cm:      null,
+      dim_height_cm:     null,
+      dim_depth_cm:      null,
+      min_sale_qty:      null,
+      sale_multiplier:   null,
+      // SEO
+      seo_title:         null,
+      seo_description:   null,
+      is_on_sale:        false,
+      sale_ends_at:      null,
+      // Atributos
+      technical_attributes: [],
     },
   })
 
@@ -254,7 +332,15 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
     name: 'barcodes',
   })
 
-  const nameValue = watch('name')
+  const { fields: attrFields, append: appendAttr, remove: removeAttr } = useFieldArray({
+    control,
+    name: 'technical_attributes',
+  })
+
+  const nameValue   = watch('name')
+  const isOnSale    = watch('is_on_sale')
+  const seoTitle    = watch('seo_title')
+  const seoDesc     = watch('seo_description')
 
   useEffect(() => {
     if (mode === 'create') {
@@ -289,6 +375,21 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
       cest:              values.cest         || undefined,
       cfop_default:      values.cfop_default || undefined,
       origin_code:       values.origin_code  ?? 0,
+      // Logística
+      dimensions: (values.dim_width_cm || values.dim_height_cm || values.dim_depth_cm) ? {
+        width:  values.dim_width_cm,
+        height: values.dim_height_cm,
+        depth:  values.dim_depth_cm,
+      } : undefined,
+      weight_gross_g:  values.weight_gross_g  ?? undefined,
+      weight_net_g:    values.weight_net_g    ?? undefined,
+      min_sale_qty:    values.min_sale_qty    ?? undefined,
+      sale_multiplier: values.sale_multiplier ?? undefined,
+      // SEO
+      seo_title:       values.seo_title       ?? undefined,
+      seo_description: values.seo_description ?? undefined,
+      is_on_sale:      values.is_on_sale,
+      sale_ends_at:    values.sale_ends_at    ?? undefined,
     }
     onSubmit(payload)
   }
@@ -395,24 +496,30 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="cost_price">Preço de Custo</Label>
-                <Controller
-                  control={control}
-                  name="cost_price"
-                  render={({ field }) => (
-                    <NumericFormat
-                      id="cost_price"
-                      customInput={Input}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      decimalScale={2}
-                      fixedDecimalScale
-                      prefix="R$ "
-                      placeholder="R$ 0,00"
-                      value={field.value ?? ''}
-                      onValueChange={(vals) => field.onChange(vals.floatValue ?? null)}
-                    />
-                  )}
-                />
+                {canViewCost ? (
+                  <Controller
+                    control={control}
+                    name="cost_price"
+                    render={({ field }) => (
+                      <NumericFormat
+                        id="cost_price"
+                        customInput={Input}
+                        thousandSeparator="."
+                        decimalSeparator=","
+                        decimalScale={2}
+                        fixedDecimalScale
+                        prefix="R$ "
+                        placeholder="R$ 0,00"
+                        value={field.value ?? ''}
+                        onValueChange={(vals) => field.onChange(vals.floatValue ?? null)}
+                      />
+                    )}
+                  />
+                ) : (
+                  <div className="text-sm text-muted-foreground bg-muted rounded px-3 py-2">
+                    Sem permissão para ver custo
+                  </div>
+                )}
                 {errors.cost_price && <p className="text-xs text-destructive">{errors.cost_price.message}</p>}
               </div>
             </div>
@@ -649,6 +756,349 @@ export function ProductForm({ defaultValues, onSubmit, isSubmitting, mode, image
               </select>
               {errors.origin_code && <p className="text-xs text-destructive">{errors.origin_code.message}</p>}
             </div>
+          </div>
+        </AppCard>
+      )}
+
+      {/* ── Tab: Logística ── */}
+      {activeTab === 'logistica' && (
+        <div className="space-y-6">
+
+          <AppCard title="Peso">
+            <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+              <div className="space-y-1.5">
+                <Label htmlFor="weight_gross_g">Peso Bruto (g)</Label>
+                <Controller
+                  control={control}
+                  name="weight_gross_g"
+                  render={({ field }) => (
+                    <Input
+                      id="weight_gross_g"
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="0"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+                {errors.weight_gross_g && <p className="text-xs text-destructive">{errors.weight_gross_g.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="weight_net_g">Peso Líquido (g)</Label>
+                <Controller
+                  control={control}
+                  name="weight_net_g"
+                  render={({ field }) => (
+                    <Input
+                      id="weight_net_g"
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="0"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+                {errors.weight_net_g && <p className="text-xs text-destructive">{errors.weight_net_g.message}</p>}
+              </div>
+            </div>
+          </AppCard>
+
+          <AppCard title="Dimensões">
+            <div className="grid gap-4 sm:grid-cols-3 max-w-2xl">
+              <div className="space-y-1.5">
+                <Label htmlFor="dim_width_cm">Largura (cm)</Label>
+                <Controller
+                  control={control}
+                  name="dim_width_cm"
+                  render={({ field }) => (
+                    <Input
+                      id="dim_width_cm"
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder="0,00"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+                {errors.dim_width_cm && <p className="text-xs text-destructive">{errors.dim_width_cm.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="dim_height_cm">Altura (cm)</Label>
+                <Controller
+                  control={control}
+                  name="dim_height_cm"
+                  render={({ field }) => (
+                    <Input
+                      id="dim_height_cm"
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder="0,00"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+                {errors.dim_height_cm && <p className="text-xs text-destructive">{errors.dim_height_cm.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="dim_depth_cm">Profundidade (cm)</Label>
+                <Controller
+                  control={control}
+                  name="dim_depth_cm"
+                  render={({ field }) => (
+                    <Input
+                      id="dim_depth_cm"
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder="0,00"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+                {errors.dim_depth_cm && <p className="text-xs text-destructive">{errors.dim_depth_cm.message}</p>}
+              </div>
+            </div>
+          </AppCard>
+
+          <AppCard title="Venda">
+            <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
+              <div className="space-y-1.5">
+                <Label htmlFor="min_sale_qty">Qtd mínima de venda</Label>
+                <Controller
+                  control={control}
+                  name="min_sale_qty"
+                  render={({ field }) => (
+                    <Input
+                      id="min_sale_qty"
+                      type="number"
+                      min={1}
+                      step={1}
+                      placeholder="1"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+                {errors.min_sale_qty && <p className="text-xs text-destructive">{errors.min_sale_qty.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="sale_multiplier">Múltiplo de venda</Label>
+                <Controller
+                  control={control}
+                  name="sale_multiplier"
+                  render={({ field }) => (
+                    <Input
+                      id="sale_multiplier"
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder="1"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  )}
+                />
+                {errors.sale_multiplier && <p className="text-xs text-destructive">{errors.sale_multiplier.message}</p>}
+              </div>
+            </div>
+          </AppCard>
+
+        </div>
+      )}
+
+      {/* ── Tab: SEO ── */}
+      {activeTab === 'seo' && (
+        <div className="space-y-6">
+
+          <AppCard title="SEO">
+            <div className="space-y-4 max-w-2xl">
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="seo_title">Título SEO</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {(seoTitle ?? '').length}/60
+                  </span>
+                </div>
+                <Input
+                  id="seo_title"
+                  placeholder="Título para mecanismos de busca (máx. 60 caracteres)"
+                  maxLength={60}
+                  {...register('seo_title')}
+                />
+                {errors.seo_title && <p className="text-xs text-destructive">{errors.seo_title.message}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="seo_description">Descrição SEO</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {(seoDesc ?? '').length}/160
+                  </span>
+                </div>
+                <textarea
+                  id="seo_description"
+                  className="w-full min-h-24 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
+                  placeholder="Descrição para mecanismos de busca (máx. 160 caracteres)"
+                  maxLength={160}
+                  {...register('seo_description')}
+                />
+                {errors.seo_description && <p className="text-xs text-destructive">{errors.seo_description.message}</p>}
+              </div>
+
+            </div>
+          </AppCard>
+
+          <AppCard title="Promoção e Destaque">
+            <div className="space-y-4 max-w-2xl">
+
+              <Controller
+                control={control}
+                name="is_featured"
+                render={({ field }) => (
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id="is_featured_seo"
+                      checked={field.value ?? false}
+                      onCheckedChange={field.onChange}
+                    />
+                    <Label htmlFor="is_featured_seo" className="cursor-pointer">
+                      Exibir como destaque
+                    </Label>
+                  </div>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="is_on_sale"
+                render={({ field }) => (
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id="is_on_sale"
+                      checked={field.value ?? false}
+                      onCheckedChange={field.onChange}
+                    />
+                    <Label htmlFor="is_on_sale" className="cursor-pointer">
+                      Produto em promoção
+                    </Label>
+                  </div>
+                )}
+              />
+
+              {isOnSale && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="sale_ends_at">Promoção válida até</Label>
+                  <Input
+                    id="sale_ends_at"
+                    type="date"
+                    {...register('sale_ends_at')}
+                  />
+                  {errors.sale_ends_at && <p className="text-xs text-destructive">{errors.sale_ends_at.message}</p>}
+                </div>
+              )}
+
+            </div>
+          </AppCard>
+
+          {mode === 'edit' && defaultValues?.qr_code_url && (
+            <AppCard title="QR Code">
+              <div className="flex flex-col gap-4 max-w-xs">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={defaultValues.qr_code_url}
+                  alt="QR Code do produto"
+                  className="w-40 h-40 rounded border object-contain"
+                />
+                <Button type="button" variant="outline" size="sm" className="w-fit">
+                  Regenerar QR Code
+                </Button>
+              </div>
+            </AppCard>
+          )}
+
+        </div>
+      )}
+
+      {/* ── Tab: Atributos Técnicos ── */}
+      {activeTab === 'atributos' && (
+        <AppCard title="Atributos Técnicos">
+          <div className="space-y-4 max-w-2xl">
+
+            <p className="text-sm text-muted-foreground">
+              Adicione dados técnicos livres como pares chave/valor (ex: Voltagem → 127V).
+            </p>
+
+            {attrFields.length > 0 && (
+              <div className="space-y-2">
+                <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-xs font-medium text-muted-foreground px-1">
+                  <span>Nome</span>
+                  <span>Valor</span>
+                  <span />
+                </div>
+                {attrFields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-start">
+                    <div className="space-y-1">
+                      <Input
+                        placeholder="Ex: Voltagem"
+                        {...register(`technical_attributes.${index}.name`)}
+                      />
+                      {errors.technical_attributes?.[index]?.name && (
+                        <p className="text-xs text-destructive">
+                          {errors.technical_attributes[index].name?.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <Input
+                        placeholder="Ex: 127V"
+                        {...register(`technical_attributes.${index}.value`)}
+                      />
+                      {errors.technical_attributes?.[index]?.value && (
+                        <p className="text-xs text-destructive">
+                          {errors.technical_attributes[index].value?.message}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => removeAttr(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {attrFields.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Nenhum atributo cadastrado. Clique em &quot;Adicionar atributo&quot; para incluir.
+              </p>
+            )}
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendAttr({ name: '', value: '' })}
+            >
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              Adicionar atributo
+            </Button>
+
           </div>
         </AppCard>
       )}

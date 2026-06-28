@@ -310,3 +310,73 @@ export function useGenerateVariants() {
     },
   })
 }
+
+export function useDuplicateProduct(uuid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => catalogService.duplicateProduct(uuid),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['products'] })
+    },
+  })
+}
+
+// ── Product Lots ──────────────────────────────────────────────────────────────
+
+export const LOTS_KEY = (productUuid: string) => ['lots', productUuid] as const
+
+export function useProductLots(productUuid: string, enabled = true) {
+  return useQuery({
+    queryKey: LOTS_KEY(productUuid),
+    queryFn:  () => catalogService.getLots(productUuid),
+    enabled:  Boolean(productUuid) && enabled,
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
+export function useCreateProductLot(productUuid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof catalogService.createLot>[1]) =>
+      catalogService.createLot(productUuid, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: LOTS_KEY(productUuid) })
+    },
+  })
+}
+
+export function useDeleteProductLot(productUuid: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (uuid: string) => catalogService.deleteLot(uuid),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: LOTS_KEY(productUuid) })
+    },
+  })
+}
+
+// ── Kit Items ─────────────────────────────────────────────────────────────────
+
+export const KIT_KEY = (productUuid: string) => ['kit-items', productUuid] as const
+
+export function useKitItems(productUuid: string, enabled = true) {
+  return useQuery({
+    queryKey: KIT_KEY(productUuid),
+    queryFn:  () => catalogService.getKitItems(productUuid),
+    enabled:  Boolean(productUuid) && enabled,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ── Price History ─────────────────────────────────────────────────────────────
+
+export const PRICE_HISTORY_KEY = (productUuid: string) => ['price-history', productUuid] as const
+
+export function usePriceHistory(productUuid: string) {
+  return useQuery({
+    queryKey: PRICE_HISTORY_KEY(productUuid),
+    queryFn:  () => catalogService.getPriceHistory(productUuid),
+    enabled:  Boolean(productUuid),
+    staleTime: 5 * 60 * 1000,
+  })
+}

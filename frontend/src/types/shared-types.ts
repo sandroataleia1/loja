@@ -222,6 +222,56 @@ export interface ProductCollection {
   is_active:   boolean
 }
 
+export interface ProductLot {
+  uuid:             string
+  product_id:       string
+  variant_id:       string | null
+  lot_number:       string
+  manufacture_date: string | null
+  expiry_date:      string | null
+  received_at:      string | null
+  initial_qty:      number
+  current_qty:      number
+  notes:            string | null
+  created_at:       string
+  updated_at:       string
+}
+
+export interface CatalogKitItem {
+  uuid:                 string
+  kit_product_id:       string
+  component_product_id: string
+  component_variant_id: string | null
+  quantity:             number
+  sort_order:           number
+  component?: {
+    uuid:  string
+    name:  string
+    code:  string
+    base_price: number | null
+  }
+  variant?: {
+    uuid: string
+    sku:  string
+    name: string | null
+    sale_price: number
+  }
+}
+
+export interface ProductPriceHistory {
+  uuid:            string
+  product_id:      string | null
+  variant_id:      string | null
+  price_list_id:   string | null
+  old_price_cents: number
+  new_price_cents: number
+  changed_by:      string | null
+  changed_at:      string
+  reason:          string | null
+  price_list?: { name: string; code: string }
+  changer?:    { name: string }
+}
+
 export interface Product {
   uuid:              string
   code:              string

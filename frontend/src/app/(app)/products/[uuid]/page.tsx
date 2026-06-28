@@ -2,7 +2,12 @@
 
 import { use, useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, Pencil, Globe, Archive, Package, Tag, Scale, Ruler, CalendarDays, Barcode, Info, FileText, BarChart3 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import {
+  ChevronLeft, Pencil, Globe, Archive, Package, Tag, Scale, Ruler,
+  CalendarDays, Barcode, Info, FileText, BarChart3, Copy, ChevronDown, ChevronUp,
+  AlertTriangle, Trash2, Plus, Layers,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,14 +16,24 @@ import { AppPageHeader } from '@/components/shared/app-page-header'
 import { AppCard } from '@/components/shared/app-card'
 import { VariantTable } from '@/features/catalog/components/variant-table'
 import { ProductImageManager } from '@/features/catalog/components/product-image-manager'
+import { CatalogPrintButton } from '@/features/catalog/components/catalog-print-button'
 import {
   useProduct,
   useVariants,
   usePublishProduct,
   useArchiveProduct,
+  useDuplicateProduct,
+  useProductLots,
+  useCreateProductLot,
+  useDeleteProductLot,
+  useKitItems,
+  usePriceHistory,
 } from '@/features/catalog/hooks'
+import { useCatalogFeatures } from '@/features/catalog/hooks/use-catalog-features'
+import { useAuth } from '@/hooks/use-auth'
 import { ROUTES } from '@/constants'
 import type { ProductStatus } from '@store/shared-types'
+import type { ProductLotData } from '@/services/catalog.service'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -57,17 +72,42 @@ const STATUS_STYLES: Record<ProductStatus, string> = {
   seasonal: 'bg-blue-50 text-blue-700 border-blue-200',
 }
 
-type Tab = 'general' | 'variants' | 'categories' | 'media'
+type Tab = 'general' | 'variants' | 'categories' | 'media' | 'lots' | 'kit'
+
+// ── Lot form initial state ────────────────────────────────────────────────────
+
+const EMPTY_LOT: ProductLotData = {
+  lot_number:       '',
+  manufacture_date: '',
+  expiry_date:      '',
+  initial_qty:      1,
+  notes:            '',
+}
 
 // ── Content ───────────────────────────────────────────────────────────────────
 
 function ProductDetailContent({ uuid }: { uuid: string }) {
+  const router = useRouter()
+  const { hasPermission }          = useAuth()
+  const { hasLotControl }          = useCatalogFeatures()
+
   const { data: product, isLoading, isError, refetch: refetchProduct } = useProduct(uuid)
   const { data: variants = [], refetch: refetchVariants }              = useVariants(uuid)
   const { mutate: publishProduct, isPending: isPublishing }            = usePublishProduct(uuid)
   const { mutate: archiveProduct, isPending: isArchiving }             = useArchiveProduct(uuid)
+  const { mutate: duplicateProduct, isPending: isDuplicating }         = useDuplicateProduct(uuid)
 
-  const [activeTab, setActiveTab] = useState<Tab>('general')
+  const { data: lots = [], isLoading: lotsLoading }                    = useProductLots(uuid, hasLotControl)
+  const { mutate: createLot, isPending: creatingLot }                  = useCreateProductLot(uuid)
+  const { mutate: deleteLot }                                          = useDeleteProductLot(uuid)
+  const { data: kitItems = [] }                                        = useKitItems(uuid, product?.type === 'kit')
+  const { data: priceHistory = [] }                                    = usePriceHistory(uuid)
+
+  const canViewCost = hasPermission('products.view_cost')
+
+  const [activeTab, setActiveTab]           = useState<Tab>('general')
+  const [showPriceHistory, setShowPriceHistory] = useState(false)
+  const [lotForm, setLotForm]               = useState<ProductLotData>(EMPTY_LOT)
 
   if (isLoading) {
     return (
@@ -91,6 +131,8 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
     { key: 'variants',   label: 'Variantes'  },
     { key: 'categories', label: 'Categorias' },
     { key: 'media',      label: `Mídia${product.images?.length ? ` (${product.images.length})` : ''}` },
+    ...(product.type === 'kit' ? [{ key: 'kit' as Tab, label: `Componentes${kitItems.length ? ` (${kitItems.length})` : ''}` }] : []),
+    ...(hasLotControl    ? [{ key: 'lots' as Tab, label: `Lotes${lots.length ? ` (${lots.length})` : ''}` }] : []),
   ]
 
   function handlePublish() {
@@ -104,6 +146,27 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
     archiveProduct(undefined, {
       onSuccess: () => toast.success('Produto arquivado.'),
       onError:   (err) => toast.error(err instanceof Error ? err.message : 'Erro ao arquivar.'),
+    })
+  }
+
+  function handleDuplicate() {
+    duplicateProduct(undefined, {
+      onSuccess: (dup) => {
+        toast.success('Produto duplicado com sucesso.')
+        router.push(`${ROUTES.PRODUCTS}/${dup.uuid}`)
+      },
+      onError: (err) => toast.error(err instanceof Error ? err.message : 'Erro ao duplicar.'),
+    })
+  }
+
+  function handleCreateLot() {
+    if (!lotForm.lot_number.trim()) { toast.error('Número do lote é obrigatório.'); return }
+    createLot(lotForm, {
+      onSuccess: () => {
+        toast.success('Lote adicionado.')
+        setLotForm(EMPTY_LOT)
+      },
+      onError: (err) => toast.error(err instanceof Error ? err.message : 'Erro ao salvar lote.'),
     })
   }
 
@@ -164,6 +227,12 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
 
           {/* Actions */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <CatalogPrintButton productUuid={uuid} type="datasheet" variant="outline" size="sm" />
+            <CatalogPrintButton productUuid={uuid} type="qrcode"    variant="outline" size="sm" />
+            <Button variant="outline" size="sm" onClick={handleDuplicate} disabled={isDuplicating}>
+              <Copy className="mr-1.5 h-3.5 w-3.5" />
+              {isDuplicating ? 'Duplicando…' : 'Duplicar'}
+            </Button>
             {product.status === 'draft' && (
               <Button variant="outline" size="sm" onClick={handlePublish} disabled={isPublishing}>
                 <Globe className="mr-1.5 h-3.5 w-3.5" />
@@ -188,7 +257,11 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
         </AppCard>
         <AppCard className="py-3 px-4">
           <p className="text-xs text-muted-foreground">Preço de Custo</p>
-          <p className="text-lg font-semibold">{formatBRL(product.cost_price)}</p>
+          {canViewCost ? (
+            <p className="text-lg font-semibold">{formatBRL(product.cost_price)}</p>
+          ) : (
+            <p className="text-lg font-semibold tracking-widest text-muted-foreground select-none">••••</p>
+          )}
         </AppCard>
         <AppCard className="py-3 px-4">
           <p className="text-xs text-muted-foreground">Visibilidade</p>
@@ -478,6 +551,50 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
                 />
               </AppCard>
             )}
+
+            {/* Histórico de Preços */}
+            {priceHistory.length > 0 && (
+              <AppCard>
+                <button
+                  onClick={() => setShowPriceHistory((v) => !v)}
+                  className="flex w-full items-center justify-between text-sm font-medium"
+                >
+                  <span>Histórico de Preços ({priceHistory.length})</span>
+                  {showPriceHistory
+                    ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  }
+                </button>
+                {showPriceHistory && (
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b text-left text-muted-foreground">
+                          <th className="py-1.5 pr-3 font-medium">Data</th>
+                          <th className="py-1.5 pr-3 font-medium">Tabela</th>
+                          <th className="py-1.5 pr-3 font-medium">De</th>
+                          <th className="py-1.5 pr-3 font-medium">Para</th>
+                          <th className="py-1.5 pr-3 font-medium">Usuário</th>
+                          <th className="py-1.5 font-medium">Motivo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {priceHistory.map((h) => (
+                          <tr key={h.uuid} className="border-b last:border-0">
+                            <td className="py-1.5 pr-3 whitespace-nowrap">{formatDate(h.changed_at)}</td>
+                            <td className="py-1.5 pr-3">{h.price_list?.name ?? '—'}</td>
+                            <td className="py-1.5 pr-3 font-mono">{formatBRL(h.old_price_cents / 100)}</td>
+                            <td className="py-1.5 pr-3 font-mono font-medium">{formatBRL(h.new_price_cents / 100)}</td>
+                            <td className="py-1.5 pr-3">{h.changer?.name ?? '—'}</td>
+                            <td className="py-1.5 text-muted-foreground">{h.reason ?? '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </AppCard>
+            )}
           </div>
         )}
 
@@ -519,6 +636,191 @@ function ProductDetailContent({ uuid }: { uuid: string }) {
               onRefresh={() => void refetchProduct()}
             />
           </AppCard>
+        )}
+
+        {/* ── KIT TAB ───────────────────────────────────────────────────────────── */}
+        {activeTab === 'kit' && product.type === 'kit' && (
+          <AppCard title="Componentes do Kit">
+            {kitItems.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+                <Layers className="h-8 w-8 opacity-30" />
+                <p className="text-sm">Nenhum componente cadastrado.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-xs text-muted-foreground uppercase tracking-wide">
+                      <th className="py-2 pr-4 font-medium">Produto</th>
+                      <th className="py-2 pr-4 font-medium">Variante</th>
+                      <th className="py-2 pr-4 font-medium">Qtd</th>
+                      <th className="py-2 pr-4 font-medium">Preço unit.</th>
+                      <th className="py-2 font-medium">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {kitItems.map((item) => {
+                      const unitPrice = item.variant?.sale_price ?? item.component?.base_price ?? null
+                      const subtotal  = unitPrice != null ? unitPrice * item.quantity : null
+                      return (
+                        <tr key={item.uuid} className="border-b last:border-0">
+                          <td className="py-2 pr-4">{item.component?.name ?? '—'}</td>
+                          <td className="py-2 pr-4 text-muted-foreground">{item.variant?.sku ?? '—'}</td>
+                          <td className="py-2 pr-4">{item.quantity}</td>
+                          <td className="py-2 pr-4 font-mono">{formatBRL(unitPrice)}</td>
+                          <td className="py-2 font-mono font-medium">{formatBRL(subtotal)}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t">
+                      <td colSpan={4} className="py-2 pr-4 text-right text-sm font-medium text-muted-foreground">Total do Kit</td>
+                      <td className="py-2 font-mono font-semibold">
+                        {formatBRL(
+                          kitItems.reduce((acc, item) => {
+                            const price = item.variant?.sale_price ?? item.component?.base_price ?? 0
+                            return acc + price * item.quantity
+                          }, 0)
+                        )}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </AppCard>
+        )}
+
+        {/* ── LOTS TAB ──────────────────────────────────────────────────────────── */}
+        {activeTab === 'lots' && hasLotControl && (
+          <div className="space-y-4">
+            <AppCard title="Lotes">
+              {lotsLoading ? (
+                <Skeleton className="h-24 w-full" />
+              ) : lots.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+                  <Package className="h-8 w-8 opacity-30" />
+                  <p className="text-sm">Nenhum lote cadastrado.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-xs text-muted-foreground uppercase tracking-wide">
+                        <th className="py-2 pr-4 font-medium">Lote</th>
+                        <th className="py-2 pr-4 font-medium">Fabricação</th>
+                        <th className="py-2 pr-4 font-medium">Vencimento</th>
+                        <th className="py-2 pr-4 font-medium">Qtd inicial</th>
+                        <th className="py-2 pr-4 font-medium">Qtd atual</th>
+                        <th className="py-2 pr-4 font-medium">Status</th>
+                        <th className="py-2 font-medium"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lots.map((lot) => {
+                        const now      = new Date()
+                        const expiry   = lot.expiry_date ? new Date(lot.expiry_date) : null
+                        const isExp    = expiry && expiry < now
+                        const isSoon   = expiry && !isExp && expiry < new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+                        return (
+                          <tr key={lot.uuid} className="border-b last:border-0">
+                            <td className="py-2 pr-4 font-mono font-medium">{lot.lot_number}</td>
+                            <td className="py-2 pr-4">{formatDate(lot.manufacture_date)}</td>
+                            <td className="py-2 pr-4">
+                              <span className={isExp ? 'text-red-600 font-medium' : isSoon ? 'text-amber-600 font-medium' : ''}>
+                                {formatDate(lot.expiry_date)}
+                              </span>
+                            </td>
+                            <td className="py-2 pr-4">{lot.initial_qty}</td>
+                            <td className="py-2 pr-4">{lot.current_qty}</td>
+                            <td className="py-2 pr-4">
+                              {isExp  ? <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Vencido</Badge>
+                              : isSoon ? <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Vence em breve</Badge>
+                              : <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Válido</Badge>}
+                            </td>
+                            <td className="py-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                onClick={() => deleteLot(lot.uuid, {
+                                  onSuccess: () => toast.success('Lote removido.'),
+                                  onError:   (err) => toast.error(err instanceof Error ? err.message : 'Erro.'),
+                                })}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </AppCard>
+
+            {/* Add lot form */}
+            <AppCard title="Adicionar Lote">
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Número do Lote *</label>
+                  <input
+                    type="text"
+                    value={lotForm.lot_number}
+                    onChange={(e) => setLotForm((f) => ({ ...f, lot_number: e.target.value }))}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                    placeholder="Ex: L2024-001"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Fabricação</label>
+                  <input
+                    type="date"
+                    value={lotForm.manufacture_date ?? ''}
+                    onChange={(e) => setLotForm((f) => ({ ...f, manufacture_date: e.target.value }))}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Vencimento</label>
+                  <input
+                    type="date"
+                    value={lotForm.expiry_date ?? ''}
+                    onChange={(e) => setLotForm((f) => ({ ...f, expiry_date: e.target.value }))}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Qtd inicial *</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={lotForm.initial_qty}
+                    onChange={(e) => setLotForm((f) => ({ ...f, initial_qty: Number(e.target.value) }))}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Observações</label>
+                  <input
+                    type="text"
+                    value={lotForm.notes ?? ''}
+                    onChange={(e) => setLotForm((f) => ({ ...f, notes: e.target.value }))}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                    placeholder="Opcional"
+                  />
+                </div>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <Button size="sm" onClick={handleCreateLot} disabled={creatingLot}>
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  {creatingLot ? 'Salvando…' : 'Adicionar Lote'}
+                </Button>
+              </div>
+            </AppCard>
+          </div>
         )}
       </div>
     </div>

@@ -7,6 +7,9 @@ import type {
   Grid,
   Product,
   ProductVariant,
+  ProductLot,
+  CatalogKitItem,
+  ProductPriceHistory,
   PaginatedResponse,
   PaginationMeta,
 } from '@store/shared-types'
@@ -29,13 +32,33 @@ import type {
 // ── Filters ──────────────────────────────────────────────────────────────────
 
 export interface ProductFilters {
-  q?:           string
-  status?:      string
-  type?:        string
-  brand_id?:    string
-  category_id?: string
-  per_page?:    number
-  page?:        number
+  q?:             string
+  status?:        string
+  type?:          string
+  brand_id?:      string
+  category_id?:   string
+  supplier_id?:   string
+  featured?:      boolean
+  on_sale?:       boolean
+  min_price?:     number
+  max_price?:     number
+  per_page?:      number
+  page?:          number
+}
+
+export interface ProductLotData {
+  lot_number:       string
+  manufacture_date?: string
+  expiry_date?:     string
+  initial_qty:      number
+  notes?:           string
+}
+
+export interface KitItemData {
+  component_product_id: string
+  component_variant_id?: string
+  quantity:             number
+  sort_order?:          number
 }
 
 // ── Service ───────────────────────────────────────────────────────────────────
@@ -125,13 +148,18 @@ export const catalogService = {
 
   async getProducts(filters?: ProductFilters): Promise<PaginatedResponse<Product>> {
     const params = new URLSearchParams()
-    if (filters?.q)           params.set('q', filters.q)
-    if (filters?.status)      params.set('status', filters.status)
-    if (filters?.type)        params.set('type', filters.type)
-    if (filters?.brand_id)    params.set('brand_id', filters.brand_id)
-    if (filters?.category_id) params.set('category_id', filters.category_id)
-    if (filters?.per_page)    params.set('per_page', String(filters.per_page))
-    if (filters?.page)        params.set('page', String(filters.page))
+    if (filters?.q)            params.set('q', filters.q)
+    if (filters?.status)       params.set('status', filters.status)
+    if (filters?.type)         params.set('type', filters.type)
+    if (filters?.brand_id)     params.set('brand_id', filters.brand_id)
+    if (filters?.category_id)  params.set('category_id', filters.category_id)
+    if (filters?.supplier_id)  params.set('supplier_id', filters.supplier_id)
+    if (filters?.featured)     params.set('featured', '1')
+    if (filters?.on_sale)      params.set('on_sale', '1')
+    if (filters?.min_price)    params.set('min_price', String(filters.min_price))
+    if (filters?.max_price)    params.set('max_price', String(filters.max_price))
+    if (filters?.per_page)     params.set('per_page', String(filters.per_page))
+    if (filters?.page)         params.set('page', String(filters.page))
     const qs  = params.toString()
     const url = `/catalog/products${qs ? `?${qs}` : ''}`
 
@@ -193,5 +221,53 @@ export const catalogService = {
 
   generateVariants(data: GenerateVariantsRequest): Promise<ProductVariant[]> {
     return apiPost<ProductVariant[], GenerateVariantsRequest>('/catalog/variants/generate', data)
+  },
+
+  duplicateProduct(uuid: string): Promise<Product> {
+    return apiPost<Product>(`/catalog/products/${uuid}/duplicate`)
+  },
+
+  // ── Product Lots ──────────────────────────────────────────────────────────────
+
+  getLots(productUuid: string): Promise<ProductLot[]> {
+    return apiGet<ProductLot[]>(`/catalog/products/${productUuid}/lots`)
+  },
+
+  createLot(productUuid: string, data: ProductLotData): Promise<ProductLot> {
+    return apiPost<ProductLot, ProductLotData>(`/catalog/products/${productUuid}/lots`, data)
+  },
+
+  updateLot(uuid: string, data: Partial<ProductLotData>): Promise<ProductLot> {
+    return apiPut<ProductLot, Partial<ProductLotData>>(`/catalog/lots/${uuid}`, data)
+  },
+
+  deleteLot(uuid: string): Promise<void> {
+    return apiDelete<void>(`/catalog/lots/${uuid}`)
+  },
+
+  // ── Kit Items ─────────────────────────────────────────────────────────────────
+
+  getKitItems(productUuid: string): Promise<CatalogKitItem[]> {
+    return apiGet<CatalogKitItem[]>(`/catalog/products/${productUuid}/kit-items`)
+  },
+
+  createKitItem(productUuid: string, data: KitItemData): Promise<CatalogKitItem> {
+    return apiPost<CatalogKitItem, KitItemData>(`/catalog/products/${productUuid}/kit-items`, data)
+  },
+
+  deleteKitItem(uuid: string): Promise<void> {
+    return apiDelete<void>(`/catalog/kit-items/${uuid}`)
+  },
+
+  // ── Price History ─────────────────────────────────────────────────────────────
+
+  getPriceHistory(productUuid: string): Promise<ProductPriceHistory[]> {
+    return apiGet<ProductPriceHistory[]>(`/catalog/products/${productUuid}/price-history`)
+  },
+
+  // ── Share Links ───────────────────────────────────────────────────────────────
+
+  generateShareLink(productUuid: string): Promise<{ url: string; expires_at: string }> {
+    return apiPost<{ url: string; expires_at: string }>(`/catalog/products/${productUuid}/datasheet/share`)
   },
 }

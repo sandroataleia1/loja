@@ -136,6 +136,19 @@ export interface CreateProductRequest {
   cest?:              string | null
   cfop_default?:      string | null
   origin_code?:       number | null
+  // Logistics
+  weight_gross_g?:    number | null
+  weight_net_g?:      number | null
+  dimensions?:        { width?: number | null; height?: number | null; depth?: number | null } | null
+  min_sale_qty?:      number | null
+  sale_multiplier?:   number | null
+  // SEO & Marketing
+  seo_title?:         string | null
+  seo_description?:   string | null
+  is_on_sale?:        boolean
+  sale_ends_at?:      string | null
+  // Technical attributes
+  technical_attributes?: { name: string; value: string }[]
 }
 
 // ── RBAC contracts ─────────────────────────────────────────────────────────
