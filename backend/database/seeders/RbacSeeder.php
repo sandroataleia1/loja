@@ -23,7 +23,7 @@ final class RbacSeeder extends Seeder
         RoleSlugEnum::Manager->value => [
             'dashboard.view',
             'customers.view', 'customers.create', 'customers.update', 'customers.delete',
-            'products.view', 'products.create', 'products.update', 'products.delete',
+            'products.view', 'products.create', 'products.update', 'products.delete', 'products.view_cost',
             'inventory.view', 'inventory.adjust', 'inventory.transfer',
             'sales.view', 'sales.create', 'sales.cancel', 'sales.discount',
             'cashier.open', 'cashier.close', 'cashier.reopen',

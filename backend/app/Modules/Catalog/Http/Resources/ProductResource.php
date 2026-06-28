@@ -10,6 +10,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 final class ProductResource extends JsonResource
 {
+    private function canViewCost(): bool
+    {
+        return auth()->user()?->hasPermission('products.view_cost') ?? false;
+    }
+
     public function toArray(Request $request): array
     {
         return [
@@ -36,9 +41,14 @@ final class ProductResource extends JsonResource
             'visibility'             => $this->visibility?->value,
             'visibility_label'       => $this->visibility?->label(),
             'base_price_cents'       => $this->base_price_cents,
-            'base_price'             => $this->base_price_formatted,
-            'cost_price_cents'       => $this->cost_price_cents,
-            'cost_price'             => $this->cost_price_formatted,
+            'base_price'             => $this->base_price_cents !== null ? round($this->base_price_cents / 100, 2) : null,
+            'base_price_formatted'   => $this->base_price_formatted,
+            'cost_price_cents'       => $this->when($this->canViewCost(), $this->cost_price_cents),
+            'cost_price'             => $this->when(
+                $this->canViewCost(),
+                $this->cost_price_cents !== null ? round($this->cost_price_cents / 100, 2) : null,
+            ),
+            'cost_price_formatted'   => $this->when($this->canViewCost(), $this->cost_price_formatted),
             'weight_gross_g'         => $this->weight_gross_g,
             'weight_net_g'           => $this->weight_net_g,
             'dimensions'             => $this->dimensions,

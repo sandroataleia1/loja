@@ -295,8 +295,10 @@ export interface Product {
   visibility:             ProductVisibility
   visibility_label:       string
   base_price:             number | null
-  cost_price:             number | null
+  base_price_formatted:   string | null
   base_price_cents:       number | null
+  cost_price:             number | null
+  cost_price_formatted:   string | null
   cost_price_cents:       number | null
   is_featured:            boolean
   is_digital:             boolean
@@ -829,5 +831,59 @@ export interface PurchaseOrder {
   receipts_count?:        number
   created_at:             string
   updated_at:             string
+}
+
+// ── Pricing ───────────────────────────────────────────────────────────────────
+
+export type PriceListType = 'retail' | 'wholesale' | 'representative' | 'special' | 'cost'
+
+export interface PriceList {
+  uuid:                 string
+  name:                 string
+  code:                 string
+  type:                 PriceListType
+  type_label:           string
+  currency:             string
+  max_discount_percent: number
+  is_default:           boolean
+  is_active:            boolean
+  valid_from:           string | null
+  valid_to:             string | null
+  products_count:       number
+  created_at:           string
+}
+
+export interface ProductPrice {
+  uuid:                   string
+  price_list_id:          string
+  product:                { uuid: string; name: string; code: string } | null
+  variant:                { uuid: string; sku: string; name: string | null; price_cents: number } | null
+  price_cents:            number
+  price_formatted:        string
+  min_price_cents:        number | null
+  min_price_formatted:    string | null
+  cost_price_cents:       number | null
+  packaging_price_cents:  number | null
+  packaging_qty:          number | null
+  valid_from:             string | null
+  valid_to:               string | null
+  is_currently_valid:     boolean
+}
+
+export interface PriceHistoryEntry {
+  uuid:              string
+  product_id:        string | null
+  variant_id:        string | null
+  price_list_id:     string | null
+  old_price_cents:   number | null
+  new_price_cents:   number
+  variation_cents:   number | null
+  variation_percent: number | null
+  reason:            string | null
+  changed_by:        string | null
+  changed_at:        string
+  product?:          { uuid: string; name: string; code: string }
+  variant?:          { uuid: string; sku: string }
+  changer?:          { uuid: string; name: string }
 }
 

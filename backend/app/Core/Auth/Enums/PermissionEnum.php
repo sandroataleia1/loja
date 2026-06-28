@@ -16,10 +16,11 @@ enum PermissionEnum: string
     case CustomersDelete = 'customers.delete';
 
     // ── Products ──────────────────────────────────────────────────────────────
-    case ProductsView   = 'products.view';
-    case ProductsCreate = 'products.create';
-    case ProductsUpdate = 'products.update';
-    case ProductsDelete = 'products.delete';
+    case ProductsView     = 'products.view';
+    case ProductsCreate   = 'products.create';
+    case ProductsUpdate   = 'products.update';
+    case ProductsDelete   = 'products.delete';
+    case ProductsViewCost = 'products.view_cost';
 
     // ── Inventory ─────────────────────────────────────────────────────────────
     case InventoryView     = 'inventory.view';
@@ -106,7 +107,7 @@ enum PermissionEnum: string
             self::CustomersView, self::CustomersCreate, self::CustomersUpdate,
             self::CustomersDelete                                                           => 'customers',
             self::ProductsView, self::ProductsCreate, self::ProductsUpdate,
-            self::ProductsDelete                                                            => 'products',
+            self::ProductsDelete, self::ProductsViewCost                                   => 'products',
             self::InventoryView, self::InventoryAdjust, self::InventoryTransfer            => 'inventory',
             self::SalesView, self::SalesCreate, self::SalesCancel, self::SalesDiscount     => 'sales',
             self::CashierOpen, self::CashierClose, self::CashierReopen                     => 'cashier',
@@ -145,6 +146,7 @@ enum PermissionEnum: string
             self::ProductsCreate         => 'Criar produtos',
             self::ProductsUpdate         => 'Editar produtos',
             self::ProductsDelete         => 'Excluir produtos',
+            self::ProductsViewCost       => 'Visualizar custo dos produtos',
             self::InventoryView          => 'Visualizar estoque',
             self::InventoryAdjust        => 'Ajustar estoque',
             self::InventoryTransfer      => 'Transferir estoque',

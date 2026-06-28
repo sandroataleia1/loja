@@ -48,9 +48,10 @@ Route::get('products/import/template',      [ProductImportController::class, 'te
 Route::get('price-lists/import/template',   [PriceImportController::class,  'template'])->name('price-lists.import.template');
 
 // Price lists — read
-Route::get('price-lists',            [PriceListController::class, 'index'])->name('price-lists.index');
-Route::get('price-lists/{priceList}', [PriceListController::class, 'show'])->name('price-lists.show');
-Route::get('price-lists/{priceList}/prices', [PriceListController::class, 'prices'])->name('price-lists.prices');
+Route::get('price-lists',                     [PriceListController::class, 'index'])->name('price-lists.index');
+Route::get('price-lists/{priceList}',         [PriceListController::class, 'show'])->name('price-lists.show');
+Route::get('price-lists/{priceList}/prices',  [PriceListController::class, 'prices'])->name('price-lists.prices');
+Route::get('price-lists/{priceList}/history', [PriceListController::class, 'history'])->name('price-lists.history');
 
 // Products — QR Code endpoint (read)
 Route::get('products/{product}/qrcode', [ProductController::class, 'qrcode'])->name('products.qrcode');

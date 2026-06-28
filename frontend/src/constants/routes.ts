@@ -35,6 +35,7 @@ export const ROUTES = {
   CATEGORIES:  '/catalog/categories',
   ATTRIBUTES:  '/catalog/attributes',
   GRIDS:       '/catalog/grids',
+  PRICE_LISTS: '/precos',
 
   // RBAC
   USERS:        '/users',

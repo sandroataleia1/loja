@@ -6,15 +6,19 @@ import { Plus, Search, Filter, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 import { AppPageHeader } from '@/components/shared/app-page-header'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { ViewToggle } from '@/components/ui/view-toggle'
 import { CustomerTable } from '@/features/customers/components/customer-table'
+import { CustomerCard } from '@/features/customers/components/customer-card'
 import {
   useCustomers,
   useDeleteCustomer,
   useBlockCustomer,
   useUnblockCustomer,
 } from '@/features/customers/hooks'
+import { useLocalStorage } from '@/hooks/use-local-storage'
 import { ROUTES } from '@/constants'
 import type { CustomerFilters } from '@/services/customer.service'
 
@@ -32,13 +36,13 @@ export default function CustomersPage() {
   const [blockUuid,        setBlockUuid]        = useState<string | null>(null)
   const [blockReason,      setBlockReason]      = useState('')
   const [showFilterSheet,  setShowFilterSheet]  = useState(false)
+  const [view,             setView]             = useLocalStorage<'table' | 'grid'>('customers-view', 'table')
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(t)
   }, [search])
 
-  // Build filters
   const filters: CustomerFilters = {
     q:        debouncedSearch || undefined,
     page,
@@ -64,13 +68,8 @@ export default function CustomersPage() {
   function handleDeleteConfirm() {
     if (!deleteUuid) return
     deleteCustomer(deleteUuid, {
-      onSuccess: () => {
-        toast.success('Cliente excluído com sucesso.')
-        setDeleteUuid(null)
-      },
-      onError: (err) => {
-        toast.error(err instanceof Error ? err.message : 'Erro ao excluir cliente.')
-      },
+      onSuccess: () => { toast.success('Cliente excluído com sucesso.'); setDeleteUuid(null) },
+      onError:   (err) => { toast.error(err instanceof Error ? err.message : 'Erro ao excluir cliente.') },
     })
   }
 
@@ -79,50 +78,29 @@ export default function CustomersPage() {
     blockCustomer(
       { uuid: blockUuid, reason: blockReason.trim() },
       {
-        onSuccess: () => {
-          toast.success('Cliente bloqueado com sucesso.')
-          setBlockUuid(null)
-          setBlockReason('')
-        },
-        onError: (err) => {
-          toast.error(err instanceof Error ? err.message : 'Erro ao bloquear cliente.')
-        },
+        onSuccess: () => { toast.success('Cliente bloqueado com sucesso.'); setBlockUuid(null); setBlockReason('') },
+        onError:   (err) => { toast.error(err instanceof Error ? err.message : 'Erro ao bloquear cliente.') },
       },
     )
   }
 
-  // Shared filter controls (used in both inline bar and filter sheet)
   const filterControls = (
     <>
-      <select
-        className={SELECT_CLASS}
-        value={status}
-        onChange={(e) => handleFilterChange(() => setStatus(e.target.value))}
-      >
+      <select className={SELECT_CLASS} value={status} onChange={(e) => handleFilterChange(() => setStatus(e.target.value))}>
         <option value="">Todos os status</option>
         <option value="active">Ativo</option>
         <option value="blocked">Bloqueado</option>
         <option value="inactive">Inativo</option>
       </select>
-
-      <select
-        className={SELECT_CLASS}
-        value={personType}
-        onChange={(e) => handleFilterChange(() => setPersonType(e.target.value))}
-      >
+      <select className={SELECT_CLASS} value={personType} onChange={(e) => handleFilterChange(() => setPersonType(e.target.value))}>
         <option value="">PF e PJ</option>
         <option value="INDIVIDUAL">Pessoa Física</option>
         <option value="COMPANY">Pessoa Jurídica</option>
       </select>
-
       <select
         className={SELECT_CLASS}
         value={daysWithoutSale ?? ''}
-        onChange={(e) =>
-          handleFilterChange(() =>
-            setDaysWithoutSale(e.target.value ? Number(e.target.value) : undefined),
-          )
-        }
+        onChange={(e) => handleFilterChange(() => setDaysWithoutSale(e.target.value ? Number(e.target.value) : undefined))}
       >
         <option value="">Todos os períodos</option>
         <option value="30">&gt; 30 dias sem venda</option>
@@ -134,14 +112,7 @@ export default function CustomersPage() {
 
   return (
     <>
-      {/* Print styles */}
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body { font-size: 11px; }
-          table { width: 100%; }
-        }
-      `}</style>
+      <style>{`@media print { .no-print { display: none !important; } body { font-size: 11px; } table { width: 100%; } }`}</style>
 
       <div className="space-y-6">
         <div className="no-print">
@@ -161,7 +132,7 @@ export default function CustomersPage() {
 
         {/* Filter bar */}
         <div className="no-print">
-          {/* Mobile: search + filter button */}
+          {/* Mobile */}
           <div className="flex items-center gap-2 md:hidden">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -172,22 +143,16 @@ export default function CustomersPage() {
                 onChange={(e) => handleFilterChange(() => setSearch(e.target.value))}
               />
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilterSheet(true)}
-              className="shrink-0"
-            >
+            <Button variant="outline" size="sm" onClick={() => setShowFilterSheet(true)} className="shrink-0">
               <Filter className="h-4 w-4 mr-1.5" />
               Filtros
-              {(status || personType || daysWithoutSale) && (
-                <span className="ml-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
-              )}
+              {(status || personType || daysWithoutSale) && <span className="ml-1.5 h-1.5 w-1.5 rounded-full bg-primary" />}
             </Button>
+            <ViewToggle view={view} onChange={setView} />
           </div>
 
-          {/* Desktop: all filters inline */}
-          <div className="hidden md:flex flex-wrap items-center gap-2">
+          {/* Desktop */}
+          <div className="hidden md:flex items-center gap-2 flex-wrap">
             <div className="relative flex-1 min-w-48 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
@@ -198,53 +163,72 @@ export default function CustomersPage() {
               />
             </div>
             {filterControls}
+            <div className="ml-auto flex items-center gap-2">
+              {meta && (
+                <span className="text-sm text-muted-foreground whitespace-nowrap">{meta.total} registros</span>
+              )}
+              <Separator orientation="vertical" className="h-6" />
+              <ViewToggle view={view} onChange={setView} />
+            </div>
           </div>
         </div>
 
-        {/* Table */}
-        <CustomerTable
-          customers={customers}
-          isLoading={isLoading}
-          onDelete={(uuid) => setDeleteUuid(uuid)}
-          onBlock={(uuid) => {
-            setBlockUuid(uuid)
-            setBlockReason('')
-          }}
-          onUnblock={(uuid) =>
-            unblockCustomer(uuid, {
-              onSuccess: () => toast.success('Cliente desbloqueado com sucesso.'),
-              onError: (err) =>
-                toast.error(err instanceof Error ? err.message : 'Erro ao desbloquear cliente.'),
-            })
-          }
-        />
+        {/* Content */}
+        {view === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {isLoading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="rounded-lg border p-4 space-y-3">
+                    <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+                    <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                    <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
+                  </div>
+                ))
+              : customers.length === 0
+              ? (
+                  <div className="col-span-full py-12 text-center text-muted-foreground border rounded-lg">
+                    Nenhum cliente encontrado.
+                  </div>
+                )
+              : customers.map((customer) => (
+                  <CustomerCard
+                    key={customer.uuid}
+                    customer={customer}
+                    onDelete={(uuid) => setDeleteUuid(uuid)}
+                    onBlock={(uuid) => { setBlockUuid(uuid); setBlockReason('') }}
+                    onUnblock={(uuid) =>
+                      unblockCustomer(uuid, {
+                        onSuccess: () => toast.success('Cliente desbloqueado com sucesso.'),
+                        onError:   (err) => toast.error(err instanceof Error ? err.message : 'Erro ao desbloquear cliente.'),
+                      })
+                    }
+                  />
+                ))
+            }
+          </div>
+        ) : (
+          <CustomerTable
+            customers={customers}
+            isLoading={isLoading}
+            onDelete={(uuid) => setDeleteUuid(uuid)}
+            onBlock={(uuid) => { setBlockUuid(uuid); setBlockReason('') }}
+            onUnblock={(uuid) =>
+              unblockCustomer(uuid, {
+                onSuccess: () => toast.success('Cliente desbloqueado com sucesso.'),
+                onError:   (err) => toast.error(err instanceof Error ? err.message : 'Erro ao desbloquear cliente.'),
+              })
+            }
+          />
+        )}
 
         {/* Pagination */}
         {meta && meta.last_page > 1 && (
           <div className="no-print flex items-center justify-between text-sm text-muted-foreground">
-            <span>
-              Mostrando {customers.length} de {meta.total} clientes
-            </span>
+            <span>Mostrando {customers.length} de {meta.total} clientes</span>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Anterior
-              </Button>
-              <span className="px-2">
-                {page} / {meta.last_page}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= meta.last_page}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Próximo
-              </Button>
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
+              <span className="px-2">{page} / {meta.last_page}</span>
+              <Button variant="outline" size="sm" disabled={page >= meta.last_page} onClick={() => setPage((p) => p + 1)}>Próximo</Button>
             </div>
           </div>
         )}
@@ -252,9 +236,7 @@ export default function CustomersPage() {
         {/* Delete confirmation */}
         <ConfirmDialog
           open={Boolean(deleteUuid)}
-          onOpenChange={(open) => {
-            if (!open) setDeleteUuid(null)
-          }}
+          onOpenChange={(open) => { if (!open) setDeleteUuid(null) }}
           onConfirm={handleDeleteConfirm}
           loading={isDeleting}
           title="Excluir cliente?"
@@ -268,22 +250,14 @@ export default function CustomersPage() {
             <div className="bg-card border rounded-2xl shadow-2xl w-full max-w-md flex flex-col">
               <div className="flex items-center justify-between px-5 py-4 border-b">
                 <p className="font-bold">Bloquear cliente</p>
-                <button
-                  type="button"
-                  onClick={() => setBlockUuid(null)}
-                  className="text-muted-foreground hover:text-foreground text-xl leading-none"
-                >
-                  &times;
-                </button>
+                <button type="button" onClick={() => setBlockUuid(null)} className="text-muted-foreground hover:text-foreground text-xl leading-none">&times;</button>
               </div>
               <div className="p-5 space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Informe o motivo do bloqueio. O cliente não poderá realizar compras enquanto estiver bloqueado.
                 </p>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium" htmlFor="block-reason">
-                    Motivo do bloqueio *
-                  </label>
+                  <label className="text-sm font-medium" htmlFor="block-reason">Motivo do bloqueio *</label>
                   <textarea
                     id="block-reason"
                     className="w-full min-h-24 rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y"
@@ -294,19 +268,8 @@ export default function CustomersPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-3 px-5 py-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setBlockUuid(null)}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={!blockReason.trim() || isBlocking}
-                  onClick={handleBlockConfirm}
-                >
+                <Button type="button" variant="outline" onClick={() => setBlockUuid(null)}>Cancelar</Button>
+                <Button type="button" variant="destructive" disabled={!blockReason.trim() || isBlocking} onClick={handleBlockConfirm}>
                   {isBlocking ? 'Bloqueando…' : 'Bloquear'}
                 </Button>
               </div>
@@ -315,34 +278,21 @@ export default function CustomersPage() {
         )}
       </div>
 
-      {/* ── Filter sheet (mobile) ── */}
+      {/* Filter sheet (mobile) */}
       {showFilterSheet && (
         <div className="md:hidden fixed inset-0 z-40">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowFilterSheet(false)}
-          />
-          {/* Sheet */}
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowFilterSheet(false)} />
           <div className="absolute top-0 right-0 bottom-0 w-72 bg-background border-l shadow-xl flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <p className="font-semibold">Filtros</p>
-              <button
-                type="button"
-                onClick={() => setShowFilterSheet(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <button type="button" onClick={() => setShowFilterSheet(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Status</label>
-                <select
-                  className={`${SELECT_CLASS} w-full`}
-                  value={status}
-                  onChange={(e) => handleFilterChange(() => setStatus(e.target.value))}
-                >
+                <select className={`${SELECT_CLASS} w-full`} value={status} onChange={(e) => handleFilterChange(() => setStatus(e.target.value))}>
                   <option value="">Todos os status</option>
                   <option value="active">Ativo</option>
                   <option value="blocked">Bloqueado</option>
@@ -351,11 +301,7 @@ export default function CustomersPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Tipo de Pessoa</label>
-                <select
-                  className={`${SELECT_CLASS} w-full`}
-                  value={personType}
-                  onChange={(e) => handleFilterChange(() => setPersonType(e.target.value))}
-                >
+                <select className={`${SELECT_CLASS} w-full`} value={personType} onChange={(e) => handleFilterChange(() => setPersonType(e.target.value))}>
                   <option value="">PF e PJ</option>
                   <option value="INDIVIDUAL">Pessoa Física</option>
                   <option value="COMPANY">Pessoa Jurídica</option>
@@ -363,15 +309,8 @@ export default function CustomersPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Dias sem venda</label>
-                <select
-                  className={`${SELECT_CLASS} w-full`}
-                  value={daysWithoutSale ?? ''}
-                  onChange={(e) =>
-                    handleFilterChange(() =>
-                      setDaysWithoutSale(e.target.value ? Number(e.target.value) : undefined),
-                    )
-                  }
-                >
+                <select className={`${SELECT_CLASS} w-full`} value={daysWithoutSale ?? ''}
+                  onChange={(e) => handleFilterChange(() => setDaysWithoutSale(e.target.value ? Number(e.target.value) : undefined))}>
                   <option value="">Todos os períodos</option>
                   <option value="30">&gt; 30 dias sem venda</option>
                   <option value="60">&gt; 60 dias sem venda</option>
@@ -380,12 +319,7 @@ export default function CustomersPage() {
               </div>
             </div>
             <div className="p-4 border-t">
-              <Button
-                className="w-full"
-                onClick={() => setShowFilterSheet(false)}
-              >
-                Aplicar filtros
-              </Button>
+              <Button className="w-full" onClick={() => setShowFilterSheet(false)}>Aplicar filtros</Button>
             </div>
           </div>
         </div>

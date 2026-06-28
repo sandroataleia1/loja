@@ -7,6 +7,7 @@ import type {
   ContactType,
   PersonType,
   FiscalPolicyMode,
+  PriceListType,
 } from './shared-types'
 
 // Re-exports shared domain types
@@ -72,6 +73,10 @@ export type {
   FiscalDocument,
   FiscalSettings,
   TaxProfile,
+  PriceListType,
+  PriceList,
+  ProductPrice,
+  PriceHistoryEntry,
 } from './shared-types'
 
 // ── Auth contracts ─────────────────────────────────────────────────────────
@@ -404,4 +409,37 @@ export interface SyncSalePayload {
     amount:    number
     reference: string | null
   }>
+}
+
+// ── Pricing contracts ─────────────────────────────────────────────────────────
+
+export interface CreatePriceListRequest {
+  name:                  string
+  code:                  string
+  type:                  PriceListType
+  currency?:             string
+  max_discount_percent?: number
+  is_default?:           boolean
+  is_active?:            boolean
+  valid_from?:           string | null
+  valid_to?:             string | null
+}
+
+export interface UpdatePriceListRequest extends Partial<CreatePriceListRequest> {}
+
+export interface UpsertPriceItem {
+  product_id?:             string
+  variant_id?:             string
+  price_cents:             number
+  min_price_cents?:        number | null
+  cost_price_cents?:       number | null
+  packaging_price_cents?:  number | null
+  packaging_qty?:          number | null
+  valid_from?:             string | null
+  valid_to?:               string | null
+  reason?:                 string
+}
+
+export interface UpsertPricesRequest {
+  prices: UpsertPriceItem[]
 }

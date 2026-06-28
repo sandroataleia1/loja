@@ -6,6 +6,9 @@ namespace App\Modules\Catalog\Http\Controllers;
 
 use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Catalog\Enums\PriceListTypeEnum;
+use App\Modules\Catalog\Http\Resources\PriceListResource;
+use App\Modules\Catalog\Http\Resources\ProductPriceResource;
+use App\Modules\Catalog\Http\Resources\ProductPriceHistoryResource;
 use App\Modules\Catalog\Models\PriceList;
 use App\Modules\Catalog\Models\ProductPrice;
 use App\Modules\Catalog\Models\ProductPriceHistory;
@@ -41,9 +44,13 @@ final class PriceListController extends Controller
             $query->currentlyValid();
         }
 
-        $lists = $query->orderBy('name')->get();
+        if ($request->filled('type')) {
+            $query->where('type', $request->string('type'));
+        }
 
-        return $this->success($lists->map(fn (PriceList $l) => $this->formatList($l)));
+        $lists = $query->withCount('productPrices')->orderBy('name')->get();
+
+        return $this->success(PriceListResource::collection($lists));
     }
 
     public function store(Request $request): JsonResponse
@@ -70,12 +77,12 @@ final class PriceListController extends Controller
             return PriceList::create($data);
         });
 
-        return $this->created($this->formatList($list));
+        return $this->created(new PriceListResource($list->loadCount('productPrices')));
     }
 
     public function show(PriceList $priceList): JsonResponse
     {
-        return $this->success($this->formatList($priceList));
+        return $this->success(new PriceListResource($priceList->loadCount('productPrices')));
     }
 
     public function update(Request $request, PriceList $priceList): JsonResponse
@@ -104,7 +111,7 @@ final class PriceListController extends Controller
             return $priceList->refresh();
         });
 
-        return $this->success($this->formatList($updated));
+        return $this->success(new PriceListResource($updated->loadCount('productPrices')));
     }
 
     public function destroy(PriceList $priceList): JsonResponse
@@ -199,29 +206,42 @@ final class PriceListController extends Controller
         return $this->success(message: count($rows) . ' preço(s) atualizados.');
     }
 
-    public function prices(PriceList $priceList): JsonResponse
+    public function prices(Request $request, PriceList $priceList): JsonResponse
     {
-        $prices = $priceList->productPrices()
-            ->with(['product:uuid,code,name', 'variant:uuid,sku,name'])
-            ->paginate(50);
+        $query = $priceList->productPrices()
+            ->with(['product:uuid,code,name', 'variant:uuid,sku,name,price_cents']);
 
-        return $this->success($prices);
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->string('product_id'));
+        }
+
+        if ($request->filled('variant_id')) {
+            $query->where('variant_id', $request->string('variant_id'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->string('search');
+            $query->where(function ($q) use ($search): void {
+                $q->whereHas('product', fn ($pq) => $pq->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('code', 'ilike', "%{$search}%"))
+                  ->orWhereHas('variant', fn ($vq) => $vq->where('sku', 'ilike', "%{$search}%")
+                    ->orWhere('name', 'ilike', "%{$search}%"));
+            });
+        }
+
+        $prices = $query->paginate((int) $request->input('per_page', 50));
+
+        return $this->success(ProductPriceResource::collection($prices)->response()->getData(true));
     }
 
-    private function formatList(PriceList $l): array
+    public function history(Request $request, PriceList $priceList): JsonResponse
     {
-        return [
-            'uuid'                 => $l->uuid,
-            'name'                 => $l->name,
-            'code'                 => $l->code,
-            'type'                 => $l->type->value,
-            'type_label'           => $l->type->label(),
-            'currency'             => $l->currency,
-            'max_discount_percent' => $l->max_discount_percent,
-            'is_default'           => $l->is_default,
-            'is_active'            => $l->is_active,
-            'valid_from'           => $l->valid_from?->toDateString(),
-            'valid_to'             => $l->valid_to?->toDateString(),
-        ];
+        $history = ProductPriceHistory::query()
+            ->where('price_list_id', $priceList->uuid)
+            ->with(['product:uuid,code,name', 'variant:uuid,sku', 'changedBy:uuid,name'])
+            ->orderByDesc('changed_at')
+            ->paginate((int) $request->input('per_page', 30));
+
+        return $this->success(ProductPriceHistoryResource::collection($history)->response()->getData(true));
     }
 }

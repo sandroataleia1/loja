@@ -1,31 +1,14 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { Eye, EyeOff, Pencil, Trash2, Lock, Unlock } from 'lucide-react'
+import { Eye, Pencil, Trash2, Lock, Unlock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ROUTES } from '@/constants'
-import { customerService } from '@/services/customer.service'
+import { formatDocument } from '@/lib/formatters'
 import type { Customer } from '@store/shared-types'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatDocument(document: string | null, personType: Customer['person_type']): string {
-  if (!document) return '—'
-  const digits = document.replace(/\D/g, '')
-  if (personType === 'INDIVIDUAL' && digits.length === 11) {
-    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-  }
-  if (personType === 'COMPANY' && digits.length === 14) {
-    return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
-  }
-  return document
-}
-
-function maskDocument(personType: Customer['person_type']): string {
-  return personType === 'INDIVIDUAL' ? '***.***.***-**' : '**.***.***/****-**'
-}
 
 function formatCurrency(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -73,20 +56,6 @@ interface CustomerTableProps {
 }
 
 export function CustomerTable({ customers, isLoading, onDelete, onBlock, onUnblock }: CustomerTableProps) {
-  const [revealed, setRevealed] = useState<Set<string>>(new Set())
-
-  function handleReveal(uuid: string) {
-    setRevealed((prev) => new Set(prev).add(uuid))
-    customerService.logSensitiveView(uuid, 'document')
-    setTimeout(() => {
-      setRevealed((prev) => {
-        const next = new Set(prev)
-        next.delete(uuid)
-        return next
-      })
-    }, 5000)
-  }
-
   if (isLoading) {
     return (
       <>
@@ -103,16 +72,12 @@ export function CustomerTable({ customers, isLoading, onDelete, onBlock, onUnblo
         {/* Desktop loading */}
         <div className="hidden md:block rounded-md border overflow-hidden">
           <table className="w-full text-sm">
-            <thead>
-              <TableHead />
-            </thead>
+            <thead><TableHead /></thead>
             <tbody>
               {Array.from({ length: 4 }).map((_, i) => (
                 <tr key={i} className="border-b last:border-0">
                   {Array.from({ length: 7 }).map((__, j) => (
-                    <td key={j} className="px-4 py-3">
-                      <Skeleton className="h-4 w-full" />
-                    </td>
+                    <td key={j} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td>
                   ))}
                 </tr>
               ))}
@@ -127,9 +92,7 @@ export function CustomerTable({ customers, isLoading, onDelete, onBlock, onUnblo
     return (
       <div className="rounded-md border">
         <table className="w-full text-sm">
-          <thead>
-            <TableHead />
-          </thead>
+          <thead><TableHead /></thead>
           <tbody>
             <tr>
               <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
@@ -150,11 +113,9 @@ export function CustomerTable({ customers, isLoading, onDelete, onBlock, onUnblo
           const c = customer as any
           const customerStatus: string = c.status ?? (customer.is_active ? 'active' : 'inactive')
           const creditLimitCents: number = c.credit_limit_cents ?? 0
-          const isRevealed = revealed.has(customer.uuid)
 
           return (
             <div key={customer.uuid} className="rounded-lg border p-4 space-y-3">
-              {/* Linha 1: nome + badge PF/PJ + badge status */}
               <div className="flex items-start gap-2 flex-wrap">
                 <Link
                   href={`${ROUTES.CUSTOMERS}/${customer.uuid}`}
@@ -168,75 +129,44 @@ export function CustomerTable({ customers, isLoading, onDelete, onBlock, onUnblo
                 <StatusBadge status={customerStatus} />
               </div>
 
-              {/* Linha 2: CPF/CNPJ mascarado + telefone */}
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <span className="font-mono text-xs">
-                    {isRevealed
-                      ? formatDocument(customer.document, customer.person_type)
-                      : maskDocument(customer.person_type)}
-                  </span>
-                  <button
-                    type="button"
-                    title={isRevealed ? 'Ocultar documento' : 'Revelar documento'}
-                    onClick={() => isRevealed ? undefined : handleReveal(customer.uuid)}
-                    className="p-0.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                  >
-                    {isRevealed ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                  </button>
-                </div>
+                <span className="font-mono text-xs">{formatDocument(customer.document)}</span>
                 <span>·</span>
                 <span>{getPrimaryPhone(customer)}</span>
               </div>
 
-              {/* Linha 3: Limite de crédito */}
               <div className="text-sm text-muted-foreground">
                 Limite: <span className="font-medium text-foreground">{formatCurrency(creditLimitCents / 100)}</span>
               </div>
 
-              {/* Linha 4: botões de ação */}
               <div className="flex items-center gap-1 pt-1 border-t">
                 <Link
                   href={`${ROUTES.CUSTOMERS}/${customer.uuid}`}
                   className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                 >
-                  <Eye className="h-3.5 w-3.5" />
-                  Ver
+                  <Eye className="h-3.5 w-3.5" /> Ver
                 </Link>
                 <Link
                   href={`${ROUTES.CUSTOMERS}/${customer.uuid}/edit`}
                   className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Editar
+                  <Pencil className="h-3.5 w-3.5" /> Editar
                 </Link>
                 {customerStatus === 'active' ? (
-                  <button
-                    type="button"
-                    onClick={() => onBlock(customer.uuid)}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:bg-muted transition-colors text-muted-foreground hover:text-orange-600"
-                  >
-                    <Lock className="h-3.5 w-3.5" />
-                    Bloquear
+                  <button type="button" onClick={() => onBlock(customer.uuid)}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:bg-muted transition-colors text-muted-foreground hover:text-orange-600">
+                    <Lock className="h-3.5 w-3.5" /> Bloquear
                   </button>
                 ) : customerStatus === 'blocked' ? (
-                  <button
-                    type="button"
-                    onClick={() => onUnblock(customer.uuid)}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:bg-muted transition-colors text-muted-foreground hover:text-green-600"
-                  >
-                    <Unlock className="h-3.5 w-3.5" />
-                    Desbloquear
+                  <button type="button" onClick={() => onUnblock(customer.uuid)}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:bg-muted transition-colors text-muted-foreground hover:text-green-600">
+                    <Unlock className="h-3.5 w-3.5" /> Desbloquear
                   </button>
                 ) : null}
                 {!customer.is_default_consumer && (
-                  <button
-                    type="button"
-                    onClick={() => onDelete(customer.uuid)}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:bg-muted transition-colors text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Excluir
+                  <button type="button" onClick={() => onDelete(customer.uuid)}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:bg-muted transition-colors text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-3.5 w-3.5" /> Excluir
                   </button>
                 )}
               </div>
@@ -248,24 +178,19 @@ export function CustomerTable({ customers, isLoading, onDelete, onBlock, onUnblo
       {/* ── Desktop table ── */}
       <div className="hidden md:block rounded-md border overflow-x-auto">
         <table className="w-full text-sm">
-          <thead>
-            <TableHead />
-          </thead>
+          <thead><TableHead /></thead>
           <tbody>
             {customers.map((customer) => {
               const c = customer as any
               const customerStatus: string = c.status ?? (customer.is_active ? 'active' : 'inactive')
               const creditLimitCents: number = c.credit_limit_cents ?? 0
-              const isRevealed = revealed.has(customer.uuid)
 
               return (
                 <tr key={customer.uuid} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
-                  {/* Código */}
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
                     {c.code ?? customer.code ?? '—'}
                   </td>
 
-                  {/* Nome / Tipo */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Link
@@ -283,83 +208,47 @@ export function CustomerTable({ customers, isLoading, onDelete, onBlock, onUnblo
                     )}
                   </td>
 
-                  {/* CPF/CNPJ — mascarado com reveal */}
+                  {/* CPF/CNPJ — direto, sem mascaramento */}
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <span className="font-mono text-xs">
-                        {isRevealed
-                          ? formatDocument(customer.document, customer.person_type)
-                          : maskDocument(customer.person_type)}
-                      </span>
-                      <button
-                        type="button"
-                        title={isRevealed ? 'Ocultar documento' : 'Revelar documento'}
-                        onClick={() => isRevealed ? undefined : handleReveal(customer.uuid)}
-                        className="p-0.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                      >
-                        {isRevealed ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                      </button>
-                    </div>
+                    <span className="font-mono text-xs">{formatDocument(customer.document)}</span>
                   </td>
 
-                  {/* Telefone */}
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                     {getPrimaryPhone(customer)}
                   </td>
 
-                  {/* Limite de Crédito */}
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                     {formatCurrency(creditLimitCents / 100)}
                   </td>
 
-                  {/* Situação */}
                   <td className="px-4 py-3">
                     <StatusBadge status={customerStatus} />
                   </td>
 
-                  {/* Ações */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      <Link
-                        href={`${ROUTES.CUSTOMERS}/${customer.uuid}`}
-                        title="Ver"
-                        className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                      >
+                      <Link href={`${ROUTES.CUSTOMERS}/${customer.uuid}`} title="Ver"
+                        className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                         <Eye className="h-3.5 w-3.5" />
                       </Link>
-                      <Link
-                        href={`${ROUTES.CUSTOMERS}/${customer.uuid}/edit`}
-                        title="Editar"
-                        className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                      >
+                      <Link href={`${ROUTES.CUSTOMERS}/${customer.uuid}/edit`} title="Editar"
+                        className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                         <Pencil className="h-3.5 w-3.5" />
                       </Link>
                       {customerStatus === 'active' ? (
-                        <button
-                          type="button"
-                          title="Bloquear"
-                          onClick={() => onBlock(customer.uuid)}
-                          className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-orange-600"
-                        >
+                        <button type="button" title="Bloquear" onClick={() => onBlock(customer.uuid)}
+                          className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-orange-600">
                           <Lock className="h-3.5 w-3.5" />
                         </button>
                       ) : customerStatus === 'blocked' ? (
-                        <button
-                          type="button"
-                          title="Desbloquear"
-                          onClick={() => onUnblock(customer.uuid)}
-                          className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-green-600"
-                        >
+                        <button type="button" title="Desbloquear" onClick={() => onUnblock(customer.uuid)}
+                          className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-green-600">
                           <Unlock className="h-3.5 w-3.5" />
                         </button>
                       ) : null}
                       {!customer.is_default_consumer && (
-                        <button
-                          type="button"
-                          title="Excluir"
-                          onClick={() => onDelete(customer.uuid)}
-                          className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-destructive"
-                        >
+                        <button type="button" title="Excluir" onClick={() => onDelete(customer.uuid)}
+                          className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-destructive">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       )}
