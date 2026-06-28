@@ -11,6 +11,8 @@ import { AppPageHeader } from '@/components/shared/app-page-header'
 import { AppCard } from '@/components/shared/app-card'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { CustomerDetailsCard } from '@/features/customers/components/customer-details-card'
+import { PrintButton } from '@/features/customers/components/print-button'
+import { LGPDActions } from '@/features/customers/components/lgpd-actions'
 import { useCustomer, useDetachTag } from '@/features/customers/hooks'
 import { ROUTES } from '@/constants'
 
@@ -29,6 +31,7 @@ function CustomerDetailContent({ uuid }: { uuid: string }) {
   if (isLoading) {
     return (
       <div className="space-y-4">
+        <Skeleton className="h-28 w-full rounded-lg" />
         <Skeleton className="h-48 w-full rounded-lg" />
         <Skeleton className="h-64 w-full rounded-lg" />
       </div>
@@ -42,6 +45,9 @@ function CustomerDetailContent({ uuid }: { uuid: string }) {
       </p>
     )
   }
+
+  const c = customer as any
+  const customerStatus: string = c.status ?? (customer.is_active ? 'active' : 'inactive')
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'addresses', label: 'Endereços' },
@@ -65,11 +71,62 @@ function CustomerDetailContent({ uuid }: { uuid: string }) {
 
   return (
     <div className="space-y-6">
+      {/* ── Header card ── */}
+      <AppCard>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* Avatar com iniciais */}
+          <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <span className="text-primary font-bold text-xl">
+              {customer.name.slice(0, 2).toUpperCase()}
+            </span>
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-bold">{customer.name}</h2>
+              <Badge variant="outline" className="text-xs">
+                {customer.person_type === 'INDIVIDUAL' ? 'PF' : 'PJ'}
+              </Badge>
+              {customerStatus === 'blocked' && (
+                <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">Bloqueado</Badge>
+              )}
+              {customerStatus === 'inactive' && (
+                <Badge variant="secondary" className="text-xs">Inativo</Badge>
+              )}
+              {(!customerStatus || customerStatus === 'active') && (
+                <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Ativo</Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Cód: {c.code ?? '—'}
+              {customer.email && ` · ${customer.email}`}
+            </p>
+          </div>
+
+          {/* Actions — hidden on mobile */}
+          <div className="hidden sm:flex items-center gap-2 flex-wrap">
+            <PrintButton label="Ficha" customerUuid={customer.uuid} type="registration-card" />
+            <PrintButton label="Contrato" customerUuid={customer.uuid} type="contract" />
+            <LGPDActions customerUuid={customer.uuid} />
+          </div>
+        </div>
+
+        {/* Mobile actions */}
+        <div className="sm:hidden flex gap-2 flex-wrap mt-4 pt-4 border-t">
+          <PrintButton label="Ficha" customerUuid={customer.uuid} type="registration-card" />
+          <PrintButton label="Contrato" customerUuid={customer.uuid} type="contract" />
+          <LGPDActions customerUuid={customer.uuid} />
+        </div>
+      </AppCard>
+
+      {/* Dados do cliente */}
       <CustomerDetailsCard customer={customer} />
 
       {/* Tabs */}
       <div>
-        <div className="border-b flex gap-1 mb-4">
+        {/* Desktop tabs */}
+        <div className="hidden md:flex border-b gap-1 mb-4">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -84,6 +141,19 @@ function CustomerDetailContent({ uuid }: { uuid: string }) {
               {tab.label}
             </button>
           ))}
+        </div>
+
+        {/* Mobile tabs — select */}
+        <div className="md:hidden mb-4">
+          <select
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value as Tab)}
+          >
+            {tabs.map((tab) => (
+              <option key={tab.key} value={tab.key}>{tab.label}</option>
+            ))}
+          </select>
         </div>
 
         {/* Addresses tab */}

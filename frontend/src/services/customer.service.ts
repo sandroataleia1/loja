@@ -100,6 +100,13 @@ export const customerService = {
     return apiGet<CustomerFinancialSummary>(`/customers/${uuid}/financial-summary`)
   },
 
+  logSensitiveView(uuid: string, field: 'document' | 'income' | 'credit_score'): Promise<void> {
+    return apiClient
+      .post(`/customers/${uuid}/sensitive-view`, { field })
+      .then(() => undefined)
+      .catch(() => undefined) // silently fail — never break UX for audit
+  },
+
   // ── Addresses ────────────────────────────────────────────────────────────
 
   getAddresses(customerUuid: string): Promise<CustomerAddress[]> {

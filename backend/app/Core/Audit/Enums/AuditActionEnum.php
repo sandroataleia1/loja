@@ -44,11 +44,14 @@ enum AuditActionEnum: string
     case FiscalEnvironmentChanged  = 'fiscal.environment_changed';
 
     // ── Cadastros Mestres ─────────────────────────────────────────────────────
-    case CustomerCreated         = 'customer.created';
-    case CustomerUpdated         = 'customer.updated';
-    case CustomerDeleted         = 'customer.deleted';
-    case CustomerBlocked         = 'customer.blocked';
-    case CustomerCreditAnalyzed  = 'customer.credit_analyzed';
+    case CustomerCreated             = 'customer.created';
+    case CustomerUpdated             = 'customer.updated';
+    case CustomerDeleted             = 'customer.deleted';
+    case CustomerBlocked             = 'customer.blocked';
+    case CustomerCreditAnalyzed      = 'customer.credit_analyzed';
+    case CustomerSensitiveDataViewed = 'customer.sensitive_data_viewed';
+    case CustomerDataExported        = 'customer.data_exported';
+    case CustomerDeletionRequested   = 'customer.deletion_requested';
     case SupplierCreated   = 'supplier.created';
     case SupplierUpdated   = 'supplier.updated';
     case SupplierDeleted   = 'supplier.deleted';
@@ -109,10 +112,13 @@ enum AuditActionEnum: string
             self::FiscalError              => 'Erro fiscal',
             self::FiscalRetried            => 'Fiscal reprocessado',
             self::FiscalEnvironmentChanged => 'Ambiente SEFAZ alterado',
-            self::CustomerCreated   => 'Cliente criado',
-            self::CustomerUpdated   => 'Cliente atualizado',
-            self::CustomerDeleted   => 'Cliente excluído',
-            self::CustomerBlocked   => 'Cliente bloqueado',
+            self::CustomerCreated             => 'Cliente criado',
+            self::CustomerUpdated             => 'Cliente atualizado',
+            self::CustomerDeleted             => 'Cliente excluído',
+            self::CustomerBlocked             => 'Cliente bloqueado',
+            self::CustomerSensitiveDataViewed => 'Dado sensível visualizado',
+            self::CustomerDataExported        => 'Dados exportados (LGPD)',
+            self::CustomerDeletionRequested   => 'Exclusão de dados solicitada',
             self::SupplierCreated   => 'Fornecedor criado',
             self::SupplierUpdated   => 'Fornecedor atualizado',
             self::SupplierDeleted   => 'Fornecedor excluído',

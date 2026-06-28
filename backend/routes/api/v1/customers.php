@@ -7,6 +7,9 @@ use App\Modules\Customers\Http\Controllers\CustomerAssetController;
 use App\Modules\Customers\Http\Controllers\CustomerAuthorizedBuyerController;
 use App\Modules\Customers\Http\Controllers\CustomerBankReferenceController;
 use App\Modules\Customers\Http\Controllers\CustomerBlockController;
+use App\Modules\Customers\Http\Controllers\CustomerDataExportController;
+use App\Modules\Customers\Http\Controllers\CustomerDeletionRequestController;
+use App\Modules\Customers\Http\Controllers\CustomerSensitiveViewController;
 use App\Modules\Customers\Http\Controllers\CustomerCardController;
 use App\Modules\Customers\Http\Controllers\CustomerController;
 use App\Modules\Customers\Http\Controllers\CustomerDocumentController;
@@ -122,3 +125,8 @@ Route::middleware('feature:sales.installment')->group(function (): void {
 // ── Bloquear / Desbloquear ────────────────────────────────────────────────────
 Route::patch('/{customer}/block',   [CustomerBlockController::class, 'block'])->name('block');
 Route::patch('/{customer}/unblock', [CustomerBlockController::class, 'unblock'])->name('unblock');
+
+// ── LGPD ──────────────────────────────────────────────────────────────────────
+Route::post('/{customer}/sensitive-view',    [CustomerSensitiveViewController::class, 'store'])->name('sensitive-view');
+Route::get('/{customer}/export-data',        CustomerDataExportController::class)->name('export-data');
+Route::post('/{customer}/request-deletion',  [CustomerDeletionRequestController::class, 'store'])->name('request-deletion');

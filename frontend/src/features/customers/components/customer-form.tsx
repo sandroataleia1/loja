@@ -271,7 +271,7 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
           onSubmit={handleSubmit((data) => { onAdd(data); onClose() })}
           className="overflow-y-auto flex-1 p-5 space-y-4"
         >
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>CEP *</Label>
               <div className="relative">
@@ -283,6 +283,7 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
                       customInput={Input}
                       format="#####-###"
                       placeholder="00000-000"
+                      inputMode="numeric"
                       className={cepLoading ? 'pr-8' : ''}
                       value={field.value ?? ''}
                       onValueChange={(vals) => field.onChange(vals.formattedValue)}
@@ -329,7 +330,7 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
             {errors.street && <p className="text-xs text-destructive">{errors.street.message}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Complemento</Label>
               <Input placeholder="Apto, Bloco…" {...register('complement')} />
@@ -341,7 +342,7 @@ function AddressDialog({ isFirst, onAdd, onClose }: {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Cidade *</Label>
               <Input placeholder="Cidade" {...register('city')} />
@@ -753,7 +754,7 @@ function PurchaseRefSection({
 
       {adding && (
         <div className="border rounded-lg p-3 space-y-3 bg-muted/20">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
               <Label>Empresa/Loja *</Label>
               <Input
@@ -1078,8 +1079,8 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
           </Button>
         </div>
 
-        {/* ── Tabs ── */}
-        <div className="border-b flex gap-0 overflow-x-auto">
+        {/* ── Tabs — desktop ── */}
+        <div className="hidden md:flex border-b gap-0 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -1095,6 +1096,19 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
               {tab.label}
             </button>
           ))}
+        </div>
+
+        {/* ── Tabs — mobile: select ── */}
+        <div className="md:hidden mb-4">
+          <select
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value as TabId)}
+          >
+            {TABS.map((tab) => (
+              <option key={tab.id} value={tab.id}>{tab.label}</option>
+            ))}
+          </select>
         </div>
 
         {/* ── Tab: Dados Gerais ── */}
@@ -1154,6 +1168,7 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
                       customInput={Input}
                       format={personType === 'COMPANY' ? '##.###.###/####-##' : '###.###.###-##'}
                       placeholder={personType === 'COMPANY' ? '00.000.000/0000-00' : '000.000.000-00'}
+                      inputMode="numeric"
                       value={field.value ?? ''}
                       onValueChange={(vals) => field.onChange(vals.formattedValue)}
                     />
@@ -1662,6 +1677,7 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
                           customInput={Input}
                           format="###.###.###-##"
                           placeholder="000.000.000-00"
+                          inputMode="numeric"
                           value={field.value ?? ''}
                           onValueChange={(vals) => field.onChange(vals.formattedValue)}
                         />
@@ -1757,6 +1773,7 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
                       customInput={Input}
                       format="###.###.###-##"
                       placeholder="000.000.000-00"
+                      inputMode="numeric"
                       value={field.value ?? ''}
                       onValueChange={(vals) => field.onChange(vals.formattedValue)}
                     />
@@ -1977,6 +1994,15 @@ export function CustomerForm({ defaultValues, onSubmit, isSubmitting, mode }: Cu
             {isSubmitting ? 'Salvando…' : mode === 'create' ? 'Criar Cliente' : 'Salvar Alterações'}
           </Button>
         </div>
+        {/* ── Sticky bottom bar — mobile only ── */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-background border-t p-3 flex gap-2">
+          <Button type="submit" className="flex-1" disabled={isSubmitting}>
+            {isSubmitting ? 'Salvando…' : mode === 'create' ? 'Criar Cliente' : 'Salvar'}
+          </Button>
+        </div>
+        {/* Spacer so content isn't hidden behind sticky bar */}
+        <div className="md:hidden h-16" />
+
       </form>
 
       {/* ── Modais ── */}
