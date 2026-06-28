@@ -44,10 +44,11 @@ enum AuditActionEnum: string
     case FiscalEnvironmentChanged  = 'fiscal.environment_changed';
 
     // ── Cadastros Mestres ─────────────────────────────────────────────────────
-    case CustomerCreated   = 'customer.created';
-    case CustomerUpdated   = 'customer.updated';
-    case CustomerDeleted   = 'customer.deleted';
-    case CustomerBlocked   = 'customer.blocked';
+    case CustomerCreated         = 'customer.created';
+    case CustomerUpdated         = 'customer.updated';
+    case CustomerDeleted         = 'customer.deleted';
+    case CustomerBlocked         = 'customer.blocked';
+    case CustomerCreditAnalyzed  = 'customer.credit_analyzed';
     case SupplierCreated   = 'supplier.created';
     case SupplierUpdated   = 'supplier.updated';
     case SupplierDeleted   = 'supplier.deleted';

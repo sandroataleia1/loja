@@ -10,8 +10,11 @@ use App\Modules\Catalog\Enums\ProductVisibilityEnum;
 use App\Modules\Catalog\Enums\UnitOfMeasureEnum;
 use App\Modules\Fiscal\Enums\ProductOriginEnum;
 use App\Modules\Media\Models\MediaAsset;
+use App\Modules\Purchasing\Models\Supplier;
 use App\Shared\Models\BaseModel;
+use App\Shared\Traits\HasCustomFields;
 use Database\Factories\ProductFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -21,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 final class Product extends BaseModel
 {
     /** @use HasFactory<ProductFactory> */
+    use HasCustomFields;
     use HasFactory;
 
     protected static function newFactory(): ProductFactory
@@ -70,6 +74,15 @@ final class Product extends BaseModel
         'dimensions',
         'qr_code_url',
         'location',
+        'origin',
+        'min_sale_qty',
+        'sale_multiplier',
+        'is_on_sale',
+        'sale_ends_at',
+        'seo_title',
+        'seo_description',
+        'supplier_id',
+        'supplier_code',
     ];
 
     protected function casts(): array
@@ -95,6 +108,10 @@ final class Product extends BaseModel
             'dimensions'        => 'array',
             'seo'               => 'array',
             'metadata'          => 'array',
+            'min_sale_qty'      => 'decimal:4',
+            'sale_multiplier'   => 'decimal:4',
+            'is_on_sale'        => 'boolean',
+            'sale_ends_at'      => 'datetime',
         ]);
     }
 
@@ -250,6 +267,28 @@ final class Product extends BaseModel
         return $this->barcodes()->where('is_primary', true)->first();
     }
 
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id', 'uuid');
+    }
+
+    // ── Scopes ────────────────────────────────────────────────────────────────
+
+    public function scopeFeatured(Builder $query): Builder
+    {
+        return $query->where('is_featured', true);
+    }
+
+    public function scopeOnSale(Builder $query): Builder
+    {
+        return $query->where('is_on_sale', true);
+    }
+
+    public function scopeFromSupplier(Builder $query, string $supplierId): Builder
+    {
+        return $query->where('supplier_id', $supplierId);
+    }
+
     // ── Price accessors ───────────────────────────────────────────────────────
 
     public function getBasePriceFormattedAttribute(): ?string
@@ -293,6 +332,11 @@ final class Product extends BaseModel
     public function isPublished(): bool
     {
         return $this->status === ProductStatusEnum::Active;
+    }
+
+    public function isCurrentlyOnSale(): bool
+    {
+        return $this->is_on_sale && ($this->sale_ends_at === null || $this->sale_ends_at->isFuture());
     }
 
     public function isReadyToPublish(): bool

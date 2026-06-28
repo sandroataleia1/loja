@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { customerService, type CustomerFilters } from '@/services/customer.service'
+import { customerService, type CustomerFilters, type CustomerFinancialSummary } from '@/services/customer.service'
 import type { CreateCustomerRequest, UpdateCustomerRequest, CreateCustomerTagRequest } from '@store/contracts'
 
 // ── Query Keys ───────────────────────────────────────────────────────────────
@@ -59,6 +59,40 @@ export function useDeleteCustomer() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: CUSTOMER_QUERY_KEYS.CUSTOMERS })
     },
+  })
+}
+
+export type { CustomerFinancialSummary }
+
+export function useBlockCustomer() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ uuid, reason }: { uuid: string; reason: string }) =>
+      customerService.blockCustomer(uuid, reason),
+    onSuccess: (_, { uuid }) => {
+      qc.invalidateQueries({ queryKey: CUSTOMER_QUERY_KEYS.CUSTOMERS })
+      qc.invalidateQueries({ queryKey: CUSTOMER_QUERY_KEYS.CUSTOMER(uuid) })
+    },
+  })
+}
+
+export function useUnblockCustomer() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (uuid: string) => customerService.unblockCustomer(uuid),
+    onSuccess: (_, uuid) => {
+      qc.invalidateQueries({ queryKey: CUSTOMER_QUERY_KEYS.CUSTOMERS })
+      qc.invalidateQueries({ queryKey: CUSTOMER_QUERY_KEYS.CUSTOMER(uuid) })
+    },
+  })
+}
+
+export function useCustomerFinancialSummary(uuid: string) {
+  return useQuery({
+    queryKey: [...CUSTOMER_QUERY_KEYS.CUSTOMER(uuid), 'financial-summary'],
+    queryFn:  () => customerService.getFinancialSummary(uuid),
+    enabled:  Boolean(uuid),
+    staleTime: 60 * 1000,
   })
 }
 

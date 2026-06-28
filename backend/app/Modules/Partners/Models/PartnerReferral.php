@@ -23,6 +23,8 @@ final class PartnerReferral extends BaseModel
         'commission_value',
         'commission_status',
         'commission_paid_at',
+        'commission_base',
+        'first_purchase_amount_cents',
         'notes',
     ];
 

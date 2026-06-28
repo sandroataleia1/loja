@@ -7,6 +7,7 @@ use App\Core\Auth\Http\Middleware\RequirePermission;
 use App\Core\Auth\Http\Middleware\RequireRole;
 use App\Core\Auth\Http\Middleware\RequireStoreAccess;
 use App\Core\Tenancy\Http\Middleware\ResolveTenant;
+use App\Http\Middleware\RequireFeature;
 use App\Shared\Exceptions\AppException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission'   => RequirePermission::class,
             'role'         => RequireRole::class,
             'store_access' => RequireStoreAccess::class,
+            'feature'      => RequireFeature::class,
         ]);
 
         $middleware->appendToGroup('api', AttachCorrelationIdMiddleware::class);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Customers\Http\Controllers;
 
+use App\Core\Tenancy\Services\FeatureManager;
 use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Customers\Actions\CreateCustomerAction;
 use App\Modules\Customers\Actions\UpdateCustomerAction;
@@ -46,11 +47,14 @@ final class CustomerController extends Controller
                 $request->filled('q'),
                 function ($q) use ($request) {
                     $v = $request->string('q')->toString();
-                    return $q->whereRaw(
-                        "search_vector @@ plainto_tsquery('portuguese', ?)",
-                        [$v]
-                    )->orWhere('code', 'ilike', "%{$v}%")
-                     ->orWhere('email', 'ilike', "%{$v}%");
+                    return $q->where(function ($sub) use ($v) {
+                        $sub->whereRaw(
+                            "search_vector @@ plainto_tsquery('portuguese', ?)",
+                            [$v]
+                        )->orWhere('code', 'ilike', "%{$v}%")
+                         ->orWhere('email', 'ilike', "%{$v}%")
+                         ->orWhere('document', 'ilike', "%{$v}%");
+                    });
                 }
             )
             ->when(
@@ -69,7 +73,27 @@ final class CustomerController extends Controller
                 $request->boolean('active'),
                 fn ($q) => $q->where('is_active', true)
             )
-            ->with(['contacts' => fn ($q) => $q->where('is_primary', true)])
+            ->when(
+                $request->filled('status'),
+                fn ($q) => $q->where('status', $request->input('status'))
+            )
+            ->when(
+                $request->filled('seller_id'),
+                fn ($q) => $q->where('seller_id', $request->input('seller_id'))
+            )
+            ->when(
+                $request->filled('person_type'),
+                fn ($q) => $q->where('person_type', $request->input('person_type'))
+            )
+            ->when(
+                $request->filled('days_without_sale'),
+                fn ($q) => $q->where(
+                    fn ($sub) => $sub
+                        ->whereNull('last_purchase_at')
+                        ->orWhere('last_purchase_at', '<', now()->subDays((int) $request->input('days_without_sale')))
+                )
+            )
+            ->with(['contacts' => fn ($q) => $q->where('is_primary', true), 'seller'])
             ->orderBy('name');
 
         $customers = $query->paginate($request->integer('per_page', 20));
@@ -98,7 +122,28 @@ final class CustomerController extends Controller
     {
         $this->authorize('view', $customer);
 
-        return $this->success(new CustomerResource($customer->load(['addresses', 'contacts', 'tags', 'commercialReferences', 'purchaseReferences'])));
+        $tenantId = $customer->tenant_id;
+        $features = app(FeatureManager::class)->allEnabled($tenantId);
+        $enabled  = array_flip($features);
+
+        $relations = [
+            'addresses', 'contacts', 'tags',
+            'commercialReferences', 'purchaseReferences',
+            'documents', 'interactions',
+            'cards', 'bankReferences',
+        ];
+
+        if (isset($enabled['customer.guarantor'])) {
+            $relations[] = 'guarantors';
+        }
+        if (isset($enabled['customer.credit_analysis'])) {
+            $relations[] = 'assets';
+        }
+        if (isset($enabled['sales.installment'])) {
+            $relations[] = 'authorizedBuyers';
+        }
+
+        return $this->success(new CustomerResource($customer->load($relations)));
     }
 
     public function update(UpdateCustomerRequest $request, Customer $customer, UpdateCustomerAction $action): JsonResponse

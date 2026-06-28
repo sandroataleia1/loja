@@ -31,6 +31,8 @@ final class Supplier extends BaseModel
         'performance_score', 'avg_delivery_days', 'return_rate',
         'supply_category', 'default_payment_term_days',
         'bank_name', 'bank_agency', 'bank_account', 'bank_account_type', 'bank_pix_key',
+        'bank_code', 'bank_account_holder', 'bank_pix_type',
+        'total_purchased_cents', 'last_purchase_at', 'purchase_count',
     ];
 
     protected function casts(): array
@@ -91,5 +93,20 @@ final class Supplier extends BaseModel
     public function contacts(): HasMany
     {
         return $this->hasMany(SupplierContact::class, 'supplier_id', 'uuid');
+    }
+
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(SupplierEvaluation::class, 'supplier_id', 'uuid')->latest('reference_date');
+    }
+
+    public function latestEvaluation(): ?SupplierEvaluation
+    {
+        return $this->evaluations()->first();
+    }
+
+    public function averageScore(): float
+    {
+        return (float) $this->evaluations()->avg('overall_score');
     }
 }

@@ -13,6 +13,8 @@ use App\Core\Auth\Services\PermissionCache;
 use App\Core\Tenancy\Models\TenantSettings;
 use App\Modules\Catalog\Models\PriceList;
 use App\Modules\Finance\Models\CostCenter;
+use App\Modules\Financial\Models\CollectionRule;
+use App\Modules\Settings\Models\CustomFieldDefinition;
 use Illuminate\Support\Collection;
 
 /**
@@ -140,12 +142,79 @@ final class BootstrapTenantAction
             ['code' => 'VAREJO',   'name' => 'Varejo',        'type' => 'retail',         'is_default' => true],
             ['code' => 'ATACADO',  'name' => 'Atacado',       'type' => 'wholesale',      'is_default' => false],
             ['code' => 'REPRES',   'name' => 'Representante', 'type' => 'representative', 'is_default' => false],
+            ['code' => 'ESPECIAL', 'name' => 'Especial',      'type' => 'special',        'is_default' => false],
             ['code' => 'CUSTO',    'name' => 'Custo',         'type' => 'cost',           'is_default' => false],
         ];
         foreach ($defaultPriceLists as $pl) {
             PriceList::firstOrCreate(
                 ['tenant_id' => $tenantId, 'code' => $pl['code']],
                 array_merge($pl, ['is_active' => true, 'currency' => 'BRL']),
+            );
+        }
+
+        // Cria régua de cobrança padrão para o novo tenant (3/10/30/60 dias).
+        $defaultCollectionRules = [
+            [
+                'name'             => 'WhatsApp — 3 dias de atraso',
+                'trigger_days'     => 3,
+                'action_type'      => 'whatsapp',
+                'message_template' => 'Olá {cliente}, sua parcela de {valor} venceu em {vencimento}. Por favor, regularize sua situação.',
+                'sort_order'       => 1,
+            ],
+            [
+                'name'             => 'E-mail — 10 dias de atraso',
+                'trigger_days'     => 10,
+                'action_type'      => 'email',
+                'message_template' => 'Prezado(a) {cliente}, sua parcela de {valor} vencida em {vencimento} ainda está em aberto. Entre em contato conosco para regularização.',
+                'sort_order'       => 2,
+            ],
+            [
+                'name'             => 'Bloquear cliente — 30 dias de atraso',
+                'trigger_days'     => 30,
+                'action_type'      => 'block_customer',
+                'message_template' => null,
+                'sort_order'       => 3,
+            ],
+            [
+                'name'             => 'Notificar gerente — 60 dias de atraso',
+                'trigger_days'     => 60,
+                'action_type'      => 'notify_seller',
+                'message_template' => null,
+                'sort_order'       => 4,
+            ],
+        ];
+        foreach ($defaultCollectionRules as $rule) {
+            CollectionRule::firstOrCreate(
+                ['tenant_id' => $tenantId, 'name' => $rule['name']],
+                array_merge($rule, ['tenant_id' => $tenantId, 'is_active' => true]),
+            );
+        }
+
+        // Cria campos customizados padrão para o novo tenant.
+        $defaultCustomFields = [
+            // entity: customer
+            ['entity_type' => 'customer', 'label' => 'Nome do cônjuge',   'field_key' => 'spouse_name',    'field_type' => 'text',   'sort_order' => 1],
+            ['entity_type' => 'customer', 'label' => 'CPF do cônjuge',    'field_key' => 'spouse_cpf',     'field_type' => 'text',   'sort_order' => 2],
+            ['entity_type' => 'customer', 'label' => 'Profissão',         'field_key' => 'profession',     'field_type' => 'text',   'sort_order' => 3],
+            ['entity_type' => 'customer', 'label' => 'Renda mensal (R$)', 'field_key' => 'monthly_income', 'field_type' => 'number', 'sort_order' => 4],
+            [
+                'entity_type' => 'customer',
+                'label'       => 'Como nos conheceu',
+                'field_key'   => 'how_found_us',
+                'field_type'  => 'select',
+                'options'     => ['Indicação', 'Google', 'Redes sociais', 'Passou na frente', 'Outros'],
+                'sort_order'  => 5,
+            ],
+            ['entity_type' => 'customer', 'label' => 'Referência de obra', 'field_key' => 'work_reference', 'field_type' => 'text', 'sort_order' => 6],
+            // entity: order
+            ['entity_type' => 'order', 'label' => 'Nome da obra',          'field_key' => 'work_name',      'field_type' => 'text', 'sort_order' => 1],
+            ['entity_type' => 'order', 'label' => 'Endereço da obra',      'field_key' => 'work_address',   'field_type' => 'text', 'sort_order' => 2],
+            ['entity_type' => 'order', 'label' => 'Arquiteto/Responsável', 'field_key' => 'architect_name', 'field_type' => 'text', 'sort_order' => 3],
+        ];
+        foreach ($defaultCustomFields as $field) {
+            CustomFieldDefinition::firstOrCreate(
+                ['tenant_id' => $tenantId, 'entity_type' => $field['entity_type'], 'field_key' => $field['field_key']],
+                array_merge($field, ['tenant_id' => $tenantId, 'is_active' => true, 'is_required' => false]),
             );
         }
 

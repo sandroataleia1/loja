@@ -15,6 +15,7 @@ use App\Modules\Partners\Http\Resources\PartnerContactResource;
 use App\Modules\Partners\Http\Resources\PartnerResource;
 use App\Modules\Partners\Models\PartnerContact;
 use App\Modules\Partners\Models\PartnerProfessional;
+use App\Modules\Partners\Models\PartnerReferral;
 use App\Shared\Traits\HasApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -132,5 +133,52 @@ final class PartnerController extends Controller
     {
         $contact->delete();
         return $this->noContent();
+    }
+
+    // ── Statement ─────────────────────────────────────────────────────────────
+
+    public function statement(Request $request, PartnerProfessional $partnerProfessional): JsonResponse
+    {
+        $tenantId = TenantContext::getIdOrFail();
+
+        $year  = (int) ($request->query('year', now()->year));
+        $month = $request->query('month');
+
+        $query = PartnerReferral::where('tenant_id', $tenantId)
+            ->where('partner_id', $partnerProfessional->uuid)
+            ->with('customer:uuid,name,code');
+
+        if ($month) {
+            $query->whereYear('referred_at', $year)->whereMonth('referred_at', (int) $month);
+        } else {
+            $query->whereYear('referred_at', $year);
+        }
+
+        $referrals = $query->orderByDesc('referred_at')->get();
+
+        $totalCommission   = $referrals->sum('commission_value');
+        $pendingCommission = $referrals->where('commission_status', 'pending')->sum('commission_value');
+        $paidCommission    = $referrals->where('commission_status', 'paid')->sum('commission_value');
+
+        return $this->success([
+            'partner'     => new PartnerResource($partnerProfessional),
+            'period'      => ['year' => $year, 'month' => $month],
+            'summary'     => [
+                'total_referrals'   => $referrals->count(),
+                'total_commission'  => $totalCommission,
+                'pending_commission' => $pendingCommission,
+                'paid_commission'   => $paidCommission,
+            ],
+            'referrals'   => $referrals->map(fn ($r) => [
+                'uuid'              => $r->uuid,
+                'customer'          => $r->customer ? ['uuid' => $r->customer->uuid, 'name' => $r->customer->name, 'code' => $r->customer->code] : null,
+                'referred_at'       => $r->referred_at,
+                'commission_base'   => $r->commission_base,
+                'commission_percent' => $r->commission_percent,
+                'commission_value'  => $r->commission_value,
+                'commission_status' => $r->commission_status,
+                'commission_paid_at' => $r->commission_paid_at,
+            ]),
+        ]);
     }
 }

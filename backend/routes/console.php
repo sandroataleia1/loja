@@ -49,3 +49,23 @@ Schedule::call(\App\Modules\Analytics\Jobs\TakeDailySnapshotJob::class . '::disp
     ->name('analytics-daily-snapshot')
     ->withoutOverlapping();
 
+/*
+|--------------------------------------------------------------------------
+| Collection Rules: cobranças automáticas por regras de tenant — 08:00
+|--------------------------------------------------------------------------
+*/
+Schedule::job(new \App\Modules\Financial\Jobs\ExecuteCollectionRulesJob())
+    ->dailyAt('08:00')
+    ->name('execute-collection-rules')
+    ->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Catalog: verificar lotes com vencimento próximo — 07:00 diário
+|--------------------------------------------------------------------------
+*/
+Schedule::job(new \App\Modules\Catalog\Jobs\CheckExpiringLotsJob())
+    ->dailyAt('07:00')
+    ->name('check-expiring-lots')
+    ->withoutOverlapping();
+

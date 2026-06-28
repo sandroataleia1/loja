@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/',                                                    [PartnerController::class, 'index'])->name('index');
 Route::get('/{partnerProfessional}',                               [PartnerController::class, 'show'])->name('show');
+Route::get('/{partnerProfessional}/statement',                     [PartnerController::class, 'statement'])->name('statement');
 
 Route::middleware('permission:partners.create')->group(function (): void {
     Route::post('/', [PartnerController::class, 'store'])->name('store');

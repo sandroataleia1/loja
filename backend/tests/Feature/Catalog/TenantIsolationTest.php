@@ -118,12 +118,15 @@ describe('Customer — isolamento cross-tenant', function (): void {
     it('não retorna clientes de outro tenant', function (): void {
         $otherTenant = Tenant::factory()->create();
 
+        // Captura contagem inicial antes de criar os clientes de teste
+        // (Tenant::factory() dispara TenantCreated → cria 1 Consumidor Final por tenant)
+        $initialCount = Customer::count();
         Customer::factory()->count(4)->create();
         TenantContext::set($otherTenant->uuid);
         Customer::factory()->count(2)->create(['tenant_id' => $otherTenant->uuid]);
         TenantContext::set($this->tenant->uuid);
 
-        expect(Customer::count())->toBe(4);
+        expect(Customer::count())->toBe($initialCount + 4);
     });
 
     it('lança exceção ao consultar sem contexto', function (): void {

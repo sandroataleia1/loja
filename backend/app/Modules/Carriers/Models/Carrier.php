@@ -56,4 +56,14 @@ final class Carrier extends BaseModel
     {
         return $this->hasMany(CarrierContact::class, 'carrier_id', 'uuid');
     }
+
+    public function freightTables(): HasMany
+    {
+        return $this->hasMany(CarrierFreightTable::class, 'carrier_id', 'uuid');
+    }
+
+    public function occurrences(): HasMany
+    {
+        return $this->hasMany(CarrierOccurrence::class, 'carrier_id', 'uuid')->latest('occurred_at');
+    }
 }

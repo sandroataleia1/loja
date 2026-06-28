@@ -61,7 +61,7 @@ final readonly class CreateVariantAction
                 'ncm'              => $dto->ncm,
                 'cest'             => $dto->cest,
                 'cfop_default'     => $dto->cfopDefault,
-                'origin_code'      => $dto->originCode,
+                'origin_code'      => $dto->originCode ?? 0,
                 'tax_profile_id'   => $dto->taxProfileId,
             ]);
 

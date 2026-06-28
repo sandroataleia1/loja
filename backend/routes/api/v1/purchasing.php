@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Purchasing\Http\Controllers\PurchaseOrderController;
 use App\Modules\Purchasing\Http\Controllers\SupplierController;
+use App\Modules\Purchasing\Http\Controllers\SupplierEvaluationController;
 use App\Modules\Purchasing\Http\Controllers\SupplierImportController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,11 @@ Route::get('/suppliers/{supplier}/contacts',                        [SupplierCon
 Route::post('/suppliers/{supplier}/contacts',                       [SupplierController::class, 'storeContact'])->name('suppliers.contacts.store');
 Route::put('/suppliers/{supplier}/contacts/{contact}',              [SupplierController::class, 'updateContact'])->name('suppliers.contacts.update');
 Route::delete('/suppliers/{supplier}/contacts/{contact}',           [SupplierController::class, 'destroyContact'])->name('suppliers.contacts.destroy');
+
+// Supplier evaluations
+Route::get('/suppliers/{supplier}/evaluations',                     [SupplierEvaluationController::class, 'index'])->name('suppliers.evaluations.index');
+Route::post('/suppliers/{supplier}/evaluations',                    [SupplierEvaluationController::class, 'store'])->name('suppliers.evaluations.store');
+Route::delete('/suppliers/{supplier}/evaluations/{evaluation}',     [SupplierEvaluationController::class, 'destroy'])->name('suppliers.evaluations.destroy');
 
 // ── Purchase Orders ───────────────────────────────────────────────────────────
 Route::get('/orders',           [PurchaseOrderController::class, 'index'])->name('orders.index');

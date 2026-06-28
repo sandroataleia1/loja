@@ -10,6 +10,7 @@ use App\Shared\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+
 /**
  * Histórico imutável de preços por produto/variante.
  *
@@ -25,11 +26,12 @@ final class ProductPriceHistory extends Model
     protected $table = 'catalog_price_history';
     protected $primaryKey = 'uuid';
 
-    // Histórico é imutável — sem SoftDeletes, sem updated_at manual
-    public $timestamps = true;
+    // Histórico é imutável — sem SoftDeletes, sem timestamps automáticos (usa changed_at)
+    public $timestamps = false;
 
     protected $fillable = [
         'tenant_id',
+        'price_list_id',
         'product_id',
         'variant_id',
         'old_price_cents',
@@ -46,6 +48,11 @@ final class ProductPriceHistory extends Model
             'new_price_cents' => 'integer',
             'changed_at'      => 'datetime',
         ];
+    }
+
+    public function priceList(): BelongsTo
+    {
+        return $this->belongsTo(PriceList::class, 'price_list_id', 'uuid');
     }
 
     public function product(): BelongsTo
@@ -65,12 +72,12 @@ final class ProductPriceHistory extends Model
 
     public function variationCents(): int
     {
-        return $this->new_price_cents - $this->old_price_cents;
+        return $this->new_price_cents - ($this->old_price_cents ?? 0);
     }
 
     public function variationPercent(): float
     {
-        if ($this->old_price_cents === 0) {
+        if (! $this->old_price_cents) {
             return 0.0;
         }
 

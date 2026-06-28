@@ -18,6 +18,7 @@ final class ProductPrice extends BaseModel
         'variant_id',
         'price_cents',
         'min_price_cents',
+        'cost_price_cents',
         'packaging_price_cents',
         'packaging_qty',
         'valid_from',
@@ -29,6 +30,7 @@ final class ProductPrice extends BaseModel
         return array_merge(parent::casts(), [
             'price_cents'          => 'integer',
             'min_price_cents'      => 'integer',
+            'cost_price_cents'     => 'integer',
             'packaging_price_cents'=> 'integer',
             'packaging_qty'        => 'decimal:4',
             'valid_from'           => 'date',

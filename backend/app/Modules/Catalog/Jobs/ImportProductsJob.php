@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Catalog\Jobs;
 
+use App\Core\Features\FeatureEnum;
+use App\Core\Tenancy\Services\FeatureManager;
+use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Catalog\Actions\CreateProductAction;
 use App\Modules\Catalog\Actions\UpdateProductAction;
 use App\Modules\Catalog\DTOs\CreateProductDTO;
@@ -14,9 +17,11 @@ use App\Modules\Catalog\Models\CatalogBarcode;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Catalog\Models\NcmCode;
 use App\Modules\Catalog\Models\Product;
+use App\Modules\Catalog\Models\ProductImage;
+use App\Modules\Catalog\Models\ProductLot;
 use App\Modules\Catalog\Models\Unit;
 use App\Modules\Catalog\Models\Variant;
-use App\Core\Tenancy\Services\TenantContext;
+use App\Modules\Purchasing\Models\Supplier;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -37,6 +42,8 @@ final class ImportProductsJob implements ShouldQueue
     public int $tries    = 1;
     public int $timeout  = 600;
 
+    private FeatureManager $features;
+
     public function __construct(
         private readonly string $filePath,
         private readonly string $tenantId,
@@ -48,7 +55,9 @@ final class ImportProductsJob implements ShouldQueue
     public function handle(
         CreateProductAction $createAction,
         UpdateProductAction $updateAction,
+        FeatureManager      $features,
     ): void {
+        $this->features = $features;
         TenantContext::set($this->tenantId);
 
         $fullPath = Storage::disk('local')->path($this->filePath);
@@ -151,6 +160,50 @@ final class ImportProductsJob implements ShouldQueue
                     ['tenant_id' => $tenantId, 'value' => $row['barcode_value']],
                     ['variant_id' => $variant->uuid, 'barcode_type' => $barcodeType, 'is_primary' => true],
                 );
+            }
+
+            // Barcode EAN13 — coluna barcode_ean13
+            if (! empty($row['barcode_ean13'])) {
+                CatalogBarcode::firstOrCreate(
+                    ['tenant_id' => $tenantId, 'value' => $row['barcode_ean13']],
+                    ['variant_id' => $variant->uuid ?? null, 'barcode_type' => 'ean13', 'is_primary' => false],
+                );
+            }
+
+            // Lote (feature: inventory.lot_control)
+            if (
+                ! empty($row['lot_number'])
+                && $this->features->isEnabled($tenantId, FeatureEnum::InventoryLotControl)
+            ) {
+                ProductLot::firstOrCreate(
+                    ['tenant_id' => $tenantId, 'product_id' => $product->uuid, 'lot_number' => $row['lot_number']],
+                    [
+                        'variant_id'    => $variant->uuid ?? null,
+                        'received_at'   => now()->toDateString(),
+                        'initial_qty'   => 1,
+                        'current_qty'   => 1,
+                        'expiry_date'   => $row['expiry_date'] ?: null,
+                    ],
+                );
+            }
+        }
+
+        // Imagem por URL
+        if (! empty($row['image_url'])) {
+            ProductImage::firstOrCreate(
+                ['imageable_type' => Product::class, 'imageable_id' => $product->uuid, 'url' => $row['image_url']],
+                ['tenant_id' => $tenantId, 'sort_order' => 0],
+            );
+        }
+
+        // Supplier por code
+        if (! empty($row['supplier_code'])) {
+            $supplier = Supplier::where('tenant_id', $tenantId)->where('code', $row['supplier_code'])->first();
+            if ($supplier && $product->supplier_id !== $supplier->uuid) {
+                $product->update([
+                    'supplier_id'   => $supplier->uuid,
+                    'supplier_code' => $row['supplier_code'],
+                ]);
             }
         }
     }

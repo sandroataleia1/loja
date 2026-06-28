@@ -8,6 +8,7 @@ use App\Core\Tenancy\Services\TenantContext;
 use App\Modules\Catalog\Enums\PriceListTypeEnum;
 use App\Modules\Catalog\Models\PriceList;
 use App\Modules\Catalog\Models\ProductPrice;
+use App\Modules\Catalog\Models\ProductPriceHistory;
 use App\Modules\Catalog\Services\PriceResolverService;
 use App\Shared\Traits\HasApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -20,15 +21,35 @@ final class PriceListController extends Controller
 {
     use HasApiResponse;
 
-    public function index(): JsonResponse
+    /**
+     * Lista tabelas de preço.
+     *
+     * Por padrão retorna apenas ativas e vigentes.
+     * Parâmetros de admin:
+     *   ?include_inactive=true  — inclui listas desativadas
+     *   ?include_expired=true   — inclui listas fora de vigência
+     */
+    public function index(Request $request): JsonResponse
     {
-        $lists = PriceList::active()->currentlyValid()->orderBy('name')->get();
+        $query = PriceList::query();
+
+        if (! $request->boolean('include_inactive')) {
+            $query->active();
+        }
+
+        if (! $request->boolean('include_expired')) {
+            $query->currentlyValid();
+        }
+
+        $lists = $query->orderBy('name')->get();
 
         return $this->success($lists->map(fn (PriceList $l) => $this->formatList($l)));
     }
 
     public function store(Request $request): JsonResponse
     {
+        $tenantId = TenantContext::getIdOrFail();
+
         $data = $request->validate([
             'name'                 => ['required', 'string', 'max:80'],
             'code'                 => ['required', 'string', 'max:20'],
@@ -40,7 +61,14 @@ final class PriceListController extends Controller
             'valid_to'             => ['nullable', 'date', 'after_or_equal:valid_from'],
         ]);
 
-        $list = PriceList::create($data);
+        $list = DB::transaction(function () use ($data, $tenantId): PriceList {
+            if (! empty($data['is_default'])) {
+                PriceList::where('tenant_id', $tenantId)->update(['is_default' => false]);
+                app(PriceResolverService::class)->invalidateDefaultList($tenantId);
+            }
+
+            return PriceList::create($data);
+        });
 
         return $this->created($this->formatList($list));
     }
@@ -52,6 +80,8 @@ final class PriceListController extends Controller
 
     public function update(Request $request, PriceList $priceList): JsonResponse
     {
+        $tenantId = TenantContext::getIdOrFail();
+
         $data = $request->validate([
             'name'                 => ['string', 'max:80'],
             'max_discount_percent' => ['numeric', 'min:0', 'max:100'],
@@ -61,13 +91,31 @@ final class PriceListController extends Controller
             'valid_to'             => ['nullable', 'date'],
         ]);
 
-        $priceList->update($data);
+        $updated = DB::transaction(function () use ($data, $priceList, $tenantId): PriceList {
+            if (! empty($data['is_default'])) {
+                PriceList::where('tenant_id', $tenantId)
+                    ->where('uuid', '!=', $priceList->uuid)
+                    ->update(['is_default' => false]);
+                app(PriceResolverService::class)->invalidateDefaultList($tenantId);
+            }
 
-        return $this->success($this->formatList($priceList->refresh()));
+            $priceList->update($data);
+
+            return $priceList->refresh();
+        });
+
+        return $this->success($this->formatList($updated));
     }
 
     public function destroy(PriceList $priceList): JsonResponse
     {
+        if ($priceList->is_default) {
+            return $this->error(
+                'Não é possível excluir a lista de preço padrão. Defina outra lista como padrão antes de excluir esta.',
+                status: 422,
+            );
+        }
+
         $priceList->delete();
 
         return $this->noContent();
@@ -76,8 +124,12 @@ final class PriceListController extends Controller
     /**
      * Adiciona ou atualiza preços em lote em uma tabela de preços.
      *
-     * Body: [{product_id|variant_id, price_cents, min_price_cents,
-     *         packaging_price_cents, packaging_qty, valid_from, valid_to}]
+     * Body: { prices: [{product_id|variant_id, price_cents, min_price_cents,
+     *         cost_price_cents, packaging_price_cents, packaging_qty, valid_from, valid_to, reason}] }
+     *
+     * Após cada upsert:
+     * - Registra histórico em catalog_price_history (observer não dispara em updateOrCreate)
+     * - Invalida cache Redis da variante afetada
      */
     public function upsertPrices(Request $request, PriceList $priceList): JsonResponse
     {
@@ -87,27 +139,60 @@ final class PriceListController extends Controller
             'prices.*.variant_id'              => ['nullable', 'uuid'],
             'prices.*.price_cents'             => ['required', 'integer', 'min:0'],
             'prices.*.min_price_cents'         => ['nullable', 'integer', 'min:0'],
+            'prices.*.cost_price_cents'        => ['nullable', 'integer', 'min:0'],
             'prices.*.packaging_price_cents'   => ['nullable', 'integer', 'min:0'],
             'prices.*.packaging_qty'           => ['nullable', 'numeric', 'min:0'],
             'prices.*.valid_from'              => ['nullable', 'date'],
             'prices.*.valid_to'                => ['nullable', 'date'],
+            'prices.*.reason'                  => ['nullable', 'string', 'max:255'],
         ])['prices'];
 
-        $tenantId = TenantContext::getIdOrFail();
+        $tenantId  = TenantContext::getIdOrFail();
+        $userId    = auth()->id();
+        $resolver  = app(PriceResolverService::class);
 
-        DB::transaction(function () use ($rows, $priceList, $tenantId): void {
+        DB::transaction(function () use ($rows, $priceList, $tenantId, $userId, $resolver): void {
             foreach ($rows as $row) {
-                $row['tenant_id']     = $tenantId;
-                $row['price_list_id'] = $priceList->uuid;
+                $key = [
+                    'price_list_id' => $priceList->uuid,
+                    'product_id'    => $row['product_id'] ?? null,
+                    'variant_id'    => $row['variant_id'] ?? null,
+                ];
 
-                ProductPrice::updateOrCreate(
-                    [
-                        'price_list_id' => $priceList->uuid,
-                        'product_id'    => $row['product_id'] ?? null,
-                        'variant_id'    => $row['variant_id'] ?? null,
-                    ],
-                    $row,
-                );
+                $fill = array_merge($key, [
+                    'tenant_id'             => $tenantId,
+                    'price_cents'           => $row['price_cents'],
+                    'min_price_cents'       => $row['min_price_cents'] ?? null,
+                    'cost_price_cents'      => $row['cost_price_cents'] ?? null,
+                    'packaging_price_cents' => $row['packaging_price_cents'] ?? null,
+                    'packaging_qty'         => $row['packaging_qty'] ?? null,
+                    'valid_from'            => $row['valid_from'] ?? null,
+                    'valid_to'              => $row['valid_to'] ?? null,
+                ]);
+
+                // Histórico manual (observer não dispara em updateOrCreate)
+                $existing = ProductPrice::where($key)->first();
+                $oldPrice = $existing?->price_cents;
+
+                $productPrice = ProductPrice::updateOrCreate($key, $fill);
+
+                if ($oldPrice !== $row['price_cents']) {
+                    ProductPriceHistory::create([
+                        'tenant_id'       => $tenantId,
+                        'product_id'      => $row['product_id'] ?? null,
+                        'variant_id'      => $row['variant_id'] ?? null,
+                        'old_price_cents' => $oldPrice,
+                        'new_price_cents' => $row['price_cents'],
+                        'changed_by'      => $userId,
+                        'changed_at'      => now(),
+                        'reason'          => $row['reason'] ?? ($oldPrice === null ? 'Cadastro inicial' : null),
+                    ]);
+                }
+
+                // Invalida cache da variante afetada
+                if (! empty($row['variant_id'])) {
+                    $resolver->invalidate($tenantId, $priceList->uuid, $row['variant_id']);
+                }
             }
         });
 

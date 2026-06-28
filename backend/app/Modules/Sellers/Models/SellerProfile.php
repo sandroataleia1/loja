@@ -64,4 +64,21 @@ final class SellerProfile extends BaseModel
     {
         return $this->hasMany(self::class, 'supervisor_id', 'uuid');
     }
+
+    public function targets(): HasMany
+    {
+        return $this->hasMany(SellerTarget::class, 'seller_id', 'uuid')
+            ->orderByDesc('year')->orderByDesc('month');
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(SellerCommission::class, 'seller_id', 'uuid')
+            ->orderByDesc('reference_year')->orderByDesc('reference_month');
+    }
+
+    public function regions(): HasMany
+    {
+        return $this->hasMany(SellerRegion::class, 'seller_id', 'uuid');
+    }
 }

@@ -12,6 +12,32 @@ export interface CustomerFilters {
   include_default?: boolean
   per_page?:        number
   page?:            number
+  status?:          'active' | 'blocked' | 'inactive'
+  seller_id?:       string
+  person_type?:     'INDIVIDUAL' | 'COMPANY'
+  days_without_sale?: number
+}
+
+export interface CustomerFinancialSummary {
+  open_invoices_count:               number
+  open_invoices_total_cents:         number
+  paid_invoices_count:               number
+  paid_invoices_total_cents:         number
+  overdue_invoices_count:            number
+  overdue_invoices_total_cents:      number
+  overdue_paid_invoices_count:       number
+  overdue_paid_invoices_total_cents: number
+  last_purchase_at:                  string | null
+  last_purchase_invoice_number:      string | null
+  last_purchase_value_cents:         number
+  highest_purchase_value_cents:      number
+  highest_purchase_invoice_number:   string | null
+  highest_purchase_at:               string | null
+  avg_ticket_cents:                  number
+  days_without_purchase:             number
+  credit_limit_cents:                number
+  credit_used_cents:                 number
+  credit_available_cents:            number
 }
 
 export const customerService = {
@@ -27,6 +53,10 @@ export const customerService = {
     if (filters?.include_default) params.set('include_default', '1')
     if (filters?.per_page)        params.set('per_page', String(filters.per_page))
     if (filters?.page)            params.set('page', String(filters.page))
+    if (filters?.status)          params.set('status', filters.status)
+    if (filters?.seller_id)       params.set('seller_id', filters.seller_id)
+    if (filters?.person_type)     params.set('person_type', filters.person_type)
+    if (filters?.days_without_sale !== undefined) params.set('days_without_sale', String(filters.days_without_sale))
     const qs = params.toString()
     const url = `/customers${qs ? `?${qs}` : ''}`
 
@@ -56,6 +86,18 @@ export const customerService = {
 
   deleteCustomer(uuid: string): Promise<void> {
     return apiDelete<void>(`/customers/${uuid}`)
+  },
+
+  async blockCustomer(uuid: string, reason: string): Promise<void> {
+    await apiClient.patch(`/customers/${uuid}/block`, { reason })
+  },
+
+  async unblockCustomer(uuid: string): Promise<void> {
+    await apiClient.patch(`/customers/${uuid}/unblock`, {})
+  },
+
+  getFinancialSummary(uuid: string): Promise<CustomerFinancialSummary> {
+    return apiGet<CustomerFinancialSummary>(`/customers/${uuid}/financial-summary`)
   },
 
   // ── Addresses ────────────────────────────────────────────────────────────

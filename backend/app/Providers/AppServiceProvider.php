@@ -29,6 +29,10 @@ use App\Modules\Inventory\Events\StockAdjusted;
 use Illuminate\Queue\Events\JobFailed;
 use App\Modules\Catalog\Events\ProductCreated as CatalogProductCreated;
 use App\Modules\Catalog\Listeners\DispatchQrCodeGenerationOnProductCreated;
+use App\Modules\Catalog\Models\ProductLot;
+use App\Modules\Catalog\Models\ProductPrice;
+use App\Modules\Catalog\Observers\ProductLotObserver;
+use App\Modules\Catalog\Observers\ProductPriceObserver;
 use App\Modules\Catalog\Listeners\UpdateProductAnalyticsOnSaleCompleted;
 use App\Modules\Catalog\Listeners\UpdateProductAnalyticsOnSaleReturned;
 use App\Modules\Customers\Http\Policies\CustomerPolicy;
@@ -132,6 +136,12 @@ final class AppServiceProvider extends ServiceProvider
 
         // ── Catalog: QR Code generation ───────────────────────────────────────
         Event::listen(CatalogProductCreated::class, DispatchQrCodeGenerationOnProductCreated::class);
+
+        // ── Catalog: histórico imutável de preços ─────────────────────────────
+        ProductPrice::observe(ProductPriceObserver::class);
+
+        // ── Catalog: notificação de lotes com vencimento próximo ──────────────
+        ProductLot::observe(ProductLotObserver::class);
 
         // ── Sale lifecycle ────────────────────────────────────────────────────
         Event::listen(SaleCompleted::class, CreateFinancialEntryOnSaleCompleted::class);

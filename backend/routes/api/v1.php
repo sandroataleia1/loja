@@ -5,7 +5,9 @@ declare(strict_types=1);
 use App\Core\Auth\Http\Controllers\AuthController;
 use App\Core\Auth\Http\Controllers\PinLoginController;
 use App\Core\Platform\Http\Controllers\PlatformAuthController;
+use App\Core\Tenancy\Http\Controllers\TenantFeaturesController;
 use App\Http\Controllers\CepLookupController;
+use App\Modules\Catalog\Http\Controllers\PublicProductController;
 use App\Modules\Pix\Http\Controllers\PixWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +19,14 @@ use Illuminate\Support\Facades\Route;
 Route::post('webhooks/pix/{tenantUuid}', [PixWebhookController::class, 'handle'])
     ->name('webhooks.pix')
     ->middleware('throttle:60,1');
+
+/*
+|--------------------------------------------------------------------------
+| Catalog — Rota pública de compartilhamento de produto (sem autenticação)
+|--------------------------------------------------------------------------
+*/
+Route::get('catalog/public/products/{token}', [PublicProductController::class, 'show'])
+    ->name('catalog.public.products.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -284,6 +294,54 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::prefix('cost-centers')->name('cost-centers.')
         ->middleware('permission:cost_centers.view')
         ->group(base_path('routes/api/v1/cost-centers.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Pricing Module — resolução de preço e aplicação de desconto
+    | Resolve: qualquer autenticado | Apply discount: orders.create
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('pricing')->name('pricing.')
+        ->group(base_path('routes/api/v1/pricing.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Tenant Features — feature flags por tenant (settings.view)
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('tenant/features')->name('tenant.features.')
+        ->middleware('permission:settings.view')
+        ->group(function (): void {
+            Route::get('/', [TenantFeaturesController::class, 'index'])->name('index');
+            Route::patch('/{feature}', [TenantFeaturesController::class, 'update'])->name('update');
+        });
+
+    /*
+    |----------------------------------------------------------------------
+    | Onboarding — perfil inicial do tenant
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('onboarding')->name('onboarding.')
+        ->middleware('permission:settings.update')
+        ->group(base_path('routes/api/v1/onboarding.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Custom Fields — campos extras configuráveis por tenant
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('custom-fields')->name('custom-fields.')
+        ->middleware('permission:settings.view')
+        ->group(base_path('routes/api/v1/custom-fields.php'));
+
+    /*
+    |----------------------------------------------------------------------
+    | Collection Rules — regras de cobrança automática
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('collection-rules')->name('collection-rules.')
+        ->middleware('permission:financial.view')
+        ->group(base_path('routes/api/v1/collection-rules.php'));
 
     /*
     |----------------------------------------------------------------------

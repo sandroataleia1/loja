@@ -5,17 +5,23 @@ declare(strict_types=1);
 use App\Modules\Catalog\Http\Controllers\AttributeGroupController;
 use App\Modules\Catalog\Http\Controllers\BarcodeController;
 use App\Modules\Catalog\Http\Controllers\BrandController;
+use App\Modules\Catalog\Http\Controllers\CatalogExportController;
 use App\Modules\Catalog\Http\Controllers\CategoryController;
 use App\Modules\Catalog\Http\Controllers\CollectionController;
 use App\Modules\Catalog\Http\Controllers\GridController;
+use App\Modules\Catalog\Http\Controllers\PriceImportController;
 use App\Modules\Catalog\Http\Controllers\PriceListController;
 use App\Modules\Catalog\Http\Controllers\ProductCollectionItemController;
 use App\Modules\Catalog\Http\Controllers\ProductController;
+use App\Modules\Catalog\Http\Controllers\ProductDatasheetController;
 use App\Modules\Catalog\Http\Controllers\ProductImageController;
 use App\Modules\Catalog\Http\Controllers\ProductImportController;
+use App\Modules\Catalog\Http\Controllers\ProductLotController;
 use App\Modules\Catalog\Http\Controllers\ProductPriceHistoryController;
+use App\Modules\Catalog\Http\Controllers\StorageAddressController;
 use App\Modules\Catalog\Http\Controllers\UnitConversionController;
 use App\Modules\Catalog\Http\Controllers\VariantController;
+use App\Modules\Catalog\Http\Controllers\VariantStorageLocationController;
 use App\Modules\Media\Http\Controllers\MediaAssetController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,8 +35,17 @@ use Illuminate\Support\Facades\Route;
 // Barcode lookup — qualquer usuário autenticado pode consultar (PDV)
 Route::get('barcode/{value}', [BarcodeController::class, 'lookup'])->name('barcode.lookup');
 
+// Ficha técnica — read (qualquer autenticado)
+Route::get('products/{product}/datasheet', [ProductDatasheetController::class, 'pdf'])->name('products.datasheet.pdf');
+Route::post('products/{product}/datasheet/share', [ProductDatasheetController::class, 'share'])->name('products.datasheet.share');
+
+// Exportação CSV — read
+Route::get('catalog/products/export/csv', [CatalogExportController::class, 'exportCsv'])->name('catalog.products.export.csv');
+Route::get('catalog/export/{jobId}/status', [CatalogExportController::class, 'exportStatus'])->name('catalog.export.download');
+
 // Import template — não requer autenticação especial
-Route::get('products/import/template', [ProductImportController::class, 'template'])->name('products.import.template');
+Route::get('products/import/template',      [ProductImportController::class, 'template'])->name('products.import.template');
+Route::get('price-lists/import/template',   [PriceImportController::class,  'template'])->name('price-lists.import.template');
 
 // Price lists — read
 Route::get('price-lists',            [PriceListController::class, 'index'])->name('price-lists.index');
@@ -133,13 +148,53 @@ Route::middleware('permission:products.view')->group(function (): void {
     Route::delete('unit-conversions/{unitConversion}',   [UnitConversionController::class, 'destroy'])->name('unit-conversions.destroy');
 
     // Price lists — write
-    Route::post('price-lists',            [PriceListController::class, 'store'])->name('price-lists.store');
-    Route::put('price-lists/{priceList}', [PriceListController::class, 'update'])->name('price-lists.update');
-    Route::delete('price-lists/{priceList}', [PriceListController::class, 'destroy'])->name('price-lists.destroy');
-    Route::post('price-lists/{priceList}/prices', [PriceListController::class, 'upsertPrices'])->name('price-lists.prices.upsert');
+    Route::post('price-lists',                     [PriceListController::class,  'store'])->name('price-lists.store');
+    Route::put('price-lists/{priceList}',          [PriceListController::class,  'update'])->name('price-lists.update');
+    Route::delete('price-lists/{priceList}',       [PriceListController::class,  'destroy'])->name('price-lists.destroy');
+    Route::post('price-lists/{priceList}/prices',  [PriceListController::class,  'upsertPrices'])->name('price-lists.prices.upsert');
+    Route::post('price-lists/{priceList}/import',  [PriceImportController::class, 'import'])->name('price-lists.import');
 
     // Product import
     Route::post('products/import', [ProductImportController::class, 'import'])->name('products.import');
+
+    // Exportação PDF (assíncrona)
+    Route::post('catalog/export/pdf', [CatalogExportController::class, 'exportPdf'])->name('catalog.export.pdf');
+
+    // Lotes (feature gate: inventory.lot_control)
+    Route::middleware('feature:inventory.lot_control')->group(function (): void {
+        Route::apiResource('products/{product}/lots', ProductLotController::class)
+            ->names([
+                'index'   => 'products.lots.index',
+                'store'   => 'products.lots.store',
+                'show'    => 'products.lots.show',
+                'update'  => 'products.lots.update',
+                'destroy' => 'products.lots.destroy',
+            ]);
+    });
+
+    // Endereçamento de estoque (feature gate: inventory.address)
+    Route::middleware('feature:inventory.address')->group(function (): void {
+        Route::apiResource('storage-addresses', StorageAddressController::class)
+            ->names([
+                'index'   => 'storage-addresses.index',
+                'store'   => 'storage-addresses.store',
+                'show'    => 'storage-addresses.show',
+                'update'  => 'storage-addresses.update',
+                'destroy' => 'storage-addresses.destroy',
+            ]);
+
+        Route::get('inventory/address/{address}', [StorageAddressController::class, 'findByAddress'])
+            ->name('inventory.address.find');
+
+        Route::apiResource('variants/{variant}/storage-locations', VariantStorageLocationController::class)
+            ->names([
+                'index'   => 'variants.storage-locations.index',
+                'store'   => 'variants.storage-locations.store',
+                'show'    => 'variants.storage-locations.show',
+                'update'  => 'variants.storage-locations.update',
+                'destroy' => 'variants.storage-locations.destroy',
+            ]);
+    });
 
     // Images (legacy)
     Route::post('images',                  [ProductImageController::class, 'store'])->name('images.store');
