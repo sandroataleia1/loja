@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useCallback } from 'react'
-import { Upload, Trash2, Star, ImageIcon } from 'lucide-react'
+import { Upload, Trash2, Star, ImageIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -14,11 +14,19 @@ interface ProductImageManagerProps {
   onRefresh:   () => void
 }
 
+function formatBytes(bytes: number | null): string {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1048576).toFixed(1)} MB`
+}
+
 export function ProductImageManager({ productUuid, images, onRefresh }: ProductImageManagerProps) {
-  const inputRef                  = useRef<HTMLInputElement>(null)
-  const [uploading, setUploading] = useState(false)
-  const [dragging,  setDragging]  = useState(false)
-  const [removing,  setRemoving]  = useState<string | null>(null)
+  const inputRef                    = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading]   = useState(false)
+  const [dragging,  setDragging]    = useState(false)
+  const [removing,  setRemoving]    = useState<string | null>(null)
+  const [promoting, setPromoting]   = useState<string | null>(null)
 
   const uploadFiles = useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files).filter((f) => f.type.startsWith('image/'))
@@ -54,12 +62,16 @@ export function ProductImageManager({ productUuid, images, onRefresh }: ProductI
   }
 
   async function handleSetPrimary(imageUuid: string) {
-    // Re-upload trick not needed — we just upload as primary via a delete+re-upload isn't right.
-    // The backend sets is_primary on existing image via the AttachImage endpoint (it only creates).
-    // Simplest UX: remove current primary flag visually and tell user to delete and re-upload.
-    // Better: we need a PATCH endpoint. For now, show a toast guiding the user.
-    toast.info('Para definir como principal: exclua e reenvie a imagem marcando-a como a primeira.')
-    void imageUuid
+    setPromoting(imageUuid)
+    try {
+      await imageService.setPrimary(imageUuid)
+      toast.success('Imagem definida como principal.')
+      onRefresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao definir imagem principal.')
+    } finally {
+      setPromoting(null)
+    }
   }
 
   return (
@@ -93,7 +105,7 @@ export function ProductImageManager({ productUuid, images, onRefresh }: ProductI
         <div className="flex flex-col items-center gap-2 text-muted-foreground">
           {uploading ? (
             <>
-              <Upload className="h-8 w-8 animate-bounce" />
+              <Loader2 className="h-8 w-8 animate-spin" />
               <p className="text-sm font-medium">Enviando…</p>
             </>
           ) : (
@@ -111,71 +123,97 @@ export function ProductImageManager({ productUuid, images, onRefresh }: ProductI
         <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
           <ImageIcon className="h-10 w-10 opacity-30" />
           <p className="text-sm">Nenhuma imagem cadastrada</p>
+          <p className="text-xs opacity-60">Adicione imagens usando a área acima</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {images.map((img) => (
-            <div
-              key={img.uuid}
-              className="group relative rounded-lg border overflow-hidden bg-muted aspect-square"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={img.thumbnail_url ?? img.url}
-                alt={img.alt_text ?? 'Imagem do produto'}
-                className="object-cover w-full h-full"
-              />
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {images.map((img) => (
+              <div
+                key={img.uuid}
+                className="group relative rounded-lg border overflow-hidden bg-muted aspect-square"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img.thumbnail_url ?? img.url}
+                  alt={img.alt_text ?? 'Imagem do produto'}
+                  className="object-cover w-full h-full"
+                  onError={(e) => {
+                    // fallback to full url if thumbnail fails
+                    const target = e.currentTarget
+                    if (target.src !== img.url) {
+                      target.src = img.url
+                    }
+                  }}
+                />
 
-              {/* Primary badge */}
-              {img.is_primary && (
-                <span className="absolute top-1.5 left-1.5 flex items-center gap-1 text-[10px] font-medium bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
-                  <Star className="h-2.5 w-2.5 fill-current" />
-                  Principal
-                </span>
-              )}
+                {/* Primary badge */}
+                {img.is_primary && (
+                  <span className="absolute top-1.5 left-1.5 flex items-center gap-1 text-[10px] font-medium bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+                    <Star className="h-2.5 w-2.5 fill-current" />
+                    Principal
+                  </span>
+                )}
 
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                {!img.is_primary && (
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                  {!img.is_primary && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 text-xs w-full"
+                      title="Definir como principal"
+                      disabled={promoting === img.uuid}
+                      onClick={() => void handleSetPrimary(img.uuid)}
+                    >
+                      {promoting === img.uuid
+                        ? <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        : <Star className="h-3 w-3 mr-1" />
+                      }
+                      Principal
+                    </Button>
+                  )}
                   <Button
                     type="button"
-                    variant="secondary"
-                    size="icon"
-                    className="h-8 w-8"
-                    title="Definir como principal"
-                    onClick={() => void handleSetPrimary(img.uuid)}
+                    variant="destructive"
+                    size="sm"
+                    className="h-7 text-xs w-full"
+                    title="Remover imagem"
+                    disabled={removing === img.uuid}
+                    onClick={() => void handleRemove(img.uuid)}
                   >
-                    <Star className="h-3.5 w-3.5" />
+                    {removing === img.uuid
+                      ? <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      : <Trash2 className="h-3 w-3 mr-1" />
+                    }
+                    Remover
                   </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="h-8 w-8"
-                  title="Remover imagem"
-                  disabled={removing === img.uuid}
-                  onClick={() => void handleRemove(img.uuid)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-
-              {/* Remove spinner */}
-              {removing === img.uuid && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
 
-      {images.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          {images.length} imagem{images.length !== 1 ? 's' : ''} — passe o mouse sobre uma imagem para ver as opções
-        </p>
+                {/* Full-screen spinner overlay during remove */}
+                {(removing === img.uuid || promoting === img.uuid) && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  </div>
+                )}
+
+                {/* Image info tooltip on bottom */}
+                {(img.width || img.size_bytes) && (
+                  <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] px-1.5 py-0.5 opacity-0 group-hover:opacity-0 leading-tight">
+                    {img.width && img.height && `${img.width}×${img.height}`}
+                    {img.width && img.size_bytes && ' · '}
+                    {img.size_bytes && formatBytes(img.size_bytes)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            {images.length} imagem{images.length !== 1 ? 's' : ''} — passe o mouse para ver as opções
+          </p>
+        </>
       )}
     </div>
   )

@@ -198,6 +198,7 @@ Route::middleware('permission:products.view')->group(function (): void {
 
     // Images (legacy)
     Route::post('images',                  [ProductImageController::class, 'store'])->name('images.store');
+    Route::patch('images/{productImage}',  [ProductImageController::class, 'update'])->name('images.update');
     Route::delete('images/{productImage}', [ProductImageController::class, 'destroy'])->name('images.destroy');
     Route::post('images/reorder',          [ProductImageController::class, 'reorder'])->name('images.reorder');
 

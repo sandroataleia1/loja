@@ -214,14 +214,23 @@ export interface ProductBarcode {
   is_primary: boolean
 }
 
+export interface ProductCollection {
+  uuid:        string
+  name:        string
+  slug:        string
+  description: string | null
+  is_active:   boolean
+}
+
 export interface Product {
   uuid:              string
   code:              string
   name:              string
   slug:              string
-  description:       string | null
-  short_description: string | null
-  internal_notes:    string | null
+  description:            string | null
+  short_description:      string | null
+  marketing_description:  string | null
+  internal_notes:         string | null
   type:                   ProductType
   type_label:             string
   unit_of_measure:        UnitOfMeasure | null
@@ -232,23 +241,41 @@ export interface Product {
   origin_code:            number | null
   origin_code_label:      string | null
   status:                 ProductStatus
-  status_label:      string
-  visibility:        ProductVisibility
-  visibility_label:  string
-  base_price:        number | null
-  cost_price:        number | null
-  is_featured:       boolean
-  is_digital:        boolean
-  is_publishable:    boolean
-  location:          string | null
-  brand?:            Brand
-  brand_id:          string | null
-  categories?:       Category[]
-  variants?:         ProductVariant[]
-  images?:           ProductMedia[]
-  barcodes?:         ProductBarcode[]
-  created_at:        string
-  updated_at:        string
+  status_label:           string
+  visibility:             ProductVisibility
+  visibility_label:       string
+  base_price:             number | null
+  cost_price:             number | null
+  base_price_cents:       number | null
+  cost_price_cents:       number | null
+  is_featured:            boolean
+  is_digital:             boolean
+  is_publishable:         boolean
+  is_ready_to_publish:    boolean
+  location:               string | null
+  season:                 string | null
+  launch_date:            string | null
+  weight_gross_g:         number | null
+  weight_net_g:           number | null
+  dimensions:             { width?: number; height?: number; depth?: number } | null
+  qr_code_url:            string | null
+  seo:                    { title?: string; description?: string; keywords?: string[] } | null
+  // Analytics
+  sales_velocity:         number | null
+  days_without_sale:      number | null
+  stock_age:              number | null
+  last_sale_at:           string | null
+  // Relations
+  brand?:                 Brand
+  brand_id:               string | null
+  categories?:            Category[]
+  collection?:            ProductCollection | null
+  tags?:                  string[]
+  variants?:              ProductVariant[]
+  images?:                ProductMedia[]
+  barcodes?:              ProductBarcode[]
+  created_at:             string
+  updated_at:             string
 }
 
 export interface ProductVariant {
